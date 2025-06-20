@@ -6,8 +6,9 @@ const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 const ACCEPTED_DOCUMENT_TYPES = ["application/pdf", ...ACCEPTED_IMAGE_TYPES];
 
-const fileSchema = (acceptedTypes: string[]) => z
+const fileSchema = (acceptedTypes: string[], isRequired: boolean, requiredMessage: string) => z
   .custom<File | null>((file) => file instanceof File || file === null, "Arquivo inválido.")
+  .refine((file) => !isRequired || file !== null, requiredMessage)
   .refine((file) => file === null || file.size <= MAX_FILE_SIZE_BYTES, `Tamanho máximo do arquivo é ${MAX_FILE_SIZE_MB}MB.`)
   .refine((file) => file === null || acceptedTypes.includes(file.type), "Formato de arquivo não suportado.");
 
@@ -33,68 +34,69 @@ export const authorizationSchema = z.object({
   buyerType: z.enum(["individual", "corporate"], {
     required_error: "Selecione o tipo de comprador.",
   }),
-  buyerName: z.string().min(3, "Nome/Razão Social deve ter pelo menos 3 caracteres.").transform(val => capitalizeWords(val.trim())),
-  buyerRG: z.string().optional().transform(val => val ? val.trim() : val),
-  buyerCPF: z.string().optional().transform(val => val ? val.trim() : val),
-  buyerCNPJ: z.string().optional().transform(val => val ? val.trim() : val),
-  buyerAddress: z.string().min(5, "Endereço deve ter pelo menos 5 caracteres.").transform(val => val.trim()),
-  buyerCityState: z.string().min(3, "Município/UF deve ter pelo menos 3 caracteres.").transform(val => val.trim()),
+  buyerName: z.string().min(1, "Nome/Razão Social é obrigatório.").transform(val => capitalizeWords(val.trim())),
+  buyerRG: z.string().optional().transform(val => val ? val.trim() : undefined),
+  buyerCPF: z.string().optional().transform(val => val ? val.trim() : undefined),
+  buyerCNPJ: z.string().optional().transform(val => val ? val.trim() : undefined),
+  
+  buyerStreet: z.string().min(1, "Rua é obrigatória.").transform(val => val.trim()),
+  buyerNumber: z.string().min(1, "Número é obrigatório.").transform(val => val.trim()),
+  buyerComplement: z.string().optional().transform(val => val ? val.trim() : undefined),
+  buyerNeighborhood: z.string().min(1, "Bairro é obrigatório.").transform(val => val.trim()),
+  buyerCity: z.string().min(1, "Município é obrigatório.").transform(val => val.trim()),
+  buyerState: z.string().min(2, "UF é obrigatória e deve ter 2 caracteres.").max(2, "UF deve ter 2 caracteres.").transform(val => val.trim().toUpperCase()),
 
-  representativeName: z.string().min(3, "Nome/Razão Social deve ter pelo menos 3 caracteres.").transform(val => capitalizeWords(val.trim())),
-  representativeRG: z.string().min(5, "RG deve ter pelo menos 5 caracteres.").transform(val => val.trim()),
-  representativeCPF: z.string().min(11, "CPF deve ter 11 caracteres.").max(14, "CPF deve ter no máximo 14 caracteres.").transform(val => val.trim()),
-  representativeAddress: z.string().min(5, "Endereço deve ter pelo menos 5 caracteres.").transform(val => val.trim()),
-  representativeCityState: z.string().min(3, "Município/UF deve ter pelo menos 3 caracteres.").transform(val => val.trim()),
+  representativeName: z.string().min(1, "Nome do representante é obrigatório.").transform(val => capitalizeWords(val.trim())),
+  representativeRG: z.string().min(1, "RG do representante é obrigatório.").transform(val => val.trim()),
+  representativeCPF: z.string().min(1, "CPF do representante é obrigatório.").transform(val => val.trim()),
 
   purchaseDate: z.date({ required_error: "Data da compra é obrigatória." }),
   purchaseValue: z.string().min(1, "Valor da compra é obrigatório.").transform(val => val.trim()),
   orderNumber: z.string()
     .min(1, "Número do pedido é obrigatório.")
-    .regex(/^V\d{8}RIHP-01$/, "Número do pedido deve ser no formato V12345678RIHP-01.")
+    .regex(/^V\d{8}RIHP-01$/, "Número do pedido inválido. Formato esperado: V12345678RIHP-01.")
     .transform(val => val.trim().toUpperCase()),
   pickupStore: z.enum(storeOptions, { required_error: "Loja para retirada é obrigatória."}),
 
   pickupDate: z.date({ required_error: "Data da retirada é obrigatória." }),
-  buyerSignature: z.string().optional(),
+  buyerSignature: z.string({required_error: "Assinatura do comprador é obrigatória."}).min(1, "Assinatura do comprador é obrigatória."),
 
-  buyerIdDocument: fileSchema(ACCEPTED_IMAGE_TYPES).refine(file => file !== null, "Documento de identidade é obrigatório."),
-  socialContractDocument: fileSchema(ACCEPTED_DOCUMENT_TYPES).optional(),
+  buyerIdDocument: fileSchema(ACCEPTED_IMAGE_TYPES, true, "Documento de identidade do comprador é obrigatório."),
+  socialContractDocument: fileSchema(ACCEPTED_DOCUMENT_TYPES, false, "Contrato social é obrigatório para Pessoa Jurídica."), // Requirement handled in superRefine
 }).superRefine((data, ctx) => {
   if (data.buyerType === "individual") {
-    if (!data.buyerRG || data.buyerRG.trim().length < 5) {
+    if (!data.buyerRG || data.buyerRG.trim().length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "RG é obrigatório e deve ter pelo menos 5 caracteres.",
+        message: "RG do comprador é obrigatório.",
         path: ["buyerRG"],
       });
     }
-    if (!data.buyerCPF || data.buyerCPF.trim().length < 11) {
+    if (!data.buyerCPF || data.buyerCPF.trim().length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "CPF é obrigatório e deve ter 11 caracteres.",
+        message: "CPF do comprador é obrigatório.",
         path: ["buyerCPF"],
       });
     }
   } else if (data.buyerType === "corporate") {
-    if (!data.buyerCNPJ || data.buyerCNPJ.trim().length < 14) {
+    if (!data.buyerCNPJ || data.buyerCNPJ.trim().length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "CNPJ é obrigatório e deve ter 14 caracteres.",
+        message: "CNPJ do comprador é obrigatório.",
         path: ["buyerCNPJ"],
       });
     }
-  }
-
-  if (!data.buyerSignature || data.buyerSignature.length === 0) {
-    ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Assinatura do comprador é obrigatória.",
-        path: ["buyerSignature"],
-      });
+    if (!data.socialContractDocument) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Contrato Social / Estatuto Social é obrigatório para Pessoa Jurídica.",
+            path: ["socialContractDocument"],
+        });
+    }
   }
 });
 
 export type AuthorizationFormData = z.infer<typeof authorizationSchema>;
 
 export const storeOptionsList = storeOptions.map(store => ({ value: store, label: store }));
-

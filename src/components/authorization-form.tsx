@@ -41,13 +41,15 @@ export function AuthorizationForm() {
       buyerRG: '',
       buyerCPF: '',
       buyerCNPJ: '',
-      buyerAddress: '',
-      buyerCityState: '',
+      buyerStreet: '',
+      buyerNumber: '',
+      buyerComplement: '',
+      buyerNeighborhood: '',
+      buyerCity: '',
+      buyerState: '',
       representativeName: '',
       representativeRG: '',
       representativeCPF: '',
-      representativeAddress: '',
-      representativeCityState: '',
       purchaseValue: '',
       orderNumber: '',
       pickupStore: undefined, 
@@ -60,11 +62,16 @@ export function AuthorizationForm() {
   const buyerType = form.watch('buyerType');
 
   useEffect(() => {
-    form.resetField('buyerRG');
-    form.resetField('buyerCPF');
-    form.resetField('buyerCNPJ');
-    form.resetField('socialContractDocument');
-    setSocialContractPreview(null);
+    // Clear conditional fields when buyerType changes
+    if (buyerType === 'individual') {
+        form.resetField('buyerCNPJ');
+        form.resetField('socialContractDocument');
+        setSocialContractPreview(null);
+    } else {
+        form.resetField('buyerRG');
+        form.resetField('buyerCPF');
+    }
+    // Clear errors for these fields too
     form.clearErrors(['buyerRG', 'buyerCPF', 'buyerCNPJ', 'socialContractDocument']);
   }, [buyerType, form]);
 
@@ -74,9 +81,10 @@ export function AuthorizationForm() {
       toast({ title: "Erro", description: "Template do PDF não encontrado.", variant: "destructive" });
       return;
     }
-
+    
+    // Make element visible but off-screen for rendering
     pdfContentElement.style.display = 'block';
-    pdfContentElement.style.position = 'fixed';
+    pdfContentElement.style.position = 'fixed'; 
     pdfContentElement.style.left = '-9999px'; 
     pdfContentElement.style.top = '0px';
     pdfContentElement.style.width = '210mm'; 
@@ -88,10 +96,9 @@ export function AuthorizationForm() {
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     pdfContentElement.offsetHeight;
 
-
     try {
       const canvas = await html2canvas(pdfContentElement, {
-        scale: 1, 
+        scale: 2, // Increased scale for better quality, adjust as needed
         useCORS: true,
         logging: false,
         width: pdfContentElement.scrollWidth,
@@ -100,28 +107,29 @@ export function AuthorizationForm() {
         windowHeight: pdfContentElement.scrollHeight,
       });
       
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4'); 
+      const imgData = canvas.toDataURL('image/png', 0.95); // Use PNG with slight compression
+      const pdf = new jsPDF('p', 'mm', 'a4', true); // true for compress
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
+      // Calculate the aspect ratio of the image
       const imgProps = pdf.getImageProperties(imgData);
       const aspectRatio = imgProps.width / imgProps.height;
-      
+
       let imgRenderWidth = pdfWidth;
       let imgRenderHeight = pdfWidth / aspectRatio;
 
-      // If rendered image height is greater than PDF height, scale down
+      // If rendered image height is greater than PDF height, scale down by height
       if (imgRenderHeight > pdfHeight) {
         imgRenderHeight = pdfHeight;
         imgRenderWidth = pdfHeight * aspectRatio;
       }
       
-      // Center the image on the PDF page (optional, adjust as needed)
+      // Center the image on the PDF page
       const xOffset = (pdfWidth - imgRenderWidth) / 2;
       const yOffset = (pdfHeight - imgRenderHeight) / 2;
 
-      pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgRenderWidth, imgRenderHeight);
+      pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgRenderWidth, imgRenderHeight, undefined, 'FAST');
       pdf.save('autorizacao_retirada.pdf');
       toast({ title: "Sucesso!", description: "PDF gerado e download iniciado." });
 
@@ -130,6 +138,7 @@ export function AuthorizationForm() {
       toast({ title: "Erro ao gerar PDF", description: "Ocorreu um problema ao tentar gerar o documento.", variant: "destructive" });
     } finally {
        if (pdfContentElement) {
+        // Hide the element again after rendering
         pdfContentElement.style.display = 'none'; 
         pdfContentElement.style.position = 'absolute'; 
        }
@@ -159,11 +168,13 @@ export function AuthorizationForm() {
         socialContractDataUrl = await readFileAsDataURL(data.socialContractDocument);
       }
       
+      // Using a callback with setState to ensure state is updated before PDF generation
       await new Promise<void>(resolve => {
         setBuyerIdPreview(buyerIdDataUrl);
         setSocialContractPreview(socialContractDataUrl);
-        setSignaturePreview(data.buyerSignature || null);
-        setTimeout(resolve, 100); // Increased delay for complex DOM updates
+        setSignaturePreview(data.buyerSignature || null); // Ensure signaturePreview has the latest value
+        // Wait for next tick to ensure DOM updates with previews are processed
+        requestAnimationFrame(() => setTimeout(resolve, 50)); 
       });
             
       await generatePdf();
@@ -175,23 +186,6 @@ export function AuthorizationForm() {
       setIsSubmitting(false);
     }
   };
-  
-  const getMunicipioUF = (cityStateString: string | undefined | null): { municipio: string; uf: string } => {
-    if (!cityStateString) return { municipio: '', uf: '' };
-    const parts = cityStateString.split('/');
-    if (parts.length === 2) {
-      return { municipio: parts[0].trim(), uf: parts[1].trim().toUpperCase() };
-    }
-    if (cityStateString.length > 2) {
-      const ufCandidate = cityStateString.slice(-2).trim().toUpperCase();
-      const municipioCandidate = cityStateString.slice(0, -2).trim();
-      if (ufCandidate.length === 2 && /^[A-Z]{2}$/.test(ufCandidate) && municipioCandidate.length > 0) { 
-         return { municipio: municipioCandidate, uf: ufCandidate };
-      }
-    }
-    return { municipio: cityStateString.trim(), uf: '' }; 
-  };
-
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
@@ -201,7 +195,7 @@ export function AuthorizationForm() {
             Autorização para Retirada por Terceiro
           </CardTitle>
           <CardDescription className="text-center text-primary-foreground/80">
-            Preencha os dados abaixo para gerar sua autorização.
+            Preencha os dados abaixo para gerar sua autorização. Todos os campos são obrigatórios, exceto Complemento.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6 space-y-8">
@@ -212,7 +206,7 @@ export function AuthorizationForm() {
                 <CardTitle className="flex items-center gap-2 font-headline"><User className="text-primary" /> Comprador</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormFieldItem>
+                <FormFieldItem className="md:col-span-2">
                   <Label>Tipo de Comprador</Label>
                   <Controller
                     control={form.control}
@@ -245,8 +239,12 @@ export function AuthorizationForm() {
                   <FormInput control={form.control} name="buyerCNPJ" label="CNPJ" placeholder="00.000.000/0000-00" error={form.formState.errors.buyerCNPJ} />
                 )}
                 
-                <FormInput control={form.control} name="buyerAddress" label="Endereço" placeholder="Rua Exemplo, 123, Bairro" error={form.formState.errors.buyerAddress} />
-                <FormInput control={form.control} name="buyerCityState" label="Município / UF" placeholder="Cidade / ES" error={form.formState.errors.buyerCityState} />
+                <FormInput control={form.control} name="buyerStreet" label="Rua" placeholder="Rua Exemplo" error={form.formState.errors.buyerStreet} />
+                <FormInput control={form.control} name="buyerNumber" label="Número" placeholder="123" error={form.formState.errors.buyerNumber} />
+                <FormInput control={form.control} name="buyerComplement" label="Complemento (Opcional)" placeholder="Apto 101" error={form.formState.errors.buyerComplement} />
+                <FormInput control={form.control} name="buyerNeighborhood" label="Bairro" placeholder="Centro" error={form.formState.errors.buyerNeighborhood} />
+                <FormInput control={form.control} name="buyerCity" label="Município" placeholder="Cidade" error={form.formState.errors.buyerCity} />
+                <FormInput control={form.control} name="buyerState" label="UF" placeholder="ES" maxLength={2} error={form.formState.errors.buyerState} />
               </CardContent>
             </Card>
 
@@ -260,8 +258,6 @@ export function AuthorizationForm() {
                 </div>
                 <FormInput control={form.control} name="representativeRG" label="RG" placeholder="11.111.111-1" error={form.formState.errors.representativeRG} />
                 <FormInput control={form.control} name="representativeCPF" label="CPF" placeholder="111.111.111-11" error={form.formState.errors.representativeCPF} />
-                <FormInput control={form.control} name="representativeAddress" label="Endereço" placeholder="Av. Teste, 456" error={form.formState.errors.representativeAddress} />
-                <FormInput control={form.control} name="representativeCityState" label="Município / UF" placeholder="Outra Cidade / RJ" error={form.formState.errors.representativeCityState} />
               </CardContent>
             </Card>
 
@@ -274,7 +270,7 @@ export function AuthorizationForm() {
                 <FormInput control={form.control} name="purchaseValue" label="Valor da Compra (R$)" placeholder="199,90" type="text" inputMode='decimal' error={form.formState.errors.purchaseValue} />
                 <FormInput control={form.control} name="orderNumber" label="Número do Pedido" placeholder="V12345678RIHP-01" error={form.formState.errors.orderNumber} />
                 
-                <FormFieldItem>
+                <FormFieldItem className="md:col-span-2">
                     <Label htmlFor="pickupStore">Loja para Retirada</Label>
                     <Controller
                         control={form.control}
@@ -313,7 +309,7 @@ export function AuthorizationForm() {
                         <FileUploader
                             id="buyerIdDocument"
                             label="Identidade do Comprador (Frente e Verso)"
-                            description="Formatos aceitos: JPG, PNG. Tamanho máximo: 5MB."
+                            description="Documento de identidade é obrigatório. Formatos: JPG, PNG. Max: 5MB."
                             onFileChange={onChange}
                             accept="image/jpeg,image/png"
                             fileError={form.formState.errors.buyerIdDocument?.message as string | undefined}
@@ -328,7 +324,7 @@ export function AuthorizationForm() {
                             <FileUploader
                                 id="socialContractDocument"
                                 label="Contrato Social / Estatuto Social Autenticado"
-                                description="Formatos aceitos: PDF, JPG, PNG. Tamanho máximo: 5MB."
+                                description="Contrato social é obrigatório para Pessoa Jurídica. Formatos: PDF, JPG, PNG. Max: 5MB."
                                 onFileChange={onChange}
                                 accept="application/pdf,image/jpeg,image/png"
                                 fileError={form.formState.errors.socialContractDocument?.message as string | undefined}
@@ -342,7 +338,7 @@ export function AuthorizationForm() {
                   render={({ field }) => (
                     <SignaturePad
                       id="buyerSignature"
-                      label="Assinatura do Comprador"
+                      label="Assinatura do Comprador (Obrigatória)"
                       onSignatureChange={(dataUrl) => field.onChange(dataUrl)}
                       signatureError={form.formState.errors.buyerSignature?.message}
                       width={typeof window !== 'undefined' ? Math.min(window.innerWidth - 80, 450) : 450} 
@@ -360,56 +356,62 @@ export function AuthorizationForm() {
         </CardContent>
       </Card>
 
-      {/* Hidden PDF Template */}
+      {/* Hidden PDF Template. Keep structure and styling closely matching the provided RiHappy image. */}
       <div ref={pdfTemplateRef} className="hidden" style={{ width: '210mm', height: '297mm', boxSizing: 'border-box', backgroundColor: 'white', color: 'black', fontFamily: 'Arial, sans-serif' }}>
         <style>
           {`
+            @page { 
+              size: A4;
+              margin: 0; /* Ensure no browser default margins */
+            }
+            body { 
+              margin: 0; /* Ensure no browser default margins */
+            }
             .pdf-page-container {
-              width: 100%;
-              height: 100%;
+              width: 100%; /* Should be 210mm */
+              height: 100%; /* Should be 297mm */
               padding: 10mm; /* Standard A4 margin */
               box-sizing: border-box;
-              font-size: 8pt; /* Base font size */
-              line-height: 1.2;
+              font-size: 8pt; /* Base font size, adjusted for compactness */
+              line-height: 1.1; /* Adjusted for compactness */
               display: flex;
               flex-direction: column;
             }
-            .pdf-header { text-align: center; margin-bottom: 5mm; }
-            .pdf-logo { max-width: 120px; max-height: 40px; margin-bottom: 3mm; }
-            .pdf-main-title { font-size: 10pt; font-weight: bold; margin-bottom: 5mm; text-transform: uppercase; }
+            .pdf-header { text-align: center; margin-bottom: 4mm; }
+            .pdf-logo { max-width: 100px; max-height: 35px; margin-bottom: 2mm; } /* Reduced logo size */
+            .pdf-main-title { font-size: 10pt; font-weight: bold; margin-bottom: 4mm; text-transform: uppercase; }
 
-            .pdf-section-box { border: 0.5px solid black; margin-bottom: 3mm; }
-            .pdf-section-title-bar { background-color: #e0e0e0; padding: 0.5mm 1mm; font-weight: bold; font-size: 7pt; border-bottom: 0.5px solid black; }
-            .pdf-section-content { padding: 1mm; }
+            .pdf-section-title { font-size: 7pt; font-weight: bold; margin-top: 2mm; margin-bottom: 0.5mm; background-color: #E0E0E0; padding: 0.5mm 1mm; border: 0.25px solid black;}
             
-            .pdf-info-grid { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 0.5mm 2mm; align-items: center; }
-            .pdf-info-grid-full { display: grid; grid-template-columns: auto 1fr; gap: 0.5mm 2mm; align-items: center; }
-            .pdf-info-label { font-weight: normal; font-size: 7pt; white-space: nowrap; }
-            .pdf-info-value { font-size: 7pt; border-bottom: 0.25px dotted black; min-height: 3mm; display:flex; align-items:center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;}
+            .pdf-info-table { width: 100%; border-collapse: collapse; margin-bottom: 2mm; font-size: 7pt; }
+            .pdf-info-table td { border: 0.25px solid black; padding: 0.75mm 1mm; vertical-align: top; }
+            .pdf-info-table td.pdf-label { width: 20%; font-weight: normal; white-space: nowrap; } /* Normal weight for labels */
+            .pdf-info-table td.pdf-value { width: 30%; font-weight: normal; word-break: break-all; } /* Normal weight for values */
+            .pdf-info-table td.pdf-value-full { width: 80%; }
             
-            .pdf-text-block { margin: 3mm 0; font-size: 7.5pt; text-align: justify; }
+            .pdf-text-block { margin: 2mm 0; font-size: 7.5pt; text-align: justify; }
             .pdf-text-block p { margin-bottom: 1mm; }
             .pdf-text-block strong { font-weight: bold; }
 
-            .pdf-order-table { width: 100%; border-collapse: collapse; margin-bottom: 3mm; }
-            .pdf-order-table th, .pdf-order-table td { border: 0.5px solid black; padding: 0.75mm; font-size: 7pt; text-align: left; vertical-align: middle; }
-            .pdf-order-table th { font-weight: bold; background-color: #e0e0e0; }
+            .pdf-order-table { width: 100%; border-collapse: collapse; margin-bottom: 2mm; }
+            .pdf-order-table th, .pdf-order-table td { border: 0.25px solid black; padding: 0.75mm; font-size: 7pt; text-align: left; vertical-align: middle; }
+            .pdf-order-table th { font-weight: bold; background-color: #E0E0E0; }
 
-            .pdf-footer-section { margin-top: 4mm; font-size: 7.5pt; }
-            .pdf-signature-area { margin-top: 3mm; }
-            .pdf-signature-label { margin-bottom: 0.5mm; display: block; }
-            .pdf-signature-line-container { min-height: 12mm; display:flex; align-items: center; justify-content: flex-start; }
-            .pdf-signature-line { width: 80mm; height: 12mm; border: 0.5px solid #ccc; display: flex; align-items: center; justify-content: center; }
+            .pdf-footer-section { margin-top: 3mm; font-size: 7.5pt; }
+            .pdf-signature-area { margin-top: 2mm; }
+            .pdf-signature-label { margin-bottom: 0.5mm; display: block; font-size: 7pt; }
+            .pdf-signature-line-container { min-height: 10mm; display:flex; align-items: center; justify-content: flex-start; }
+            .pdf-signature-line { width: 70mm; height: 10mm; border: 0.25px solid #ccc; display: flex; align-items: center; justify-content: center; margin-bottom: 0.5mm; }
             .pdf-signature-line img { max-width: 100%; max-height: 100%; object-fit: contain; }
-            .pdf-signature-placeholder { color: #888; font-size: 6.5pt; }
+            .pdf-signature-placeholder { color: #888; font-size: 6pt; }
             
-            .pdf-final-note { margin-top: auto; font-size: 6.5pt; text-align: left; padding-top: 2mm; }
+            .pdf-final-note { font-size: 6pt; text-align: left; margin-top: auto; padding-top: 2mm; } /* Pushes to bottom */
             
-            .pdf-document-section { margin-top: 3mm; page-break-inside: avoid; }
-            .pdf-document-title { font-size: 7pt; font-weight: bold; margin-bottom: 1mm; text-align: center; }
-            .pdf-document-image-container { display: flex; justify-content: center; align-items: center; border: 0.5px solid #ccc; min-height: 30mm; max-height: 40mm; padding: 1mm; margin-bottom:1mm; }
-            .pdf-document-image-container img { max-width: 100%; max-height: 38mm; object-fit: contain; }
-            .pdf-document-placeholder { font-size: 6.5pt; color: #666; text-align: center; }
+            .pdf-document-section { margin-top: 2mm; page-break-inside: avoid; }
+            .pdf-document-title { font-size: 7pt; font-weight: bold; margin-bottom: 0.5mm; text-align: center; }
+            .pdf-document-image-container { display: flex; justify-content: center; align-items: center; border: 0.25px solid #ccc; min-height: 25mm; max-height: 30mm; padding: 1mm; margin-bottom:1mm; }
+            .pdf-document-image-container img { max-width: 100%; max-height: 28mm; object-fit: contain; }
+            .pdf-document-placeholder { font-size: 6pt; color: #666; text-align: center; }
           `}
         </style>
         <div className="pdf-page-container">
@@ -418,65 +420,55 @@ export function AuthorizationForm() {
             <div className="pdf-main-title">TERMO DE AUTORIZAÇÃO PARA RETIRADA POR TERCEIROS</div>
           </div>
 
-          {/* Comprador Section */}
-          <div className="pdf-section-box">
-            <div className="pdf-section-title-bar">COMPRADOR</div>
-            <div className="pdf-section-content">
-              <div className="pdf-info-grid-full" style={{ marginBottom: '0.5mm' }}>
-                <div className="pdf-info-label">Nome/Razão Social:</div>
-                <div className="pdf-info-value">{form.getValues('buyerName') || ''}</div>
-              </div>
-              <div className="pdf-info-grid">
-                <div className="pdf-info-label">RG:</div>
-                <div className="pdf-info-value">{form.getValues('buyerType') === 'individual' ? form.getValues('buyerRG') || '' : ''}</div>
-                <div className="pdf-info-label" style={{paddingLeft: '2mm'}}>CPF:</div>
-                <div className="pdf-info-value">{form.getValues('buyerType') === 'individual' ? form.getValues('buyerCPF') || '' : ''}</div>
-              </div>
-               {form.getValues('buyerType') === 'corporate' && (
-                <div className="pdf-info-grid-full" style={{ marginTop: '0.5mm' }}>
-                    <div className="pdf-info-label">CNPJ:</div>
-                    <div className="pdf-info-value">{form.getValues('buyerCNPJ') || ''}</div>
-                </div>
-               )}
-              <div className="pdf-info-grid-full" style={{ marginTop: '0.5mm' }}>
-                <div className="pdf-info-label">Endereço:</div>
-                <div className="pdf-info-value">{form.getValues('buyerAddress') || ''}</div>
-              </div>
-              <div className="pdf-info-grid">
-                <div className="pdf-info-label">Município:</div>
-                <div className="pdf-info-value">{getMunicipioUF(form.getValues('buyerCityState')).municipio}</div>
-                <div className="pdf-info-label" style={{paddingLeft: '2mm'}}>UF:</div>
-                <div className="pdf-info-value">{getMunicipioUF(form.getValues('buyerCityState')).uf}</div>
-              </div>
-            </div>
-          </div>
+          <div className="pdf-section-title">COMPRADOR</div>
+          <table className="pdf-info-table">
+            <tbody>
+              <tr>
+                <td className="pdf-label">Nome/Razão Social:</td>
+                <td className="pdf-value" colSpan={3}>{form.getValues('buyerName') || ''}</td>
+              </tr>
+              <tr>
+                <td className="pdf-label">RG:</td>
+                <td className="pdf-value">{form.getValues('buyerType') === 'individual' ? form.getValues('buyerRG') || '' : ''}</td>
+                <td className="pdf-label">CPF:</td>
+                <td className="pdf-value">{form.getValues('buyerType') === 'individual' ? form.getValues('buyerCPF') || '' : ''}</td>
+              </tr>
+              {form.getValues('buyerType') === 'corporate' && (
+                 <tr>
+                    <td className="pdf-label">CNPJ:</td>
+                    <td className="pdf-value" colSpan={3}>{form.getValues('buyerCNPJ') || ''}</td>
+                </tr>
+              )}
+              <tr>
+                <td className="pdf-label">Endereço:</td>
+                <td className="pdf-value" colSpan={3}>
+                  {`${form.getValues('buyerStreet') || ''}, ${form.getValues('buyerNumber') || ''}${form.getValues('buyerComplement') ? ` - ${form.getValues('buyerComplement')}` : ''}, ${form.getValues('buyerNeighborhood') || ''}`}
+                </td>
+              </tr>
+              <tr>
+                <td className="pdf-label">Município:</td>
+                <td className="pdf-value">{form.getValues('buyerCity') || ''}</td>
+                <td className="pdf-label">UF:</td>
+                <td className="pdf-value">{form.getValues('buyerState') || ''}</td>
+              </tr>
+            </tbody>
+          </table>
 
-          {/* Representante Section */}
-          <div className="pdf-section-box">
-            <div className="pdf-section-title-bar">REPRESENTANTE</div>
-            <div className="pdf-section-content">
-              <div className="pdf-info-grid-full" style={{ marginBottom: '0.5mm' }}>
-                <div className="pdf-info-label">Nome/Razão Social:</div>
-                <div className="pdf-info-value">{form.getValues('representativeName') || ''}</div>
-              </div>
-              <div className="pdf-info-grid">
-                <div className="pdf-info-label">RG:</div>
-                <div className="pdf-info-value">{form.getValues('representativeRG') || ''}</div>
-                <div className="pdf-info-label" style={{paddingLeft: '2mm'}}>CPF:</div>
-                <div className="pdf-info-value">{form.getValues('representativeCPF') || ''}</div>
-              </div>
-              <div className="pdf-info-grid-full" style={{ marginTop: '0.5mm' }}>
-                <div className="pdf-info-label">Endereço:</div>
-                <div className="pdf-info-value">{form.getValues('representativeAddress') || ''}</div>
-              </div>
-              <div className="pdf-info-grid">
-                <div className="pdf-info-label">Município:</div>
-                <div className="pdf-info-value">{getMunicipioUF(form.getValues('representativeCityState')).municipio}</div>
-                <div className="pdf-info-label" style={{paddingLeft: '2mm'}}>UF:</div>
-                <div className="pdf-info-value">{getMunicipioUF(form.getValues('representativeCityState')).uf}</div>
-              </div>
-            </div>
-          </div>
+          <div className="pdf-section-title">REPRESENTANTE</div>
+          <table className="pdf-info-table">
+            <tbody>
+              <tr>
+                <td className="pdf-label">Nome/Razão Social:</td>
+                <td className="pdf-value" colSpan={3}>{form.getValues('representativeName') || ''}</td>
+              </tr>
+              <tr>
+                <td className="pdf-label">RG:</td>
+                <td className="pdf-value">{form.getValues('representativeRG') || ''}</td>
+                <td className="pdf-label">CPF:</td>
+                <td className="pdf-value">{form.getValues('representativeCPF') || ''}</td>
+              </tr>
+            </tbody>
+          </table>
           
           <div className="pdf-text-block">
             <p>O <strong>COMPRADOR</strong> autoriza seu <strong>REPRESENTANTE</strong>, acima identificado, a retirar os produtos listados no Pedido, cujas informações estão detalhadas no quadro abaixo, na loja física escolhida pelo <strong>COMPRADOR</strong> no momento da realização de sua compra no site.</p>
@@ -484,6 +476,7 @@ export function AuthorizationForm() {
             <p>O horário de funcionamento da loja física escolhida para retirada do pedido, deverá ser respeitado.</p>
           </div>
 
+          <div className="pdf-section-title">DETALHES DO PEDIDO</div>
           <table className="pdf-order-table">
             <thead>
               <tr>
@@ -513,11 +506,9 @@ export function AuthorizationForm() {
                   {signaturePreview ? <img src={signaturePreview} alt="Assinatura do Comprador" /> : <span className="pdf-signature-placeholder"></span>}
                 </div>
               </div>
-              <span className="pdf-signature-label" style={{marginTop: '1mm'}}>Assinatura do comprador</span> {/* Redundant as per image */}
             </div>
           </div>
           
-          {/* Document Images Section */}
           <div className="pdf-document-section">
             <div className="pdf-document-title">DOCUMENTO DE IDENTIDADE DO COMPRADOR</div>
             <div className="pdf-document-image-container">
@@ -531,7 +522,7 @@ export function AuthorizationForm() {
               <div className="pdf-document-image-container">
                 {socialContractPreview.startsWith('data:image') ? 
                   <img src={socialContractPreview} alt="Contrato Social" /> : 
-                  <p className="pdf-document-placeholder">Contrato Social (PDF) - Visualização não disponível.</p>
+                  <p className="pdf-document-placeholder">Contrato Social (PDF) - Visualização não disponível no preview.</p>
                 }
               </div>
             </div>
@@ -555,22 +546,23 @@ const FormFieldItem: React.FC<{ children: React.ReactNode; className?: string }>
 
 interface FormInputProps {
   control: any;
-  name: keyof AuthorizationFormData;
+  name: keyof AuthorizationFormData | string; // Allow string for dynamic field names if necessary
   label: string;
   placeholder?: string;
   type?: string;
   inputMode?: "text" | "search" | "email" | "tel" | "url" | "none" | "numeric" | "decimal" | undefined;
   error?: { message?: string };
   className?: string;
+  maxLength?: number;
 }
 
-const FormInput: React.FC<FormInputProps> = ({ control, name, label, placeholder, type = "text", inputMode, error, className }) => (
+const FormInput: React.FC<FormInputProps> = ({ control, name, label, placeholder, type = "text", inputMode, error, className, maxLength }) => (
   <FormFieldItem className={className}>
-    <Label htmlFor={name}>{label}</Label>
+    <Label htmlFor={name as string}>{label}</Label>
     <Controller
       control={control}
-      name={name}
-      render={({ field }) => <Input id={name} type={type} inputMode={inputMode} placeholder={placeholder} {...field} value={field.value || ''} className={error ? 'border-destructive' : ''} />}
+      name={name as keyof AuthorizationFormData} // Cast to ensure type safety with schema keys
+      render={({ field }) => <Input id={name as string} type={type} inputMode={inputMode} placeholder={placeholder} {...field} value={field.value || ''} maxLength={maxLength} className={error ? 'border-destructive' : ''} />}
     />
     {error && <FormErrorMessage message={error.message} />}
   </FormFieldItem>
