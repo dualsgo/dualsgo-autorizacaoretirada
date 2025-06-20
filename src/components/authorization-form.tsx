@@ -41,12 +41,7 @@ export function AuthorizationForm() {
       buyerRG: '',
       buyerCPF: '',
       buyerCNPJ: '',
-      buyerStreet: '',
-      buyerNumber: '',
-      buyerComplement: '',
-      buyerNeighborhood: '',
-      buyerCity: '',
-      buyerState: '',
+      // Address fields removed
       representativeName: '',
       representativeRG: '',
       representativeCPF: '',
@@ -231,13 +226,7 @@ export function AuthorizationForm() {
                 {buyerType === 'corporate' && (
                   <FormInput control={form.control} name="buyerCNPJ" label="CNPJ" placeholder="00.000.000/0000-00" error={form.formState.errors.buyerCNPJ} />
                 )}
-                
-                <FormInput control={form.control} name="buyerStreet" label="Rua" placeholder="Rua Exemplo" error={form.formState.errors.buyerStreet} />
-                <FormInput control={form.control} name="buyerNumber" label="Número" placeholder="123" error={form.formState.errors.buyerNumber} />
-                <FormInput control={form.control} name="buyerComplement" label="Complemento (Opcional)" placeholder="Apto 101" error={form.formState.errors.buyerComplement} />
-                <FormInput control={form.control} name="buyerNeighborhood" label="Bairro" placeholder="Centro" error={form.formState.errors.buyerNeighborhood} />
-                <FormInput control={form.control} name="buyerCity" label="Município" placeholder="Cidade" error={form.formState.errors.buyerCity} />
-                <FormInput control={form.control} name="buyerState" label="UF" placeholder="ES" maxLength={2} error={form.formState.errors.buyerState} />
+                {/* Address fields removed from UI */}
               </CardContent>
             </Card>
 
@@ -365,43 +354,44 @@ export function AuthorizationForm() {
             }
             .pdf-page-container {
               width: 100%; 
-              height: 100%; /* Use full height of the parent */
-              padding: 15mm; /* Balanced margins */
+              height: 100%; 
+              padding: 10mm; 
               box-sizing: border-box;
-              font-size: 10pt;
-              line-height: 1.4; /* Slightly increased line height */
+              font-size: 9pt; /* Slightly reduced for more space */
+              line-height: 1.3; /* Reduced line height */
               display: flex;
               flex-direction: column;
             }
             .pdf-header { 
               text-align: center; 
-              margin-bottom: 6mm; 
+              margin-bottom: 5mm; /* Reduced */
             }
             .pdf-logo { 
-              max-width: 70px; 
-              margin: 0 auto 3mm auto; 
+              max-width: 70px; /* Reduced logo size */
+              margin: 0 auto 3mm auto; /* Reduced margin */
             }
             .pdf-main-title { 
-              font-size: 11pt; 
+              font-size: 11pt; /* Reduced */
               font-weight: bold; 
-              margin-bottom: 4mm; 
+              margin-bottom: 4mm; /* Reduced */
               text-transform: uppercase;
               text-align: center;
             }
 
             .pdf-data-section { 
-              margin-bottom: 6mm; /* Increased spacing between sections */
+              margin-bottom: 4mm; /* Reduced */
             }
             .pdf-data-section-title {
-              font-size: 10pt;
+              font-size: 10pt; /* Reduced */
               font-weight: bold;
-              margin-bottom: 2mm;
+              margin-bottom: 2mm; /* Reduced */
               padding-bottom: 0.5mm;
+              /* border-bottom: 1px solid #eee; Removed as per last request */
             }
             .pdf-data-content {
               display: grid;
-              grid-template-columns: max-content 1fr; /* Label and value/grouped values */
-              gap: 2mm 4mm; /* row-gap column-gap */
+              grid-template-columns: max-content 1fr; 
+              gap: 1.5mm 3mm; /* Reduced gap */
             }
             .pdf-field-label {
               font-weight: 600; 
@@ -411,27 +401,40 @@ export function AuthorizationForm() {
             .pdf-field-value {
               word-break: break-word;
               min-height: 1em; 
+              /* border-bottom: 0.5px solid #333; Removed underline */
+              /* padding-bottom: 0.5mm; Removed padding for underline */
             }
-             .pdf-field-group { /* For RG/CPF and Município/UF pairs */
+            .pdf-field-group { 
                 display: flex;
                 align-items: baseline;
              }
              .pdf-field-group .pdf-field-label {
-                margin-left: 5mm; /* Space before the second label in a pair */
+                margin-left: 5mm; 
              }
              .pdf-field-group .pdf-field-value {
                  flex-grow: 1;
-                 min-width: 0; /* Allow shrinking */
+                 min-width: 0; 
+                 /* border-bottom: 0.5px solid #333; Removed underline */
+                 /* padding-bottom: 0.5mm; Removed padding for underline */
              }
+            .full-width-label { /* For Nome/Razão Social and Endereço labels */
+                grid-column: 1 / -1;
+                font-weight: bold;
+                margin-bottom: -1mm; /* Pull value closer */
+            }
+            .full-width-value { /* For Nome/Razão Social and Endereço values */
+                 grid-column: 1 / -1;
+                 margin-bottom: 1mm; /* Space after full-width value */
+            }
 
 
             .pdf-text-block { 
-              margin: 4mm 0; 
-              font-size: 9pt; 
+              margin: 4mm 0; /* Reduced */
+              font-size: 8.5pt; /* Reduced */
               text-align: justify;
             }
             .pdf-text-block p { 
-              margin-bottom: 1.5mm; 
+              margin-bottom: 1.5mm; /* Reduced */
             }
             .pdf-text-block strong { 
               font-weight: bold; 
@@ -449,74 +452,73 @@ export function AuthorizationForm() {
               width: 100%; 
               border-collapse: collapse; 
               margin-bottom: 4mm; 
-              font-size: 9pt; 
+              font-size: 8.5pt; /* Reduced */
             }
             .pdf-order-table th { 
               font-weight: bold; 
               text-align: left;
-              padding: 1mm 0; 
+              padding: 0.5mm 0; /* Reduced padding */
             }
             .pdf-order-table td { 
-              padding: 1mm 0; 
+              padding: 0.5mm 0; /* Reduced padding */
             }
              .pdf-order-table tr:not(:last-child) th,
              .pdf-order-table tr:not(:last-child) td {
-                padding-bottom: 1.5mm; 
+                padding-bottom: 1mm; /* Reduced */
             }
 
-            .pdf-signature-section { 
-              margin: 4mm 0 6mm 0; 
+            .pdf-signature-and-id-section {
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-start; /* Align tops */
+                margin-top: 4mm;
+                margin-bottom: 4mm;
+                gap: 4mm; /* Space between ID and Signature */
             }
-            .pdf-signature-label { 
+            .pdf-document-item-inline, .pdf-signature-item-inline {
+                flex: 1; /* Each takes half the space */
+                display: flex;
+                flex-direction: column;
+            }
+            .pdf-document-title, .pdf-signature-label { 
               font-weight: bold;
-              font-size: 10pt;
-              margin-bottom: 1mm;
+              font-size: 9pt; /* Reduced */
+              margin-bottom: 1mm; /* Reduced */
+              text-align: center; /* Center titles */
             }
-            .pdf-signature-box { 
+            .pdf-document-image-wrapper, .pdf-signature-box { 
+              margin-top: 1mm; /* Reduced */
               width: 100%; 
-              height: 20mm; /* Reduced from 25mm to allow more space for docs */
-              margin-top: 1mm;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-            }
-            
-            .pdf-documents-area { 
-              margin-top: 4mm; 
-              flex-grow: 1; 
-              display: flex;
-              flex-direction: column;
-              justify-content: flex-start; 
-            }
-            .pdf-document-item {
-                page-break-inside: avoid;
-                margin-bottom: 3mm; 
-            }
-            .pdf-document-title { 
-              font-weight: bold;
-              font-size: 10pt;
-              margin-bottom: 1mm;
-              text-align: center;
-              padding: 0.5mm; 
-            }
-            .pdf-document-image-wrapper { 
-              margin-top: 1mm;
-              width: 100%; 
-              padding: 1mm; 
+              height: 35mm; /* Defined height for consistency */
               display: flex; 
               align-items: center; 
               justify-content: center; 
               box-sizing: border-box;
+              border: 1px dashed #ccc; /* Optional: visual guide for image area */
             }
+             .pdf-document-image-wrapper img, .pdf-signature-box img {
+                max-height: 100%;
+                max-width: 100%;
+                object-fit: contain;
+             }
+            
+            .pdf-social-contract-section {
+                margin-top: 4mm;
+            }
+            .pdf-social-contract-section .pdf-document-image-wrapper {
+                height: 40mm; /* Slightly more height for social contract if needed */
+            }
+            
             .pdf-document-placeholder {
-                font-size: 9pt; color: #777; text-align: center; padding: 10mm 0;
+                font-size: 8pt; color: #777; text-align: center; padding: 10mm 0;
             }
 
             .pdf-final-disclaimer { 
-              font-size: 8pt; 
+              font-size: 7.5pt; /* Reduced */
               margin-top: auto; 
               padding-top: 2mm; 
               text-align: left;
+              /* border-top: 1px solid #eee;  Removed as per last request */
             }
           `}
         </style>
@@ -529,53 +531,39 @@ export function AuthorizationForm() {
           <div className="pdf-data-section">
             <div className="pdf-data-section-title">DADOS DO COMPRADOR</div>
             <div className="pdf-data-content">
-              <span className="pdf-field-label" style={{gridColumn: '1 / -1', fontWeight:'bold'}}>Nome/Razão Social:</span>
-              <span className="pdf-field-value" style={{gridColumn: '1 / -1', borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>{form.getValues('buyerName') || ' '}</span>
+              <span className="full-width-label" style={{gridColumn: '1 / -1', fontWeight:'bold'}}>Nome/Razão Social:</span>
+              <span className="pdf-field-value full-width-value" style={{gridColumn: '1 / -1'}}>{form.getValues('buyerName') || ' '}</span>
               
               {form.getValues('buyerType') === 'individual' ? (
                 <>
                   <span className="pdf-field-label">RG:</span>
                   <div className="pdf-field-group">
-                     <span className="pdf-field-value" style={{ borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>{form.getValues('buyerRG') || ' '}</span>
+                     <span className="pdf-field-value">{form.getValues('buyerRG') || ' '}</span>
                      <span className="pdf-field-label">CPF:</span>
-                     <span className="pdf-field-value" style={{ borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>{form.getValues('buyerCPF') || ' '}</span>
+                     <span className="pdf-field-value">{form.getValues('buyerCPF') || ' '}</span>
                   </div>
                 </>
               ) : (
                 <>
                   <span className="pdf-field-label">CNPJ:</span>
-                  <span className="pdf-field-value" style={{ borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>{form.getValues('buyerCNPJ') || ' '}</span>
+                  <span className="pdf-field-value">{form.getValues('buyerCNPJ') || ' '}</span>
                 </>
               )}
-              
-              <span className="pdf-field-label" style={{gridColumn: '1 / -1', fontWeight:'bold'}}>Endereço:</span>
-              <span className="pdf-field-value" style={{gridColumn: '1 / -1', borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>
-                {`${form.getValues('buyerStreet') || ''}${form.getValues('buyerNumber') ? `, ${form.getValues('buyerNumber')}` : ''}${form.getValues('buyerComplement') ? `, ${form.getValues('buyerComplement')}` : ''}`}
-              </span>
-              <span className="pdf-field-label" style={{gridColumn: '1 / -1', fontWeight:'bold'}}>Bairro:</span>
-              <span className="pdf-field-value" style={{gridColumn: '1 / -1', borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>
-                 {form.getValues('buyerNeighborhood') || ' '}
-              </span>
-              <span className="pdf-field-label">Município:</span>
-              <div className="pdf-field-group">
-                <span className="pdf-field-value" style={{ borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>{form.getValues('buyerCity') || ' '}</span>
-                <span className="pdf-field-label">UF:</span>
-                <span className="pdf-field-value" style={{ borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>{form.getValues('buyerState') || ' '}</span>
-              </div>
+              {/* Address fields removed from PDF */}
             </div>
           </div>
 
           <div className="pdf-data-section">
             <div className="pdf-data-section-title">DADOS DA PESSOA AUTORIZADA A RETIRAR</div>
             <div className="pdf-data-content">
-              <span className="pdf-field-label" style={{gridColumn: '1 / -1', fontWeight:'bold'}}>Nome:</span>
-              <span className="pdf-field-value" style={{gridColumn: '1 / -1', borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>{form.getValues('representativeName') || ' '}</span>
+              <span className="full-width-label" style={{gridColumn: '1 / -1', fontWeight:'bold'}}>Nome:</span>
+              <span className="pdf-field-value full-width-value" style={{gridColumn: '1 / -1'}}>{form.getValues('representativeName') || ' '}</span>
               
               <span className="pdf-field-label">RG:</span>
               <div className="pdf-field-group">
-                <span className="pdf-field-value" style={{ borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>{form.getValues('representativeRG') || ' '}</span>
+                <span className="pdf-field-value">{form.getValues('representativeRG') || ' '}</span>
                 <span className="pdf-field-label">CPF:</span>
-                <span className="pdf-field-value" style={{ borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>{form.getValues('representativeCPF') || ' '}</span>
+                <span className="pdf-field-value">{form.getValues('representativeCPF') || ' '}</span>
               </div>
             </div>
           </div>
@@ -616,43 +604,42 @@ export function AuthorizationForm() {
             </table>
           </div>
           
-          <div className="pdf-field-label" style={{fontWeight: 'bold', fontSize: '10pt'}}>Data prevista para retirada:</div>
-          <div className="pdf-field-value" style={{marginBottom: '4mm', borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>
+          <div className="pdf-field-label" style={{fontWeight: 'bold', fontSize: '9pt'}}>Data prevista para retirada:</div>
+          <div className="pdf-field-value" style={{marginBottom: '4mm'}}>
             {form.getValues('pickupDate') ? format(form.getValues('pickupDate'), 'dd / MM / yyyy', { locale: ptBR }) : '_____ / _____ / _____'}
           </div>
             
-          <div className="pdf-signature-section">
-            <div className="pdf-signature-label">Assinatura do comprador:</div>
-            <div className="pdf-signature-box">
-              {signaturePreview ? (
-                <img src={signaturePreview} alt="Assinatura do Comprador" style={{maxHeight: '20mm', display: 'block', margin: '0 auto', objectFit: 'contain'}} />
-              ) : <span className="pdf-document-placeholder">(Assinatura não fornecida)</span>}
+          <div className="pdf-signature-and-id-section">
+             <div className="pdf-document-item-inline">
+                <div className="pdf-document-title">DOCUMENTO DE IDENTIDADE DO COMPRADOR</div>
+                <div className="pdf-document-image-wrapper">
+                    {buyerIdPreview ? (
+                    <img src={buyerIdPreview} alt="Identidade do Comprador" />
+                    ) : <p className="pdf-document-placeholder">Documento não fornecido.</p>}
+                </div>
+            </div>
+            <div className="pdf-signature-item-inline">
+                <div className="pdf-signature-label">Assinatura do comprador:</div>
+                <div className="pdf-signature-box">
+                {signaturePreview ? (
+                    <img src={signaturePreview} alt="Assinatura do Comprador" />
+                ) : <span className="pdf-document-placeholder">(Assinatura não fornecida)</span>}
+                </div>
             </div>
           </div>
           
-          <div className="pdf-documents-area">
-            <div className="pdf-document-item">
-              <div className="pdf-document-title">DOCUMENTO DE IDENTIDADE DO COMPRADOR</div>
+          {form.getValues('buyerType') === 'corporate' && (
+            <div className="pdf-social-contract-section">
+              <div className="pdf-document-title">CONTRATO SOCIAL / ESTATUTO SOCIAL</div>
               <div className="pdf-document-image-wrapper">
-                {buyerIdPreview ? (
-                  <img src={buyerIdPreview} alt="Identidade do Comprador" style={{maxHeight: '40mm', maxWidth: '100%', display: 'block', margin: '0 auto', objectFit: 'contain'}} />
+                {socialContractPreview ? (
+                    socialContractPreview.startsWith('data:image') ? 
+                    <img src={socialContractPreview} alt="Contrato Social" /> :
+                    <p className="pdf-document-placeholder">Contrato Social (PDF) - Preview não disponível para PDF neste template.</p>
                 ) : <p className="pdf-document-placeholder">Documento não fornecido.</p>}
               </div>
             </div>
-
-            {form.getValues('buyerType') === 'corporate' && (
-              <div className="pdf-document-item" style={{marginTop: '4mm'}}>
-                <div className="pdf-document-title">CONTRATO SOCIAL / ESTATUTO SOCIAL</div>
-                <div className="pdf-document-image-wrapper">
-                  {socialContractPreview ? (
-                     socialContractPreview.startsWith('data:image') ? 
-                     <img src={socialContractPreview} alt="Contrato Social" style={{maxHeight: '40mm', maxWidth: '100%', display: 'block', margin: '0 auto', objectFit: 'contain'}} /> :
-                     <p className="pdf-document-placeholder">Contrato Social (PDF) - Preview não disponível para PDF neste template.</p>
-                  ) : <p className="pdf-document-placeholder">Documento não fornecido.</p>}
-                </div>
-              </div>
-            )}
-          </div>
+          )}
           
           <div className="pdf-final-disclaimer">
             (*) Os documentos mencionados e obrigatórios para entrega do(s) produto(s), não serão retidos em loja, após a conferência, serão devolvidos ao terceiro autorizado.
@@ -752,4 +739,3 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 );
 
 export default AuthorizationForm;
-

@@ -21,27 +21,38 @@ const capitalizeWords = (str: string | undefined) => {
     .join(' ');
 };
 
-const formatCPF = (cpf: string | undefined) => {
+const formatCPF = (cpf: string | undefined): string | undefined => {
   if (!cpf) return undefined;
   const cleaned = cpf.replace(/\D/g, '');
   if (cleaned.length !== 11) return cpf; // Return original if not 11 digits
   return cleaned.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
 };
 
-const formatRG = (rg: string | undefined) => {
+const formatRG = (rg: string | undefined): string | undefined => {
   if (!rg) return undefined;
   const cleaned = rg.replace(/\D/g, '');
-  // Basic RG format, can be adjusted for more specific state formats
-  if (cleaned.length === 9) { // Common format like XX.XXX.XXX-Y (SP)
+   if (cleaned.length === 9) { // Common format like XX.XXX.XXX-Y (SP) or XX.XXX.XXX.Y
     return cleaned.replace(/^(\d{2})(\d{3})(\d{3})([0-9A-Za-z])$/, '$1.$2.$3-$4');
   }
-  if (cleaned.length === 8) { // Another common format XX.XXX.XXX
-     return cleaned.replace(/^(\d{2})(\d{3})(\d{3})$/, '$1.$2.$3');
+  if (cleaned.length === 8 && !isNaN(Number(cleaned.charAt(cleaned.length -1))) ) { // XX.XXX.XX-Y
+     return cleaned.replace(/^(\d{2})(\d{3})(\d{2})([0-9A-Za-z])$/, '$1.$2.$3-$4');
   }
-   if (cleaned.length === 7 && !isNaN(Number(cleaned.charAt(cleaned.length -1)))) { // MG: X.XXX.XXX
-    return cleaned.replace(/^(\d{1})(\d{3})(\d{3})$/, '$1.$2.$3');
+   if (cleaned.length === 7 && !isNaN(Number(cleaned.charAt(cleaned.length -1)))) { // MG: X.XXX.XXX or other 7-digit RGs
+    return cleaned.replace(/^(\d{1})(\d{3})(\d{2})([0-9A-Za-z])$/, '$1.$2.$3-$4'); // A bit generic for 7 digits
   }
-  return rg; // Return original if no specific format matches
+  // Fallback for RGs that don't fit typical formatting, or very short ones
+  if (cleaned.length > 4) { // Attempt a generic split if long enough
+    const firstPart = cleaned.slice(0, cleaned.length - 1);
+    const lastChar = cleaned.slice(-1);
+    if (firstPart.length > 3) {
+        const p1 = firstPart.slice(0,2);
+        const p2 = firstPart.slice(2,5);
+        const p3 = firstPart.slice(5);
+        return `${p1}.${p2}.${p3}-${lastChar}`;
+    }
+    return `${firstPart}-${lastChar}`;
+  }
+  return rg; // Return original if no specific format matches or too short
 };
 
 
@@ -63,13 +74,6 @@ export const authorizationSchema = z.object({
   buyerCPF: z.string().optional().transform(val => val ? formatCPF(val.trim()) : undefined),
   buyerCNPJ: z.string().optional().transform(val => val ? val.trim() : undefined),
   
-  buyerStreet: z.string().min(1, "Rua é obrigatória.").transform(val => val.trim()),
-  buyerNumber: z.string().min(1, "Número é obrigatório.").transform(val => val.trim()),
-  buyerComplement: z.string().optional().transform(val => val ? val.trim() : undefined),
-  buyerNeighborhood: z.string().min(1, "Bairro é obrigatório.").transform(val => val.trim()),
-  buyerCity: z.string().min(1, "Município é obrigatório.").transform(val => val.trim()),
-  buyerState: z.string().min(2, "UF é obrigatória e deve ter 2 caracteres.").max(2, "UF deve ter 2 caracteres.").transform(val => val.trim().toUpperCase()),
-
   representativeName: z.string().min(1, "Nome do representante é obrigatório.").transform(val => capitalizeWords(val.trim())),
   representativeRG: z.string().min(1, "RG do representante é obrigatório.").transform(val => formatRG(val.trim())),
   representativeCPF: z.string().min(1, "CPF do representante é obrigatório.").transform(val => formatCPF(val.trim())),
@@ -139,4 +143,3 @@ export const authorizationSchema = z.object({
 export type AuthorizationFormData = z.infer<typeof authorizationSchema>;
 
 export const storeOptionsList = storeOptions.map(store => ({ value: store, label: store }));
-
