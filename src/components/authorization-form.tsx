@@ -348,7 +348,7 @@ export function AuthorizationForm() {
           </form>
         </CardContent>
       </Card>
-
+      
       {/* PDF Template - Hidden from view, used for PDF generation */}
       <div ref={pdfTemplateRef} className="hidden" style={{ width: '210mm', height: '297mm', boxSizing: 'border-box', backgroundColor: 'white', color: 'black', fontFamily: 'Arial, sans-serif' }}>
         <style>
@@ -357,190 +357,248 @@ export function AuthorizationForm() {
               size: A4;
               margin: 0; 
             }
-            body { /* Applied to the body of the iframe html2canvas creates */
+            body {
               margin: 0; 
-              color: black; /* Ensure text is black */
-              font-family: Arial, sans-serif; /* Consistent font */
+              color: black;
+              font-family: Arial, sans-serif;
             }
             .pdf-page-container {
               width: 100%; 
               height: 100%; 
-              padding: 7mm; 
+              padding: 10mm; 
               box-sizing: border-box;
-              font-size: 8pt; 
-              line-height: 1.2; 
+              font-size: 10pt;
+              line-height: 1.4;
               display: flex;
               flex-direction: column;
-              color: black; 
             }
-            .pdf-header { text-align: center; margin-bottom: 4mm; }
-            .pdf-logo { max-width: 80px; max-height: 28px; margin: 0 auto 3mm auto; display:block; }
+            .pdf-header { 
+              text-align: center; 
+              margin-bottom: 8mm; 
+            }
+            .pdf-logo { 
+              max-width: 80px; 
+              margin: 0 auto 4mm auto;
+              display: block; /* Ensure logo is block for auto margins */
+            }
             .pdf-main-title { 
-              font-size: 10pt; 
+              font-size: 12pt; 
               font-weight: bold; 
-              margin-bottom: 4mm; 
-              text-transform: uppercase; 
-              border-bottom: 1px solid black; 
-              padding-bottom: 1.5mm; 
+              margin-bottom: 6mm;
+              text-transform: uppercase;
               text-align: center;
             }
 
-            .pdf-data-section { margin-bottom: 3mm; }
-            .pdf-data-section-title { 
-              font-size: 9pt; 
-              font-weight: bold; 
-              margin-bottom: 1mm; 
-              background-color: #e0e0e0; 
-              padding: 0.8mm 1.2mm; 
-              border: 0.5px solid black; 
-              display: inline-block;
-              width: auto;
+            .pdf-data-section { 
+              margin-bottom: 6mm; 
+            }
+            .pdf-data-section-title {
+              font-size: 11pt;
+              font-weight: bold;
+              margin-bottom: 3mm;
+              padding-bottom: 1mm;
+              border-bottom: 1px solid #eee; 
             }
             .pdf-data-content {
-              /* border removed as per request */
-              /* padding removed as per request */
               display: grid;
-              gap: 0.8mm 2mm; /* Row gap, Column gap */
-              margin-top: 1mm; /* Add some space below the title bar */
+              grid-template-columns: max-content 1fr; /* Label take content width, value takes rest */
+              gap: 1.5mm 4mm; /* Adjusted gap */
             }
-            
-            .pdf-data-content.buyer-info, .pdf-data-content.rep-info {
-              grid-template-columns: auto 1fr auto 1fr; 
+             .pdf-data-content.buyer-address-grid {
+              grid-template-columns: max-content 1fr max-content 1fr; /* For buyer address to have two columns of fields */
+              gap: 1.5mm 3mm;
             }
-            .pdf-data-content .pdf-field-label {
-              font-weight: normal; 
+            .pdf-field-label {
+              font-weight: 600; /* Using numeric weight for Arial */
               white-space: nowrap;
-              padding-right: 1mm;
-              align-self: baseline;
+              padding-right: 1mm; /* Ensure some space between label and value if grid doesn't provide enough */
             }
-            .pdf-data-content .pdf-field-value {
-              border-bottom: 0.4px solid #333;
+            .pdf-field-value {
               word-break: break-word;
-              min-height: 7pt; 
-              padding: 0 0.5mm 0.2mm 0.5mm; 
-              align-self: baseline;
+              border-bottom: 0.4px solid #333; /* Underline for values */
+              padding-bottom: 0.2mm;
+              min-height: 1.2em; /* Ensure line height for empty values */
             }
-            .pdf-data-content .full-width-label {
-                grid-column: 1 / 2;
+            .pdf-field-group-title { /* For 'Endereço:' title */
+              grid-column: 1 / -1;
+              font-weight: 600;
+              margin-top: 2mm;
+              margin-bottom: 1mm;
             }
-            .pdf-data-content .full-width-value {
-                grid-column: 2 / -1; 
-            }
-             .pdf-data-content .address-value { 
-                grid-column: 2 / -1;
+            .pdf-field-address-value {
+               grid-column: 1 / -1; /* Address value takes full width under its specific title */
+               border-bottom: 0.4px solid #333;
+               padding-bottom: 0.2mm;
+               min-height: 1.2em;
             }
 
 
-            .pdf-text-block { margin: 3mm 0; font-size: 8pt; text-align: justify; }
-            .pdf-text-block p { margin-bottom: 1.2mm; }
-            .pdf-text-block strong { font-weight: bold; }
-            .pdf-text-block ul { list-style-type: disc; padding-left: 4mm; margin-bottom: 1.2mm; }
-            .pdf-text-block li { margin-bottom: 0.4mm; }
-
-            .pdf-order-table { width: 100%; border-collapse: collapse; margin-bottom: 3mm; font-size: 7.5pt; }
-            .pdf-order-table th, .pdf-order-table td { border: 0.5px solid black; padding: 0.8mm; text-align: left; vertical-align: middle; }
-            .pdf-order-table th { font-weight: bold; background-color: #e0e0e0; }
-
-            .pdf-footer-info { margin-top: 3mm; font-size: 8pt; margin-bottom: 3mm; }
-            
-            .pdf-signature-section { margin-top: 3mm; }
-            .pdf-signature-label { display: block; font-size: 8pt; margin-bottom: 0.5mm; }
-            .pdf-signature-box { 
-              width: 100%; 
-              height: 20mm; 
-              border: 0.5px solid #ccc; 
-              display: flex; 
-              align-items: center; 
-              justify-content: center; 
-              background-color: #f9f9f9;
-              margin-bottom: 2mm;
+            .pdf-text-block { 
+              margin: 6mm 0; 
+              font-size: 10pt; 
+              text-align: justify;
             }
-            .pdf-signature-box img { max-width: 95%; max-height: 18mm; object-fit: contain; }
-            .pdf-signature-placeholder { color: #888; font-size: 7pt; }
-            
-            .pdf-documents-area { margin-top: 3mm; display: grid; grid-template-columns: 1fr; gap: 2mm; }
-            .pdf-document-item { page-break-inside: avoid; }
-            .pdf-document-title-box { 
-              font-size: 8pt; 
+            .pdf-text-block p { 
+              margin-bottom: 3mm; 
+            }
+            .pdf-text-block strong { 
               font-weight: bold; 
-              margin-bottom: 0.8mm; 
-              text-align: center; 
-              background-color: #e0e0e0; 
-              padding: 0.5mm; 
-              border: 0.5px solid black;
+            }
+            .pdf-text-block ul { 
+              list-style-type: disc; 
+              padding-left: 6mm; 
+              margin-bottom: 3mm; 
+            }
+            .pdf-text-block li {
+              margin-bottom: 0.8mm;
+            }
+
+            .pdf-order-table { 
+              width: 100%; 
+              border-collapse: collapse; 
+              margin-bottom: 6mm; 
+              font-size: 9.5pt;
+            }
+            .pdf-order-table th { 
+              font-weight: bold; 
+              text-align: left;
+              padding: 1.5mm 2mm 1.5mm 0; /* More padding for headers */
+              border-bottom: 1px solid #ccc;
+            }
+            .pdf-order-table td { 
+              padding: 1.5mm 2mm 1.5mm 0; 
+              border-bottom: 1px dotted #eee; /* Lighter dotted line for rows */
+            }
+            .pdf-order-table tr:last-child td {
+                border-bottom: none; /* No border for the last row */
+            }
+
+
+            .pdf-signature-section { 
+              margin-top: 8mm;
+              margin-bottom: 4mm;
+            }
+            .pdf-signature-label { 
+              font-weight: bold;
+              font-size: 10pt;
+              margin-bottom: 1mm;
+            }
+            .pdf-signature-box { 
+              width: 100%;
+              height: 30mm; 
+              border: 0.5px solid #ccc; 
+              margin-top: 2mm;
+              background-color: #f9f9f9;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .pdf-signature-box img {
+              max-width: 90%;
+              max-height: 28mm;
+              object-fit: contain;
+            }
+            
+            .pdf-documents-area { 
+              margin-top: 6mm;
+            }
+            .pdf-document-item {
+                page-break-inside: avoid;
+                margin-bottom: 4mm;
+            }
+            .pdf-document-title { 
+              font-weight: bold;
+              font-size: 10pt;
+              margin-bottom: 1mm;
+              text-align: center;
+              padding: 1mm;
+              background-color: #f0f0f0;
+              border: 0.5px solid #ccc;
             }
             .pdf-document-image-wrapper { 
-              border: 0.5px solid black; 
-              padding: 1.5mm; 
-              background-color: #f9f9f9; 
-              min-height: 60mm; 
-              max-height: 75mm; 
-              display: flex; 
-              justify-content: center; 
-              align-items: center; 
+              margin-top: 1mm;
+              min-height: 65mm; /* Increased height */
+              max-height: 80mm; /* Increased height */
+              border: 0.5px solid #ccc;
+              background-color: #f9f9f9;
+              padding: 2mm;
+              display: flex;
+              align-items: center;
+              justify-content: center;
             }
-            .pdf-document-image-wrapper img { 
-              max-width: 100%; 
-              max-height: 72mm; 
-              object-fit: contain; 
+            .pdf-document-image-wrapper img {
+              max-width: 100%;
+              max-height: calc(100% - 4mm); /* Max height within padding */
+              object-fit: contain;
             }
-            .pdf-document-placeholder { font-size: 7pt; color: #666; text-align: center; }
-            
-            .pdf-final-disclaimer { font-size: 7pt; text-align: left; margin-top: auto; padding-top: 2mm; }
+            .pdf-document-placeholder {
+                font-size: 9pt; color: #777; text-align: center;
+            }
+
+            .pdf-final-disclaimer { 
+              font-size: 8pt; 
+              margin-top: auto; /* Pushes to bottom if container is flex */
+              padding-top: 4mm;
+              border-top: 1px solid #eee;
+              text-align: left;
+            }
           `}
         </style>
         <div className="pdf-page-container">
           <div className="pdf-header">
-            <img src="https://placehold.co/80x28.png" alt="RIHAPPY Logo" className="pdf-logo" data-ai-hint="brand logo" />
+            <img src="https://placehold.co/80x28.png" alt="Logo" className="pdf-logo" data-ai-hint="brand logo" />
             <div className="pdf-main-title">TERMO DE AUTORIZAÇÃO PARA RETIRADA POR TERCEIROS</div>
           </div>
 
-          {/* DADOS DO COMPRADOR */}
           <div className="pdf-data-section">
             <div className="pdf-data-section-title">DADOS DO COMPRADOR</div>
-            <div className="pdf-data-content buyer-info">
-              <span className="pdf-field-label full-width-label">Nome/Razão Social:</span>
-              <span className="pdf-field-value full-width-value">{form.getValues('buyerName') || ' '}</span>
+            <div className="pdf-data-content">
+              <span className="pdf-field-label">Nome/Razão Social:</span>
+              <span className="pdf-field-value" style={{ gridColumn: '2 / -1' }}>{form.getValues('buyerName') || ' '}</span>
               
               {form.getValues('buyerType') === 'individual' ? (
                 <>
                   <span className="pdf-field-label">RG:</span>
                   <span className="pdf-field-value">{form.getValues('buyerRG') || ' '}</span>
-                  <span className="pdf-field-label">CPF:</span>
-                  <span className="pdf-field-value">{form.getValues('buyerCPF') || ' '}</span>
+                  <span className="pdf-field-label" style={{gridRow: form.getValues('buyerType') === 'individual' ? 2 : 'auto' , gridColumn: form.getValues('buyerType') === 'individual' ? 3 : 'auto' }}>CPF:</span>
+                  <span className="pdf-field-value" style={{gridRow: form.getValues('buyerType') === 'individual' ? 2 : 'auto' , gridColumn: form.getValues('buyerType') === 'individual' ? 4 : 'auto' }}>{form.getValues('buyerCPF') || ' '}</span>
                 </>
               ) : (
                 <>
-                  <span className="pdf-field-label" style={{gridColumn: '1 / 2'}}>CNPJ:</span>
-                  <span className="pdf-field-value" style={{gridColumn: '2 / -1'}}>{form.getValues('buyerCNPJ') || ' '}</span>
-                  <span className="pdf-field-label" style={{gridColumn: '1 / 2', visibility:'hidden'}}>&nbsp;</span> {/* Placeholder for grid structure */}
-                  <span className="pdf-field-value" style={{gridColumn: '2 / -1', visibility:'hidden'}}>&nbsp;</span>
+                  <span className="pdf-field-label">CNPJ:</span>
+                  <span className="pdf-field-value" style={{ gridColumn: '2 / -1' }}>{form.getValues('buyerCNPJ') || ' '}</span>
                 </>
               )}
+            </div>
+            <div className="pdf-data-content buyer-address-grid" style={{ marginTop: '2mm' }}>
+              <span className="pdf-field-group-title" style={{ gridColumn: '1 / -1', marginBottom:'1mm' }}>Endereço:</span>
+              <span className="pdf-field-label">Rua:</span>
+              <span className="pdf-field-value" style={{ gridColumn: '2 / -1' }}>{form.getValues('buyerStreet') || ' '}</span>
               
-              <span className="pdf-field-label full-width-label">Endereço:</span>
-              <span className="pdf-field-value address-value">
-                {`${form.getValues('buyerStreet') || ''}, ${form.getValues('buyerNumber') || ''}${form.getValues('buyerComplement') ? `, ${form.getValues('buyerComplement')}` : ''} - ${form.getValues('buyerNeighborhood') || ''}`}
-              </span>
+              <span className="pdf-field-label">Número:</span>
+              <span className="pdf-field-value">{form.getValues('buyerNumber') || ' '}</span>
+              <span className="pdf-field-label">Complemento:</span>
+              <span className="pdf-field-value">{form.getValues('buyerComplement') || ' '}</span>
               
+              <span className="pdf-field-label">Bairro:</span>
+              <span className="pdf-field-value">{form.getValues('buyerNeighborhood') || ' '}</span>
               <span className="pdf-field-label">Município:</span>
               <span className="pdf-field-value">{form.getValues('buyerCity') || ' '}</span>
-              <span className="pdf-field-label">UF:</span>
-              <span className="pdf-field-value">{form.getValues('buyerState') || ' '}</span>
+
+              <span className="pdf-field-label" style={{gridRow: 5, gridColumn: 3}}>UF:</span>
+              <span className="pdf-field-value" style={{gridRow: 5, gridColumn: 4}}>{form.getValues('buyerState') || ' '}</span>
             </div>
           </div>
 
-          {/* DADOS DA PESSOA AUTORIZADA A RETIRAR */}
           <div className="pdf-data-section">
             <div className="pdf-data-section-title">DADOS DA PESSOA AUTORIZADA A RETIRAR</div>
-            <div className="pdf-data-content rep-info">
-              <span className="pdf-field-label full-width-label">Nome/Razão Social:</span>
-              <span className="pdf-field-value full-width-value">{form.getValues('representativeName') || ' '}</span>
-              
+            <div className="pdf-data-content">
+              <span className="pdf-field-label">Nome:</span>
+              <span className="pdf-field-value" style={{ gridColumn: '2 / -1' }}>{form.getValues('representativeName') || ' '}</span>
               <span className="pdf-field-label">RG:</span>
               <span className="pdf-field-value">{form.getValues('representativeRG') || ' '}</span>
-              <span className="pdf-field-label">CPF:</span>
-              <span className="pdf-field-value">{form.getValues('representativeCPF') || ' '}</span>
+              <span className="pdf-field-label" style={{gridRow: 2, gridColumn: 3}}>CPF:</span>
+              <span className="pdf-field-value" style={{gridRow: 2, gridColumn: 4}}>{form.getValues('representativeCPF') || ' '}</span>
             </div>
           </div>
           
@@ -558,56 +616,63 @@ export function AuthorizationForm() {
             <p><strong>⚠️ A retirada deve ser feita dentro do horário de funcionamento da loja escolhida.</strong></p>
           </div>
 
-          {/* DETALHES DO PEDIDO */}
           <div className="pdf-data-section">
-             <div className="pdf-data-section-title">DETALHES DO PEDIDO</div>
+            <div className="pdf-data-section-title">DETALHES DO PEDIDO</div>
             <table className="pdf-order-table">
-                <thead>
+              <thead>
                 <tr>
-                    <th>Data da Compra</th>
-                    <th>Valor da Compra</th>
-                    <th>Nº do Pedido</th>
-                    <th>Loja para Retirada</th>
+                  <th>Data da Compra</th>
+                  <th>Valor da Compra</th>
+                  <th>Nº do Pedido</th>
+                  <th>Loja para Retirada</th>
                 </tr>
-                </thead>
-                <tbody>
+              </thead>
+              <tbody>
                 <tr>
-                    <td>{form.getValues('purchaseDate') ? format(form.getValues('purchaseDate')!, 'dd/MM/yyyy', { locale: ptBR }) : ' '}</td>
-                    <td>R$ {form.getValues('purchaseValue') || ' '}</td>
-                    <td>{form.getValues('orderNumber') || ' '}</td>
-                    <td>{storeOptionsList.find(s => s.value === form.getValues('pickupStore'))?.label || form.getValues('pickupStore') || ' '}</td>
+                  <td>{form.getValues('purchaseDate') ? format(form.getValues('purchaseDate'), 'dd/MM/yyyy', { locale: ptBR }) : ' '}</td>
+                  <td>R$ {form.getValues('purchaseValue') || ' '}</td>
+                  <td>{form.getValues('orderNumber') || ' '}</td>
+                  <td>{storeOptionsList.find(s => s.value === form.getValues('pickupStore'))?.label || form.getValues('pickupStore') || ' '}</td>
                 </tr>
-                </tbody>
+              </tbody>
             </table>
           </div>
           
-          <div className="pdf-footer-info">Data da retirada: {form.getValues('pickupDate') ? format(form.getValues('pickupDate')!, 'dd / MM / yyyy', { locale: ptBR }) : '_____ / _____ / _____'}</div>
+          <div className="pdf-field-label" style={{fontWeight: 'bold', fontSize: '10pt'}}>Data prevista para retirada:</div>
+          <div className="pdf-field-value" style={{marginBottom: '6mm', borderBottom:'0.4px solid #333', paddingBottom:'0.2mm'}}>
+            {form.getValues('pickupDate') ? format(form.getValues('pickupDate'), 'dd / MM / yyyy', { locale: ptBR }) : '_____ / _____ / _____'}
+          </div>
             
           <div className="pdf-signature-section">
-            <span className="pdf-signature-label">Assinatura do comprador:</span>
+            <div className="pdf-signature-label">Assinatura do comprador:</div>
             <div className="pdf-signature-box">
-              {signaturePreview ? <img src={signaturePreview} alt="Assinatura do Comprador" /> : <span className="pdf-signature-placeholder"></span>}
+              {signaturePreview ? (
+                <img src={signaturePreview} alt="Assinatura do Comprador" style={{maxHeight: '28mm', maxWidth: '90%', objectFit: 'contain'}} />
+              ) : <span className="pdf-document-placeholder">(Assinatura não fornecida)</span>}
             </div>
           </div>
           
           <div className="pdf-documents-area">
             <div className="pdf-document-item">
-                <div className="pdf-document-title-box">DOCUMENTO DE IDENTIDADE DO COMPRADOR</div>
-                <div className="pdf-document-image-wrapper">
-                {buyerIdPreview ? <img src={buyerIdPreview} alt="Identidade do Comprador" /> : <p className="pdf-document-placeholder">Documento não fornecido.</p>}
-                </div>
+              <div className="pdf-document-title">DOCUMENTO DE IDENTIDADE DO COMPRADOR</div>
+              <div className="pdf-document-image-wrapper">
+                {buyerIdPreview ? (
+                  <img src={buyerIdPreview} alt="Identidade do Comprador" />
+                ) : <p className="pdf-document-placeholder">Documento não fornecido.</p>}
+              </div>
             </div>
 
-            {form.getValues('buyerType') === 'corporate' && socialContractPreview && (
-                <div className="pdf-document-item">
-                  <div className="pdf-document-title-box">CONTRATO SOCIAL / ESTATUTO SOCIAL</div>
-                  <div className="pdf-document-image-wrapper">
-                      {socialContractPreview.startsWith('data:image') ? 
-                      <img src={socialContractPreview} alt="Contrato Social" /> : 
-                      <p className="pdf-document-placeholder">Contrato Social (PDF) - Preview não disponível.</p>
-                      }
-                  </div>
+            {form.getValues('buyerType') === 'corporate' && (
+              <div className="pdf-document-item" style={{marginTop: '6mm'}}>
+                <div className="pdf-document-title">CONTRATO SOCIAL / ESTATUTO SOCIAL</div>
+                <div className="pdf-document-image-wrapper">
+                  {socialContractPreview ? (
+                     socialContractPreview.startsWith('data:image') ? 
+                     <img src={socialContractPreview} alt="Contrato Social" /> :
+                     <p className="pdf-document-placeholder">Contrato Social (PDF) - Preview não disponível para PDF neste template.</p>
+                  ) : <p className="pdf-document-placeholder">Documento não fornecido.</p>}
                 </div>
+              </div>
             )}
           </div>
           
