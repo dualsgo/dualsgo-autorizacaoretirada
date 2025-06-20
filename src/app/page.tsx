@@ -5,24 +5,25 @@ import Image from 'next/image';
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-background flex flex-col items-center justify-center py-8 px-4 selection:bg-accent/50 selection:text-accent-foreground">
-      <header className="mb-8 text-center">
+      <header className="mb-6 text-center">
         <Image 
           src="https://rihappynovo.vtexassets.com/arquivos/solzinhoFooterNew.png" 
           alt="Logo da Empresa" 
-          width={200} 
-          height={200} 
-          className="mx-auto mb-6" 
+          width={150} 
+          height={150} 
+          className="mx-auto mb-4" 
           data-ai-hint="cartoon sun character" />
         
-        <h1 className="text-4xl md:text-5xl font-headline font-bold text-foreground text-center mb-6">
+        <h1 className="text-3xl md:text-4xl font-headline font-bold text-foreground text-center mb-4">
           A DIVERSÃO CONTINUA COM VOCÊ!
         </h1>
-        <p className="text-2xl md:text-3xl font-headline text-foreground mb-2">
+        <p className="text-xl md:text-2xl font-headline text-foreground mb-2">
           Pedido prontinho para retirada!
         </p>
-
       </header>
+
       <AuthorizationForm />
+      
       <footer className="mt-12 text-center text-xs text-muted-foreground px-4">
         <p>Ri Happy é uma empresa do Grupo Ri Happy S/A, com escritório administrativo na Av. Engenheiro Luís Carlos Berrini, 105 - Cidade Monções, – São Paulo/SP, inscrita no CNPJ 58.731.662/0001-11 - atendimento@rihappy.com.br</p>
       </footer>

@@ -4,13 +4,14 @@ import { z } from "zod";
 const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
-const ACCEPTED_DOCUMENT_TYPES = ["application/pdf", ...ACCEPTED_IMAGE_TYPES];
+const ACCEPTED_DOCUMENT_TYPES_CORPORATE = ["application/pdf", ...ACCEPTED_IMAGE_TYPES];
 
-const fileSchema = (acceptedTypes: string[], isRequired: boolean, requiredMessage: string) => z
-  .custom<File | null>((file) => file instanceof File || file === null, "Arquivo inválido.")
+const fileSchema = (acceptedTypes: string[], isRequired: boolean, requiredMessage: string) => 
+  z.custom<File | null>((file) => file === null || file instanceof File, "Arquivo inválido.")
   .refine((file) => !isRequired || file !== null, requiredMessage)
   .refine((file) => file === null || file.size <= MAX_FILE_SIZE_BYTES, `Tamanho máximo do arquivo é ${MAX_FILE_SIZE_MB}MB.`)
   .refine((file) => file === null || acceptedTypes.includes(file.type), "Formato de arquivo não suportado.");
+
 
 const capitalizeWords = (str: string | undefined) => {
   if (!str) return '';
@@ -24,7 +25,7 @@ const capitalizeWords = (str: string | undefined) => {
 const formatCPF = (cpf: string | undefined): string | undefined => {
   if (!cpf) return undefined;
   const cleaned = cpf.replace(/\D/g, '');
-  if (cleaned.length !== 11) return cpf; // Return original if not 11 digits for Zod to catch length error first if any
+  if (cleaned.length !== 11) return cpf; 
   return cleaned.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
 };
 
@@ -45,47 +46,35 @@ const isValidCPF = (cpf: string | undefined): boolean => {
   return true;
 };
 
-const formatRG = (rg: string | undefined): string | undefined => {
-  if (!rg) return undefined;
-  let cleaned = rg.replace(/\D/g, ''); 
-  if (cleaned.length === 0) return rg; // Return original if empty after clean
-
-  // Common RG patterns vary by state, this is a generic formatter
-  // Assuming max 9 digits for simplicity in formatting, can be adjusted
-  if (cleaned.length > 9) cleaned = cleaned.substring(0,9);
-
-
-  if (cleaned.length === 9) { // e.g., XX.XXX.XXX-Y (São Paulo)
-    return cleaned.replace(/^(\d{2})(\d{3})(\d{3})([\dX])$/, '$1.$2.$3-$4');
-  }
-  if (cleaned.length === 8) { // e.g., X.XXX.XXX-Y or XX.XXX.XXX (depending on state)
-     return cleaned.replace(/^(\d{1,2})(\d{3})(\d{3})([\dX])$/, '$1.$2.$3-$4'); // More flexible for 8-digit
-  }
-   // For RGs with fewer digits, just return cleaned or a partial format
-  if (cleaned.length >= 7) {
-    return cleaned.replace(/^(\d{1,2})(\d{3})(\d{3})$/, '$1.$2.$3');
-  }
-  return cleaned; 
-};
+const rgCnhValidationRegex = /^[a-zA-Z0-9]+$/; 
+const rgLengthMessage = "RG deve ter entre 6 e 9 caracteres alfanuméricos.";
+const cnhLengthMessage = "CNH deve ter 11 dígitos numéricos.";
 
 
 const formatPhoneNumber = (phone: string | undefined): string | undefined => {
     if (!phone) return undefined;
     const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.length === 11) { // DDD + 9 digits (mobile)
+    if (cleaned.length === 11) { 
         return cleaned.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
     }
-    if (cleaned.length === 10) { // DDD + 8 digits (landline)
+    if (cleaned.length === 10) { 
         return cleaned.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
     }
-    return phone; // Return original if not matching expected lengths for Zod to catch
+    return phone; 
 };
 
 const nameValidationRegex = /^[a-zA-ZÀ-ÖØ-öø-ÿĀ-žȘ-țА-яЁё\s']*$/;
-// Corrected regex: Ș-ț includes Ș (U+0218), ș (U+0219), Ț (U+021A), ț (U+021B)
 
-const rgValidationRegex = /^[0-9Xx]+$/; 
+export const documentTypeOptionsBuyer = [
+  { value: "RG", label: "RG" },
+  { value: "CNH", label: "CNH - Carteira de Motorista" },
+];
 
+export const documentTypeOptionsRepresentative = [
+  { value: "RG", label: "RG" },
+  { value: "CNH", label: "CNH - Carteira de Motorista" },
+  { value: "CPF", label: "CPF" },
+];
 
 export const authorizationSchema = z.object({
   buyerType: z.enum(["individual", "corporate"], {
@@ -96,18 +85,16 @@ export const authorizationSchema = z.object({
     .min(1, "Nome/Razão Social é obrigatório.")
     .regex(nameValidationRegex, "Nome/Razão Social contém caracteres inválidos.")
     .transform(val => capitalizeWords(val)),
-  buyerRG: z.string()
-    .trim()
-    .optional()
-    .transform(val => val ? val.replace(/[\.\-]/g, '') : undefined) 
-    .refine(val => !val || rgValidationRegex.test(val), { message: "RG contém caracteres inválidos."})
-    .refine(val => !val || (val.length >= 6 && val.length <= 9), { message: "RG deve ter entre 6 e 9 dígitos."})
-    .transform(val => val ? formatRG(val) : undefined),
-  buyerCPF: z.string()
-    .trim()
-    .optional()
-    .refine(val => !val || isValidCPF(val), "CPF inválido.")
+  
+  buyerCPF: z.string().optional() 
+    .transform(val => val ? val.replace(/\D/g, '') : undefined)
+    .refine(val => !val || isValidCPF(val), "CPF do comprador inválido.")
     .transform(val => val ? formatCPF(val) : undefined),
+
+  buyerDocumentType: z.enum(["RG", "CNH"], { errorMap: () => ({ message: "Selecione o tipo de documento do comprador (RG ou CNH)." })}).optional(),
+  buyerDocumentNumber: z.string().trim().optional()
+    .transform(val => val ? val.toUpperCase().replace(/[\.\-]/g, '') : undefined),
+  
   buyerCNPJ: z.string().trim().optional()
     .transform(val => {
         if (!val) return undefined;
@@ -115,12 +102,8 @@ export const authorizationSchema = z.object({
         if (cleaned.length === 14) {
             return cleaned.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
         }
-        return val; // Return original if not 14 digits for Zod to catch
-    }).refine(val => {
-        if (!val) return true; 
-        const cleaned = val.replace(/\D/g, '');
-        return cleaned.length === 14;
-    }, "CNPJ deve ter 14 dígitos."),
+        return val; 
+    }),
   buyerEmail: z.string()
     .trim()
     .min(1, "E-mail do comprador é obrigatório.")
@@ -138,18 +121,14 @@ export const authorizationSchema = z.object({
     .min(1, "Nome do representante é obrigatório.")
     .regex(nameValidationRegex, "Nome do representante contém caracteres inválidos.")
     .transform(val => capitalizeWords(val)),
-  representativeRG: z.string()
+
+  representativeDocumentType: z.enum(["RG", "CNH", "CPF"], {
+    required_error: "Selecione o tipo de documento da pessoa autorizada.",
+  }),
+  representativeDocumentNumber: z.string()
     .trim()
-    .min(1, "RG do representante é obrigatório.")
-    .transform(val => val.replace(/[\.\-]/g, ''))
-    .refine(val => rgValidationRegex.test(val), { message: "RG do representante contém caracteres inválidos."})
-    .refine(val => val.length >= 6 && val.length <= 9, { message: "RG do representante deve ter entre 6 e 9 caracteres."})
-    .transform(val => formatRG(val)),
-  representativeCPF: z.string()
-    .trim()
-    .min(1, "CPF do representante é obrigatório.")
-    .refine(isValidCPF, "CPF do representante inválido.")
-    .transform(formatCPF),
+    .min(1, "Número do documento da pessoa autorizada é obrigatório.")
+    .transform(val => val ? val.toUpperCase().replace(/[\.\-]/g, '') : ''),
 
   purchaseDate: z.date({ required_error: "Data da compra é obrigatória." })
     .refine(date => {
@@ -183,50 +162,71 @@ export const authorizationSchema = z.object({
     ] as const, { required_error: "Loja para retirada é obrigatória."}),
 
   pickupDate: z.date({ required_error: "Data da retirada é obrigatória." }),
-  buyerSignature: z.string({required_error: "Assinatura do comprador é obrigatória."}).min(1, "Assinatura do comprador é obrigatória."),
 
-  buyerIdDocument: fileSchema(ACCEPTED_IMAGE_TYPES, true, "Documento de identidade do comprador é obrigatório."),
-  socialContractDocument: fileSchema(ACCEPTED_DOCUMENT_TYPES, false, "Contrato social é obrigatório para Pessoa Jurídica."),
+  buyerIdDocument: fileSchema(ACCEPTED_IMAGE_TYPES, false, "Documento de identidade do comprador é obrigatório."), 
+  socialContractDocument: fileSchema(ACCEPTED_DOCUMENT_TYPES_CORPORATE, false, "Contrato social é obrigatório para Pessoa Jurídica."),
+  representativeIdDocument: fileSchema(ACCEPTED_IMAGE_TYPES, false, "Documento com foto da pessoa autorizada é obrigatório (RG ou CNH)."),
+
 }).superRefine((data, ctx) => {
+  // Buyer validation
   if (data.buyerType === "individual") {
-    if (!data.buyerRG || data.buyerRG.trim().length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "RG do comprador é obrigatório.",
-        path: ["buyerRG"],
-      });
+    if (!data.buyerCPF) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "CPF do comprador é obrigatório.", path: ["buyerCPF"] });
     }
-    if (!data.buyerCPF || data.buyerCPF.trim().length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "CPF do comprador é obrigatório.",
-        path: ["buyerCPF"],
-      });
+    if (!data.buyerDocumentType) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Selecione o tipo de documento do comprador (RG ou CNH).", path: ["buyerDocumentType"] });
+    }
+    if (!data.buyerDocumentNumber || data.buyerDocumentNumber.trim().length === 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Número do documento do comprador é obrigatório.", path: ["buyerDocumentNumber"] });
+    } else {
+        if (data.buyerDocumentType === "RG") {
+            if (!rgCnhValidationRegex.test(data.buyerDocumentNumber)) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "RG do comprador contém caracteres inválidos.", path: ["buyerDocumentNumber"] });
+            if (data.buyerDocumentNumber.length < 6 || data.buyerDocumentNumber.length > 9) ctx.addIssue({ code: z.ZodIssueCode.custom, message: rgLengthMessage, path: ["buyerDocumentNumber"] });
+        } else if (data.buyerDocumentType === "CNH") {
+            if (!/^\d{11}$/.test(data.buyerDocumentNumber)) ctx.addIssue({ code: z.ZodIssueCode.custom, message: cnhLengthMessage, path: ["buyerDocumentNumber"] });
+        }
+    }
+    if (!data.buyerIdDocument) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Anexo do documento com foto do comprador é obrigatório.", path: ["buyerIdDocument"] });
     }
   } else if (data.buyerType === "corporate") {
     if (!data.buyerCNPJ || data.buyerCNPJ.trim().length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "CNPJ do comprador é obrigatório.",
-        path: ["buyerCNPJ"],
-      });
-    }
-     const cleanedCnpj = data.buyerCNPJ ? data.buyerCNPJ.replace(/\D/g, '') : '';
-    if (cleanedCnpj.length !== 14) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "CNPJ deve ter 14 dígitos.",
-            path: ["buyerCNPJ"],
-        });
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "CNPJ do comprador é obrigatório.", path: ["buyerCNPJ"] });
+    } else {
+        const cleanedCnpj = data.buyerCNPJ.replace(/\D/g, '');
+        if (cleanedCnpj.length !== 14) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "CNPJ deve ter 14 dígitos.", path: ["buyerCNPJ"] });
+        }
     }
     if (!data.socialContractDocument) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Contrato Social / Estatuto Social é obrigatório para Pessoa Jurídica.",
-            path: ["socialContractDocument"],
-        });
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Contrato Social / Estatuto Social é obrigatório para Pessoa Jurídica.", path: ["socialContractDocument"]});
     }
   }
+
+  // Representative document number validation based on type
+  if (data.representativeDocumentType && data.representativeDocumentNumber) {
+    const num = data.representativeDocumentNumber;
+    if (data.representativeDocumentType === "RG") {
+        if (!rgCnhValidationRegex.test(num)) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "RG da pessoa autorizada contém caracteres inválidos.", path: ["representativeDocumentNumber"] });
+        if (num.length < 6 || num.length > 9) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "RG da pessoa autorizada deve ter entre 6 e 9 caracteres.", path: ["representativeDocumentNumber"] });
+    } else if (data.representativeDocumentType === "CNH") {
+        if (!/^\d{11}$/.test(num)) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "CNH da pessoa autorizada deve ter 11 dígitos.", path: ["representativeDocumentNumber"] });
+    } else if (data.representativeDocumentType === "CPF") {
+        if (!isValidCPF(num)) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "CPF da pessoa autorizada inválido.", path: ["representativeDocumentNumber"] });
+         // Re-format CPF if it was valid but unformatted from the superRefine input
+        data.representativeDocumentNumber = formatCPF(num) || num;
+    }
+  }
+  
+  // Conditional requirement for representative's ID document attachment
+  if ((data.representativeDocumentType === "RG" || data.representativeDocumentType === "CNH") && !data.representativeIdDocument) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Anexe um documento com foto válido da pessoa autorizada (RG ou CNH).",
+      path: ["representativeIdDocument"],
+    });
+  }
+
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -235,11 +235,7 @@ export const authorizationSchema = z.object({
     const purchaseD = new Date(data.purchaseDate);
     purchaseD.setHours(0,0,0,0);
     if (purchaseD > today) {
-         ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "A data da compra não pode ser no futuro.",
-            path: ["purchaseDate"],
-        });
+         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A data da compra não pode ser no futuro.", path: ["purchaseDate"] });
     }
   }
 
@@ -248,22 +244,14 @@ export const authorizationSchema = z.object({
     pickupD.setHours(0, 0, 0, 0); 
 
     if (pickupD < today) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "A data da retirada não pode ser anterior à data atual.",
-            path: ["pickupDate"],
-        });
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A data da retirada não pode ser anterior à data atual.", path: ["pickupDate"] });
     }
     
     if (data.purchaseDate) {
         const purchaseD = new Date(data.purchaseDate);
         purchaseD.setHours(0,0,0,0);
         if (pickupD < purchaseD) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "A data da retirada não pode ser anterior à data da compra.",
-                path: ["pickupDate"],
-            });
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A data da retirada não pode ser anterior à data da compra.", path: ["pickupDate"] });
         }
     }
   }
@@ -279,5 +267,3 @@ export const storeOptionsList = [
   "1239 - SHOPPING RECREIO", "1300 - ECO VILLA", "1301 - IPANEMA", "1304 - PARK JACAREPAGUÁ",
   "9014 - RIO DESIGN"
 ].map(store => ({ value: store, label: store }));
-
-    
