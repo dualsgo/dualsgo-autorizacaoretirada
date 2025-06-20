@@ -24,7 +24,7 @@ const capitalizeWords = (str: string | undefined) => {
 const formatCPF = (cpf: string | undefined): string | undefined => {
   if (!cpf) return undefined;
   const cleaned = cpf.replace(/\D/g, '');
-  if (cleaned.length !== 11) return cpf; // Return original if not 11 digits after cleaning for pre-validation display
+  if (cleaned.length !== 11) return cpf;
   return cleaned.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
 };
 
@@ -47,19 +47,22 @@ const isValidCPF = (cpf: string | undefined): boolean => {
 
 const formatRG = (rg: string | undefined): string | undefined => {
   if (!rg) return undefined;
-  const cleaned = rg.replace(/\D/g, '').toUpperCase(); // Keep X if present
-  if (!cleaned) return rg;
+  let cleaned = rg.replace(/\D/g, ''); 
+  if (cleaned.length === 0) return rg;
 
-  // Common Brazilian RG patterns (can be very state-specific)
-  // This is a generic formatter, might need adjustment for specific state rules
-  if (cleaned.length === 9) { // XX.XXX.XXX-Y
-    return cleaned.replace(/^(\d{2})(\d{3})(\d{3})([0-9A-Z])$/, '$1.$2.$3-$4');
+  if (cleaned.length > 9) cleaned = cleaned.substring(0,9);
+
+
+  if (cleaned.length === 9) { 
+    return cleaned.replace(/^(\d{2})(\d{3})(\d{3})(\d{1})$/, '$1.$2.$3-$4');
   }
-  if (cleaned.length === 8) { // X.XXX.XXX-Y or XX.XXX.XX-Y (less common but possible)
-     return cleaned.replace(/^(\d{1})(\d{3})(\d{3})([0-9A-Z])$/, '$1.$2.$3-$4');
+  if (cleaned.length === 8) { 
+     return cleaned.replace(/^(\d{1})(\d{3})(\d{3})(\d{1})$/, '$1.$2.$3-$4');
   }
-   // Fallback for other lengths, just return cleaned if no specific mask matches
-  return cleaned;
+  if (cleaned.length <= 7 && cleaned.length >=2) {
+    return cleaned.replace(/^(\d{1,2})(\d{3})(\d{3})$/, '$1.$2.$3');
+  }
+  return cleaned; 
 };
 
 
@@ -72,11 +75,12 @@ const formatPhoneNumber = (phone: string | undefined): string | undefined => {
     if (cleaned.length === 10) {
         return cleaned.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
     }
-    return phone;
+    return phone; 
 };
 
-const nameValidationRegex = /^[a-zA-ZÀ-ÖØ-öø-ÿĀ-žȘ-țȚ-șА-яЁё\s']*$/;
-const rgValidationRegex = /^[0-9Xx]+$/; // After cleaning, allow digits and X
+const nameValidationRegex = /^[a-zA-ZÀ-ÖØ-öø-ÿĀ-žȘ-țА-яЁё\s']*$/;
+
+const rgValidationRegex = /^[0-9Xx]+$/; 
 
 
 export const authorizationSchema = z.object({
@@ -91,24 +95,28 @@ export const authorizationSchema = z.object({
   buyerRG: z.string()
     .trim()
     .optional()
-    .transform(val => val ? val.replace(/\.|\-/g, '') : undefined) // Clean before further validation/formatting
+    .transform(val => val ? val.replace(/[\.\-]/g, '') : undefined) 
     .refine(val => !val || rgValidationRegex.test(val), { message: "RG contém caracteres inválidos."})
-    .refine(val => !val || (val.length >= 6 && val.length <= 15), { message: "RG deve ter entre 6 e 15 caracteres."})
+    .refine(val => !val || (val.length >= 6 && val.length <= 9), { message: "RG deve ter entre 6 e 9 dígitos."})
     .transform(val => val ? formatRG(val) : undefined),
   buyerCPF: z.string()
     .trim()
     .optional()
     .refine(val => !val || isValidCPF(val), "CPF inválido.")
     .transform(val => val ? formatCPF(val) : undefined),
-  buyerCNPJ: z.string().trim().optional() // Basic CNPJ validation could be added if needed
+  buyerCNPJ: z.string().trim().optional()
     .transform(val => {
         if (!val) return undefined;
         const cleaned = val.replace(/\D/g, '');
         if (cleaned.length === 14) {
             return cleaned.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
         }
-        return val; // Return original if not 14 digits
-    }),
+        return val; 
+    }).refine(val => {
+        if (!val) return true; 
+        const cleaned = val.replace(/\D/g, '');
+        return cleaned.length === 14;
+    }, "CNPJ deve ter 14 dígitos."),
   buyerEmail: z.string()
     .trim()
     .min(1, "E-mail do comprador é obrigatório.")
@@ -129,9 +137,9 @@ export const authorizationSchema = z.object({
   representativeRG: z.string()
     .trim()
     .min(1, "RG do representante é obrigatório.")
-    .transform(val => val.replace(/\.|\-/g, ''))
+    .transform(val => val.replace(/[\.\-]/g, ''))
     .refine(val => rgValidationRegex.test(val), { message: "RG do representante contém caracteres inválidos."})
-    .refine(val => val.length >= 6 && val.length <= 15, { message: "RG do representante deve ter entre 6 e 15 caracteres."})
+    .refine(val => val.length >= 6 && val.length <= 9, { message: "RG do representante deve ter entre 6 e 9 caracteres."})
     .transform(val => formatRG(val)),
   representativeCPF: z.string()
     .trim()
@@ -142,13 +150,15 @@ export const authorizationSchema = z.object({
   purchaseDate: z.date({ required_error: "Data da compra é obrigatória." })
     .refine(date => {
         const today = new Date();
-        today.setHours(0,0,0,0);
-        return date <= today;
+        today.setHours(0,0,0,0); 
+        const purchaseD = new Date(date);
+        purchaseD.setHours(0,0,0,0);
+        return purchaseD <= today;
     }, "A data da compra não pode ser no futuro."),
   purchaseValue: z.string()
     .trim()
     .min(1, "Valor da compra é obrigatório.")
-    .regex(/^[0-9]+([,.][0-9]{1,2})?$/, "Valor da compra inválido. Use números e até 2 casas decimais (ex: 199,90 ou 199.90).")
+    .regex(/^[0-9]+([,.][0-9]{1,2})?$/, "Valor inválido. Use números e até 2 casas decimais (ex: 199,90 ou 199.90).")
     .transform(val => {
         const cleanedVal = val.replace(',', '.');
         const num = parseFloat(cleanedVal);
@@ -157,7 +167,7 @@ export const authorizationSchema = z.object({
   orderNumber: z.string()
     .trim()
     .min(1, "Número do pedido é obrigatório.")
-    .regex(/^V\d{8}RIHP-01$/, "Número do pedido inválido. Formato esperado: V12345678RIHP-01.")
+    .regex(/^V\d{8}RIHP-01$/, "Número do pedido inválido. Formato: V12345678RIHP-01.")
     .transform(val => val.toUpperCase()),
   pickupStore: z.enum([
       "1030 - NOVA AMÉRICA", "1033 - NORTESHOPPING", "1052 - BANGU", "1057 - IGUATEMI RJ",
@@ -197,6 +207,14 @@ export const authorizationSchema = z.object({
         path: ["buyerCNPJ"],
       });
     }
+     const cleanedCnpj = data.buyerCNPJ ? data.buyerCNPJ.replace(/\D/g, '') : '';
+    if (cleanedCnpj.length !== 14) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "CNPJ deve ter 14 dígitos.",
+            path: ["buyerCNPJ"],
+        });
+    }
     if (!data.socialContractDocument) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -212,30 +230,37 @@ export const authorizationSchema = z.object({
   if (data.purchaseDate) {
     const purchaseD = new Date(data.purchaseDate);
     purchaseD.setHours(0,0,0,0);
-    if (purchaseD > today) { // Should have been caught by field-level refine, but good to double check
-        // This case is typically for purchaseDate > today, which is handled by its own refine
+    if (purchaseD > today) {
+         ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "A data da compra não pode ser no futuro.",
+            path: ["purchaseDate"],
+        });
     }
   }
 
-  if (data.purchaseDate && data.pickupDate) {
-    const purchaseD = new Date(data.purchaseDate);
+  if (data.pickupDate) {
     const pickupD = new Date(data.pickupDate);
-    purchaseD.setHours(0, 0, 0, 0); 
     pickupD.setHours(0, 0, 0, 0); 
 
-    if (pickupD < purchaseD) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "A data da retirada não pode ser anterior à data da compra.",
-        path: ["pickupDate"],
-      });
-    }
     if (pickupD < today) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: "A data da retirada não pode ser anterior à data atual.",
             path: ["pickupDate"],
         });
+    }
+    
+    if (data.purchaseDate) {
+        const purchaseD = new Date(data.purchaseDate);
+        purchaseD.setHours(0,0,0,0);
+        if (pickupD < purchaseD) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "A data da retirada não pode ser anterior à data da compra.",
+                path: ["pickupDate"],
+            });
+        }
     }
   }
 });
