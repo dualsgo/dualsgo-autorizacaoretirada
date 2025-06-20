@@ -48,6 +48,7 @@ export function AuthorizationForm() {
       buyerIdDocument: null,
       socialContractDocument: null,
     },
+     mode: "onTouched", // Show errors when field is touched
   });
 
   const buyerType = form.watch('buyerType');
@@ -61,6 +62,7 @@ export function AuthorizationForm() {
         form.resetField('buyerRG');
         form.resetField('buyerCPF');
     }
+    // Clear errors for fields that become conditionally hidden/shown
     form.clearErrors(['buyerRG', 'buyerCPF', 'buyerCNPJ', 'socialContractDocument', 'buyerEmail', 'buyerPhone']);
   }, [buyerType, form]);
 
@@ -195,7 +197,19 @@ export function AuthorizationForm() {
                     name="buyerType"
                     render={({ field }) => (
                       <RadioGroup
-                        onValueChange={field.onChange}
+                        onValueChange={(value) => {
+                            field.onChange(value);
+                            // Manually trigger validation for dependent fields if needed
+                            if (value === 'individual') {
+                                form.trigger(['buyerRG', 'buyerCPF']);
+                                form.setValue('buyerCNPJ', ''); // Clear CNPJ
+                                form.setValue('socialContractDocument', null); // Clear social contract
+                            } else {
+                                form.trigger(['buyerCNPJ', 'socialContractDocument']);
+                                form.setValue('buyerRG', ''); // Clear RG
+                                form.setValue('buyerCPF', ''); // Clear CPF
+                            }
+                        }}
                         defaultValue={field.value}
                         className="flex space-x-4 pt-2"
                       >
@@ -213,15 +227,15 @@ export function AuthorizationForm() {
 
                 {buyerType === 'individual' && (
                   <>
-                    <FormInput control={form.control} name="buyerRG" label="RG" placeholder="00.000.000-0" error={form.formState.errors.buyerRG} inputMode="numeric" />
-                    <FormInput control={form.control} name="buyerCPF" label="CPF" placeholder="000.000.000-00" error={form.formState.errors.buyerCPF} inputMode="numeric" />
+                    <FormInput control={form.control} name="buyerRG" label="RG" placeholder="00.000.000-0 ou 0.000.000-X" error={form.formState.errors.buyerRG} inputMode="text" maxLength={12} />
+                    <FormInput control={form.control} name="buyerCPF" label="CPF" placeholder="000.000.000-00" error={form.formState.errors.buyerCPF} inputMode="numeric" maxLength={14}/>
                   </>
                 )}
                 {buyerType === 'corporate' && (
-                  <FormInput control={form.control} name="buyerCNPJ" label="CNPJ" placeholder="00.000.000/0000-00" error={form.formState.errors.buyerCNPJ} inputMode="numeric" className="md:col-span-2" />
+                  <FormInput control={form.control} name="buyerCNPJ" label="CNPJ" placeholder="00.000.000/0000-00" error={form.formState.errors.buyerCNPJ} inputMode="numeric" className="md:col-span-2" maxLength={18}/>
                 )}
                  <FormInput control={form.control} name="buyerEmail" label="E-mail do Comprador" placeholder="comprador@email.com" type="email" error={form.formState.errors.buyerEmail} />
-                 <FormInput control={form.control} name="buyerPhone" label="Telefone do Comprador" placeholder="(XX) XXXXX-XXXX" type="tel" error={form.formState.errors.buyerPhone} inputMode="tel" />
+                 <FormInput control={form.control} name="buyerPhone" label="Telefone do Comprador" placeholder="(XX) XXXXX-XXXX" type="tel" error={form.formState.errors.buyerPhone} inputMode="tel" maxLength={15}/>
               </CardContent>
             </Card>
 
@@ -232,10 +246,10 @@ export function AuthorizationForm() {
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
-                 <FormInput control={form.control} name="representativeName" label="Nome / Razão Social" placeholder="Maria Oliveira" error={form.formState.errors.representativeName} />
+                 <FormInput control={form.control} name="representativeName" label="Nome Completo" placeholder="Maria Oliveira" error={form.formState.errors.representativeName} />
                 </div>
-                <FormInput control={form.control} name="representativeRG" label="RG" placeholder="11.111.111-1" error={form.formState.errors.representativeRG} inputMode="numeric" />
-                <FormInput control={form.control} name="representativeCPF" label="CPF" placeholder="111.111.111-11" error={form.formState.errors.representativeCPF} inputMode="numeric" />
+                <FormInput control={form.control} name="representativeRG" label="RG" placeholder="11.111.111-1 ou 1.111.111-X" error={form.formState.errors.representativeRG} inputMode="text" maxLength={12}/>
+                <FormInput control={form.control} name="representativeCPF" label="CPF" placeholder="111.111.111-11" error={form.formState.errors.representativeCPF} inputMode="numeric" maxLength={14}/>
               </CardContent>
             </Card>
 
@@ -403,16 +417,16 @@ export function AuthorizationForm() {
                 display: grid;
                 gap: 1mm 4mm;
                 align-items: baseline;
-                margin-bottom: 2.5mm; /* Space between conceptual rows */
+                margin-bottom: 2.5mm; 
             }
             .pdf-data-row:last-child {
                 margin-bottom: 0;
             }
             .pdf-data-row.two-pairs {
-                grid-template-columns: auto 1fr auto 1fr; /* Label1 Value1 Label2 Value2 */
+                grid-template-columns: auto 1fr auto 1fr; 
             }
             .pdf-data-row.one-pair {
-                grid-template-columns: auto 1fr; /* Label1 Value1 */
+                grid-template-columns: auto 1fr; 
             }
             .pdf-field-label {
                 font-weight: bold;
@@ -426,44 +440,51 @@ export function AuthorizationForm() {
                 word-break: break-word;
                 text-align: left;
             }
-            /* If a value in a 'two-pairs' row needs to span the remaining 3 columns */
             .pdf-data-row.two-pairs .pdf-field-value.full-span-value {
                 grid-column: span 3;
             }
-             /* If a value in a 'one-pair' row is the only element (e.g. for a sub-header) */
             .pdf-data-row.one-pair .pdf-field-label.full-width-label,
             .pdf-data-row.one-pair .pdf-field-value.full-width-value {
                 grid-column: span 2;
             }
 
-
-            .pdf-text-block { 
-              margin: 10mm 0; 
-              font-size: 10pt; 
-              text-align: left; 
+            .pdf-text-block {
+              margin: 10mm 0;
+              font-size: 10pt;
+              text-align: left;
               color: #333333;
             }
-            .pdf-text-block p { 
-              margin-bottom: 4mm; 
+            .pdf-text-block p {
+                margin-bottom: 1mm;
             }
-            .pdf-text-block strong { 
-              font-weight: bold; 
+            .pdf-text-block strong {
+                font-weight: bold;
             }
-            .pdf-text-block ul { 
-              list-style-position: outside;
-              padding-left: 5mm; 
-              margin-top: 2mm;
-              margin-bottom: 3mm;
+            .pdf-text-block ul {
+                list-style-position: outside;
+                padding-left: 5mm; /* Indent list items */
+                margin-top: 1mm;
+                margin-bottom: 3mm;
             }
             .pdf-text-block li {
-              margin-bottom: 2mm;
-              display: flex;
-              align-items: flex-start;
+                margin-bottom: 1.5mm;
+                /* display: flex and align-items: flex-start can be used if icons are per-li */
             }
             .pdf-text-block .icon {
-              margin-right: 2mm;
-              line-height: 1.4; 
+                margin-right: 1.5mm; /* Space between icon and text */
+                /* line-height: 1.4; Ensure vertical alignment with text if needed */
             }
+            .pdf-text-block .list-item-content {
+                 display: inline-block; /* Or flex if more complex alignment is needed */
+                 vertical-align: top;
+            }
+            .pdf-text-block .list-item-content p {
+                margin-bottom: 1mm;
+            }
+             .pdf-text-block .list-item-content p:last-child {
+                margin-bottom: 0;
+            }
+
 
             .pdf-order-table { 
               width: 100%; 
@@ -512,12 +533,12 @@ export function AuthorizationForm() {
               justify-content: space-between; 
               min-height: 60mm; 
             }
-            .pdf-signature-docs-container .pdf-doc-column:first-child { /* Document */
+            .pdf-signature-docs-container .pdf-doc-column:first-child { 
               flex-grow: 2; 
               flex-basis: 0;
               min-width: 0;
             }
-            .pdf-signature-docs-container .pdf-doc-column:last-child { /* Signature */
+            .pdf-signature-docs-container .pdf-doc-column:last-child { 
               flex-grow: 1; 
               flex-basis: 0;
               min-width: 0;
@@ -534,8 +555,7 @@ export function AuthorizationForm() {
               align-items: center;
               justify-content: center;
               width: 100%; 
-              /* height dynamically determined by content or min-height of parent */
-              min-height: 50mm; /* Ensure a minimum area */
+              min-height: 50mm; 
               overflow: hidden; 
             }
             .pdf-placeholder-box img {
@@ -546,8 +566,6 @@ export function AuthorizationForm() {
              .pdf-placeholder-text { 
               font-size: 8pt;
               color: #777777;
-              /* margin-top: auto; Removed to allow flex centering to fully work */
-              /* padding: 10mm 0; */
             }
             .pdf-social-contract-section {
                 margin-top: 8mm; 
@@ -619,15 +637,18 @@ export function AuthorizationForm() {
             </div>
           </div>
           
-          <div className="pdf-text-block">
-             <ul>
-                <li><span className="icon">🔔</span> <strong>Importante:</strong> O comprador deve enviar o PDF da autorização para o WhatsApp ou e-mail da loja, garantindo que um colaborador da loja confirme o recebimento. A pessoa autorizada a retirar deve ser maior de idade.</li>
-                <li><span className="icon">⚠️</span> <strong>Atenção:</strong> A retirada deve ser feita dentro do horário de funcionamento da loja escolhida.</li>
-             </ul>
-            {form.getValues('buyerType') === 'corporate' && (
-                <p>Se o comprador for uma pessoa jurídica, também é necessário apresentar uma foto ou cópia autenticada do Contrato Social ou Estatuto Social da empresa.</p>
-            )}
-          </div>
+            <div className="pdf-text-block">
+                <p><span className="icon">🔔</span> <strong>Importante:</strong></p>
+                <ul>
+                    <li>O comprador deve enviar o PDF da autorização para o WhatsApp ou e-mail da loja, garantindo que um colaborador da loja confirme o recebimento.</li>
+                    <li>A pessoa autorizada a retirar deve ser maior de idade.</li>
+                </ul>
+                <p style={{ marginTop: '3mm' }}><span className="icon">⚠️</span> <strong>Atenção:</strong> A retirada deve ser feita dentro do horário de funcionamento da loja escolhida.</p>
+
+                {form.getValues('buyerType') === 'corporate' && (
+                    <p style={{ marginTop: '3mm' }}>Se o comprador for uma pessoa jurídica, também é necessário apresentar uma foto ou cópia autenticada do Contrato Social ou Estatuto Social da empresa.</p>
+                )}
+            </div>
 
           <div className="pdf-data-section"> 
             <div className="pdf-data-section-title">DETALHES DO PEDIDO</div>
@@ -644,7 +665,7 @@ export function AuthorizationForm() {
                 <tbody>
                     <tr>
                     <td>{form.getValues('purchaseDate') ? format(form.getValues('purchaseDate') as Date, 'dd/MM/yyyy', { locale: ptBR }) : ' '}</td>
-                    <td>R$ {(form.getValues('purchaseValue') || '0.00').replace('.', ',')}</td>
+                    <td>R$ {form.getValues('purchaseValue') ? parseFloat(form.getValues('purchaseValue')).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00'}</td>
                     <td>{form.getValues('orderNumber') || ' '}</td>
                     <td>{storeOptionsList.find(s => s.value === form.getValues('pickupStore'))?.label || form.getValues('pickupStore') || ' '}</td>
                     </tr>
@@ -805,4 +826,6 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 );
 
 export default AuthorizationForm;
+    
+
     

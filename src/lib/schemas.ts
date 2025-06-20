@@ -24,7 +24,7 @@ const capitalizeWords = (str: string | undefined) => {
 const formatCPF = (cpf: string | undefined): string | undefined => {
   if (!cpf) return undefined;
   const cleaned = cpf.replace(/\D/g, '');
-  if (cleaned.length !== 11) return cpf;
+  if (cleaned.length !== 11) return cpf; // Return original if not 11 digits for Zod to catch length error first if any
   return cleaned.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
 };
 
@@ -48,18 +48,21 @@ const isValidCPF = (cpf: string | undefined): boolean => {
 const formatRG = (rg: string | undefined): string | undefined => {
   if (!rg) return undefined;
   let cleaned = rg.replace(/\D/g, ''); 
-  if (cleaned.length === 0) return rg;
+  if (cleaned.length === 0) return rg; // Return original if empty after clean
 
+  // Common RG patterns vary by state, this is a generic formatter
+  // Assuming max 9 digits for simplicity in formatting, can be adjusted
   if (cleaned.length > 9) cleaned = cleaned.substring(0,9);
 
 
-  if (cleaned.length === 9) { 
-    return cleaned.replace(/^(\d{2})(\d{3})(\d{3})(\d{1})$/, '$1.$2.$3-$4');
+  if (cleaned.length === 9) { // e.g., XX.XXX.XXX-Y (São Paulo)
+    return cleaned.replace(/^(\d{2})(\d{3})(\d{3})([\dX])$/, '$1.$2.$3-$4');
   }
-  if (cleaned.length === 8) { 
-     return cleaned.replace(/^(\d{1})(\d{3})(\d{3})(\d{1})$/, '$1.$2.$3-$4');
+  if (cleaned.length === 8) { // e.g., X.XXX.XXX-Y or XX.XXX.XXX (depending on state)
+     return cleaned.replace(/^(\d{1,2})(\d{3})(\d{3})([\dX])$/, '$1.$2.$3-$4'); // More flexible for 8-digit
   }
-  if (cleaned.length <= 7 && cleaned.length >=2) {
+   // For RGs with fewer digits, just return cleaned or a partial format
+  if (cleaned.length >= 7) {
     return cleaned.replace(/^(\d{1,2})(\d{3})(\d{3})$/, '$1.$2.$3');
   }
   return cleaned; 
@@ -69,16 +72,17 @@ const formatRG = (rg: string | undefined): string | undefined => {
 const formatPhoneNumber = (phone: string | undefined): string | undefined => {
     if (!phone) return undefined;
     const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.length === 11) {
+    if (cleaned.length === 11) { // DDD + 9 digits (mobile)
         return cleaned.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
     }
-    if (cleaned.length === 10) {
+    if (cleaned.length === 10) { // DDD + 8 digits (landline)
         return cleaned.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
     }
-    return phone; 
+    return phone; // Return original if not matching expected lengths for Zod to catch
 };
 
 const nameValidationRegex = /^[a-zA-ZÀ-ÖØ-öø-ÿĀ-žȘ-țА-яЁё\s']*$/;
+// Corrected regex: Ș-ț includes Ș (U+0218), ș (U+0219), Ț (U+021A), ț (U+021B)
 
 const rgValidationRegex = /^[0-9Xx]+$/; 
 
@@ -111,7 +115,7 @@ export const authorizationSchema = z.object({
         if (cleaned.length === 14) {
             return cleaned.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
         }
-        return val; 
+        return val; // Return original if not 14 digits for Zod to catch
     }).refine(val => {
         if (!val) return true; 
         const cleaned = val.replace(/\D/g, '');
@@ -120,13 +124,13 @@ export const authorizationSchema = z.object({
   buyerEmail: z.string()
     .trim()
     .min(1, "E-mail do comprador é obrigatório.")
-    .email("E-mail inválido.")
+    .email("E-mail inválido. Verifique o formato (ex: nome@dominio.com).")
     .transform(val => val.toLowerCase()),
   buyerPhone: z.string()
     .trim()
     .min(1, "Telefone do comprador é obrigatório.")
     .transform(val => val.replace(/\D/g, ''))
-    .refine(val => val.length === 10 || val.length === 11, "Telefone inválido. Use DDD + número (10 ou 11 dígitos).")
+    .refine(val => val.length === 10 || val.length === 11, "Telefone inválido. Use DDD + 8 ou 9 dígitos.")
     .transform(val => formatPhoneNumber(val)),
   
   representativeName: z.string()
@@ -275,3 +279,5 @@ export const storeOptionsList = [
   "1239 - SHOPPING RECREIO", "1300 - ECO VILLA", "1301 - IPANEMA", "1304 - PARK JACAREPAGUÁ",
   "9014 - RIO DESIGN"
 ].map(store => ({ value: store, label: store }));
+
+    
