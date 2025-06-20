@@ -24,88 +24,149 @@ const capitalizeWords = (str: string | undefined) => {
 const formatCPF = (cpf: string | undefined): string | undefined => {
   if (!cpf) return undefined;
   const cleaned = cpf.replace(/\D/g, '');
-  if (cleaned.length !== 11) return cpf;
+  if (cleaned.length !== 11) return cpf; // Return original if not 11 digits after cleaning for pre-validation display
   return cleaned.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
+};
+
+const isValidCPF = (cpf: string | undefined): boolean => {
+  if (!cpf) return false;
+  const cleaned = cpf.replace(/\D/g, '');
+  if (cleaned.length !== 11 || /^(\d)\1+$/.test(cleaned)) return false;
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += parseInt(cleaned.charAt(i)) * (10 - i);
+  let remainder = 11 - (sum % 11);
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cleaned.charAt(9))) return false;
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += parseInt(cleaned.charAt(i)) * (11 - i);
+  remainder = 11 - (sum % 11);
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cleaned.charAt(10))) return false;
+  return true;
 };
 
 const formatRG = (rg: string | undefined): string | undefined => {
   if (!rg) return undefined;
-  const cleaned = rg.replace(/\D/g, '');
-  if (cleaned.length === 9) {
-    return cleaned.replace(/^(\d{2})(\d{3})(\d{3})([0-9A-Za-z])$/, '$1.$2.$3-$4');
+  const cleaned = rg.replace(/\D/g, '').toUpperCase(); // Keep X if present
+  if (!cleaned) return rg;
+
+  // Common Brazilian RG patterns (can be very state-specific)
+  // This is a generic formatter, might need adjustment for specific state rules
+  if (cleaned.length === 9) { // XX.XXX.XXX-Y
+    return cleaned.replace(/^(\d{2})(\d{3})(\d{3})([0-9A-Z])$/, '$1.$2.$3-$4');
   }
-  if (cleaned.length === 8 && !isNaN(Number(cleaned.charAt(cleaned.length -1))) ) {
-     return cleaned.replace(/^(\d{2})(\d{3})(\d{2})([0-9A-Za-z])$/, '$1.$2.$3-$4');
+  if (cleaned.length === 8) { // X.XXX.XXX-Y or XX.XXX.XX-Y (less common but possible)
+     return cleaned.replace(/^(\d{1})(\d{3})(\d{3})([0-9A-Z])$/, '$1.$2.$3-$4');
   }
-  if (cleaned.length === 7 && !isNaN(Number(cleaned.charAt(cleaned.length -1)))) {
-    return cleaned.replace(/^(\d{1})(\d{3})(\d{2})([0-9A-Za-z])$/, '$1.$2.$3-$4');
-  }
-  if (cleaned.length > 4) {
-    const firstPart = cleaned.slice(0, cleaned.length - 1);
-    const lastChar = cleaned.slice(-1);
-    if (firstPart.length > 3) {
-        const p1 = firstPart.slice(0,2);
-        const p2 = firstPart.slice(2,5);
-        const p3 = firstPart.slice(5);
-        return `${p1}.${p2}.${p3}-${lastChar}`;
-    }
-    return `${firstPart}-${lastChar}`;
-  }
-  return rg;
+   // Fallback for other lengths, just return cleaned if no specific mask matches
+  return cleaned;
 };
+
 
 const formatPhoneNumber = (phone: string | undefined): string | undefined => {
     if (!phone) return undefined;
     const cleaned = phone.replace(/\D/g, '');
-    if (cleaned.length === 11) { // Celular (XX) XXXXX-XXXX
+    if (cleaned.length === 11) {
         return cleaned.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
     }
-    if (cleaned.length === 10) { // Fixo (XX) XXXX-XXXX
+    if (cleaned.length === 10) {
         return cleaned.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
     }
-    return phone; // Retorna original se não se encaixar nos formatos comuns
+    return phone;
 };
 
+const nameValidationRegex = /^[a-zA-ZÀ-ÖØ-öø-ÿĀ-žȘ-țȚ-șА-яЁё\s']*$/;
+const rgValidationRegex = /^[0-9Xx]+$/; // After cleaning, allow digits and X
 
-const storeOptions = [
-  "1030 - NOVA AMÉRICA", "1033 - NORTESHOPPING", "1052 - BANGU", "1057 - IGUATEMI RJ",
-  "1058 - VIA PARQUE", "1072 - GRANDE RIO", "1074 - NITERÓI PLAZA SHOP.", "1078 - ILHA PLAZA",
-  "1101 - PARTEGE SÃO GONÇALO", "1106 - SHOPPING METROPOLITANO BARRA", "1141 - AMÉRICA SHOPPING",
-  "1169 - NOVA IGUAÇU", "1187 - CARIOCA SHOPPING", "1224 - TOP SHOPPING", "1232 - BARRA SHOPPING",
-  "1239 - SHOPPING RECREIO", "1300 - ECO VILLA", "1301 - IPANEMA", "1304 - PARK JACAREPAGUÁ",
-  "9014 - RIO DESIGN"
-] as const;
 
 export const authorizationSchema = z.object({
   buyerType: z.enum(["individual", "corporate"], {
     required_error: "Selecione o tipo de comprador.",
   }),
-  buyerName: z.string().min(1, "Nome/Razão Social é obrigatório.").transform(val => capitalizeWords(val.trim())),
-  buyerRG: z.string().optional().transform(val => val ? formatRG(val.trim()) : undefined),
-  buyerCPF: z.string().optional().transform(val => val ? formatCPF(val.trim()) : undefined),
-  buyerCNPJ: z.string().optional().transform(val => val ? val.trim() : undefined),
-  buyerEmail: z.string().email("E-mail inválido.").min(1, "E-mail do comprador é obrigatório.").transform(val => val.trim().toLowerCase()),
-  buyerPhone: z.string().min(1, "Telefone do comprador é obrigatório.")
-    .transform(val => val.trim())
-    .refine(val => val.replace(/\D/g, '').length >= 10, "Telefone inválido. Deve conter DDD + número.")
+  buyerName: z.string()
+    .trim()
+    .min(1, "Nome/Razão Social é obrigatório.")
+    .regex(nameValidationRegex, "Nome/Razão Social contém caracteres inválidos.")
+    .transform(val => capitalizeWords(val)),
+  buyerRG: z.string()
+    .trim()
+    .optional()
+    .transform(val => val ? val.replace(/\.|\-/g, '') : undefined) // Clean before further validation/formatting
+    .refine(val => !val || rgValidationRegex.test(val), { message: "RG contém caracteres inválidos."})
+    .refine(val => !val || (val.length >= 6 && val.length <= 15), { message: "RG deve ter entre 6 e 15 caracteres."})
+    .transform(val => val ? formatRG(val) : undefined),
+  buyerCPF: z.string()
+    .trim()
+    .optional()
+    .refine(val => !val || isValidCPF(val), "CPF inválido.")
+    .transform(val => val ? formatCPF(val) : undefined),
+  buyerCNPJ: z.string().trim().optional() // Basic CNPJ validation could be added if needed
+    .transform(val => {
+        if (!val) return undefined;
+        const cleaned = val.replace(/\D/g, '');
+        if (cleaned.length === 14) {
+            return cleaned.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+        }
+        return val; // Return original if not 14 digits
+    }),
+  buyerEmail: z.string()
+    .trim()
+    .min(1, "E-mail do comprador é obrigatório.")
+    .email("E-mail inválido.")
+    .transform(val => val.toLowerCase()),
+  buyerPhone: z.string()
+    .trim()
+    .min(1, "Telefone do comprador é obrigatório.")
+    .transform(val => val.replace(/\D/g, ''))
+    .refine(val => val.length === 10 || val.length === 11, "Telefone inválido. Use DDD + número (10 ou 11 dígitos).")
     .transform(val => formatPhoneNumber(val)),
   
-  representativeName: z.string().min(1, "Nome do representante é obrigatório.").transform(val => capitalizeWords(val.trim())),
-  representativeRG: z.string().min(1, "RG do representante é obrigatório.").transform(val => formatRG(val.trim())),
-  representativeCPF: z.string().min(1, "CPF do representante é obrigatório.").transform(val => formatCPF(val.trim())),
+  representativeName: z.string()
+    .trim()
+    .min(1, "Nome do representante é obrigatório.")
+    .regex(nameValidationRegex, "Nome do representante contém caracteres inválidos.")
+    .transform(val => capitalizeWords(val)),
+  representativeRG: z.string()
+    .trim()
+    .min(1, "RG do representante é obrigatório.")
+    .transform(val => val.replace(/\.|\-/g, ''))
+    .refine(val => rgValidationRegex.test(val), { message: "RG do representante contém caracteres inválidos."})
+    .refine(val => val.length >= 6 && val.length <= 15, { message: "RG do representante deve ter entre 6 e 15 caracteres."})
+    .transform(val => formatRG(val)),
+  representativeCPF: z.string()
+    .trim()
+    .min(1, "CPF do representante é obrigatório.")
+    .refine(isValidCPF, "CPF do representante inválido.")
+    .transform(formatCPF),
 
   purchaseDate: z.date({ required_error: "Data da compra é obrigatória." })
     .refine(date => {
         const today = new Date();
-        today.setHours(0,0,0,0); // Compare dates only
+        today.setHours(0,0,0,0);
         return date <= today;
     }, "A data da compra não pode ser no futuro."),
-  purchaseValue: z.string().min(1, "Valor da compra é obrigatório.").transform(val => val.trim()),
+  purchaseValue: z.string()
+    .trim()
+    .min(1, "Valor da compra é obrigatório.")
+    .regex(/^[0-9]+([,.][0-9]{1,2})?$/, "Valor da compra inválido. Use números e até 2 casas decimais (ex: 199,90 ou 199.90).")
+    .transform(val => {
+        const cleanedVal = val.replace(',', '.');
+        const num = parseFloat(cleanedVal);
+        return isNaN(num) ? "" : num.toFixed(2);
+    }),
   orderNumber: z.string()
+    .trim()
     .min(1, "Número do pedido é obrigatório.")
     .regex(/^V\d{8}RIHP-01$/, "Número do pedido inválido. Formato esperado: V12345678RIHP-01.")
-    .transform(val => val.trim().toUpperCase()),
-  pickupStore: z.enum(storeOptions, { required_error: "Loja para retirada é obrigatória."}),
+    .transform(val => val.toUpperCase()),
+  pickupStore: z.enum([
+      "1030 - NOVA AMÉRICA", "1033 - NORTESHOPPING", "1052 - BANGU", "1057 - IGUATEMI RJ",
+      "1058 - VIA PARQUE", "1072 - GRANDE RIO", "1074 - NITERÓI PLAZA SHOP.", "1078 - ILHA PLAZA",
+      "1101 - PARTEGE SÃO GONÇALO", "1106 - SHOPPING METROPOLITANO BARRA", "1141 - AMÉRICA SHOPPING",
+      "1169 - NOVA IGUAÇU", "1187 - CARIOCA SHOPPING", "1224 - TOP SHOPPING", "1232 - BARRA SHOPPING",
+      "1239 - SHOPPING RECREIO", "1300 - ECO VILLA", "1301 - IPANEMA", "1304 - PARK JACAREPAGUÁ",
+      "9014 - RIO DESIGN"
+    ] as const, { required_error: "Loja para retirada é obrigatória."}),
 
   pickupDate: z.date({ required_error: "Data da retirada é obrigatória." }),
   buyerSignature: z.string({required_error: "Assinatura do comprador é obrigatória."}).min(1, "Assinatura do comprador é obrigatória."),
@@ -145,21 +206,30 @@ export const authorizationSchema = z.object({
     }
   }
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (data.purchaseDate) {
+    const purchaseD = new Date(data.purchaseDate);
+    purchaseD.setHours(0,0,0,0);
+    if (purchaseD > today) { // Should have been caught by field-level refine, but good to double check
+        // This case is typically for purchaseDate > today, which is handled by its own refine
+    }
+  }
+
   if (data.purchaseDate && data.pickupDate) {
     const purchaseD = new Date(data.purchaseDate);
     const pickupD = new Date(data.pickupDate);
     purchaseD.setHours(0, 0, 0, 0); 
     pickupD.setHours(0, 0, 0, 0); 
 
-    if (pickupD < purchaseD) { // Changed to strictly less than
+    if (pickupD < purchaseD) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: "A data da retirada não pode ser anterior à data da compra.",
         path: ["pickupDate"],
       });
     }
-    const today = new Date();
-    today.setHours(0,0,0,0);
     if (pickupD < today) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -172,5 +242,11 @@ export const authorizationSchema = z.object({
 
 export type AuthorizationFormData = z.infer<typeof authorizationSchema>;
 
-export const storeOptionsList = storeOptions.map(store => ({ value: store, label: store }));
-
+export const storeOptionsList = [
+  "1030 - NOVA AMÉRICA", "1033 - NORTESHOPPING", "1052 - BANGU", "1057 - IGUATEMI RJ",
+  "1058 - VIA PARQUE", "1072 - GRANDE RIO", "1074 - NITERÓI PLAZA SHOP.", "1078 - ILHA PLAZA",
+  "1101 - PARTEGE SÃO GONÇALO", "1106 - SHOPPING METROPOLITANO BARRA", "1141 - AMÉRICA SHOPPING",
+  "1169 - NOVA IGUAÇU", "1187 - CARIOCA SHOPPING", "1224 - TOP SHOPPING", "1232 - BARRA SHOPPING",
+  "1239 - SHOPPING RECREIO", "1300 - ECO VILLA", "1301 - IPANEMA", "1304 - PARK JACAREPAGUÁ",
+  "9014 - RIO DESIGN"
+].map(store => ({ value: store, label: store }));

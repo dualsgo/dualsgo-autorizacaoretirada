@@ -1,10 +1,14 @@
-import type {Metadata} from 'next';
+
+import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 
 export const metadata: Metadata = {
   title: 'Autoriza Terceiro',
   description: 'Formulário de autorização para retirada de pedido por terceiro.',
+  icons: {
+    icon: '/favicon.ico', // Explicitly point to the favicon in the public folder
+  },
 };
 
 export default function RootLayout({
