@@ -565,7 +565,7 @@ export function AuthorizationForm() {
         </style>
         <div className="pdf-page-container">
           <div className="pdf-header">
-            <img src="/logo.png" alt="Logo da Empresa" className="pdf-logo" data-ai-hint="company logo"/>
+            <img src="/home/user/studio/src/components/ui/logo.png" alt="Logo da Empresa" className="pdf-logo" data-ai-hint="company logo"/>
             <div className="pdf-main-title">TERMO DE AUTORIZAÇÃO PARA RETIRADA POR TERCEIROS</div>
           </div>
 
