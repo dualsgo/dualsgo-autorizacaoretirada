@@ -47,7 +47,6 @@ export function AuthorizationForm() {
       buyerSignature: '',
       buyerIdDocument: null,
       socialContractDocument: null,
-      // RG, CPF, CNPJ will be undefined initially and populated/validated by Zod transforms
     },
   });
 
@@ -249,6 +248,8 @@ export function AuthorizationForm() {
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormDatePicker control={form.control} name="purchaseDate" label="Data da Compra" error={form.formState.errors.purchaseDate} />
+                <FormDatePicker control={form.control} name="pickupDate" label="Data Prevista da Retirada" error={form.formState.errors.pickupDate} />
+                
                 <FormInput control={form.control} name="purchaseValue" label="Valor da Compra (R$)" placeholder="199.90" type="text" inputMode='decimal' error={form.formState.errors.purchaseValue} />
                 <FormInput control={form.control} name="orderNumber" label="Número do Pedido" placeholder="V12345678RIHP-01" error={form.formState.errors.orderNumber} />
                 
@@ -258,7 +259,7 @@ export function AuthorizationForm() {
                         control={form.control}
                         name="pickupStore"
                         render={({ field }) => (
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                             <SelectTrigger id="pickupStore" className={form.formState.errors.pickupStore ? 'border-destructive' : ''}>
                                 <SelectValue placeholder="Selecione uma loja" />
                             </SelectTrigger>
@@ -272,10 +273,6 @@ export function AuthorizationForm() {
                     />
                     {form.formState.errors.pickupStore && <FormErrorMessage message={form.formState.errors.pickupStore.message} />}
                 </FormFieldItem>
-
-                <div className="md:col-span-2">
-                    <FormDatePicker control={form.control} name="pickupDate" label="Data Prevista da Retirada" error={form.formState.errors.pickupDate} />
-                </div>
               </CardContent>
             </Card>
             
@@ -338,7 +335,7 @@ export function AuthorizationForm() {
         </CardContent>
       </Card>
       
-      <div ref={pdfTemplateRef} className="hidden">
+      <div ref={pdfTemplateRef} className="hidden" style={{ width: '210mm', height: '297mm', boxSizing: 'border-box', backgroundColor: 'white', color: 'black', fontFamily: "'Roboto', Arial, sans-serif" }}>
         <style>
           {`
             @page { 
@@ -458,9 +455,12 @@ export function AuthorizationForm() {
             }
             .pdf-text-block li {
               margin-bottom: 2mm;
+              display: flex;
+              align-items: flex-start;
             }
             .pdf-text-block .icon {
               margin-right: 2mm;
+              line-height: 1.5; /* Align icon with first line of text */
             }
 
             .pdf-order-details-section-title { /* For the "DETALHES DO PEDIDO" title if not using .pdf-data-section-title */
@@ -549,6 +549,7 @@ export function AuthorizationForm() {
               font-size: 8pt;
               color: #777777;
               margin-top: auto; 
+              padding: 10mm 0; /* Add some padding if no image */
             }
             .pdf-social-contract-section {
                 margin-top: 8mm; 
@@ -628,9 +629,11 @@ export function AuthorizationForm() {
           
           <div className="pdf-text-block">
             <p>O comprador autoriza o representante identificado acima a retirar os produtos do pedido na loja escolhida no momento da compra no site.</p>
+             <ul>
+                <li><span className="icon">🔔</span> <strong>Importante:</strong> O comprador deve enviar o PDF da autorização para o WhatsApp ou e-mail da loja, garantindo que um colaborador da loja confirme o recebimento. A pessoa autorizada a retirar deve ser maior de idade.</li>
+                <li><span className="icon">⚠️</span> <strong>Atenção:</strong> A retirada deve ser feita dentro do horário de funcionamento da loja escolhida.</li>
+             </ul>
             <p>Se o comprador for uma pessoa jurídica, também é necessário apresentar uma foto ou cópia autenticada do Contrato Social ou Estatuto Social da empresa.</p>
-             <p><span className="icon">🔔</span> <strong>Importante:</strong> O comprador deve enviar o PDF da autorização para o WhatsApp ou e-mail da loja, garantindo que um colaborador da loja confirme o recebimento. A pessoa autorizada a retirar deve ser maior de idade.</p>
-            <p><span className="icon">⚠️</span> <strong>Atenção:</strong> A retirada deve ser feita dentro do horário de funcionamento da loja escolhida.</p>
           </div>
 
           <div className="pdf-data-section"> 
@@ -665,7 +668,7 @@ export function AuthorizationForm() {
           </div>
             
           <div className="pdf-signature-docs-container">
-             <div className="pdf-doc-column"> {/* Document Column - Wider */}
+             <div className="pdf-doc-column" style={{ flexGrow: 2, flexBasis: 0 }}>
                 <div className="pdf-column-title">Documento do Comprador</div>
                 <div className="pdf-placeholder-box">
                     {buyerIdPreview ? (
@@ -673,7 +676,7 @@ export function AuthorizationForm() {
                     ) : <span className="pdf-placeholder-text">(Documento não fornecido)</span>}
                 </div>
             </div>
-            <div className="pdf-doc-column"> {/* Signature Column - Narrower */}
+            <div className="pdf-doc-column" style={{ flexGrow: 1, flexBasis: 0 }}>
                 <div className="pdf-column-title">Assinatura do Comprador</div>
                 <div className="pdf-placeholder-box">
                 {signaturePreview ? (
@@ -683,15 +686,17 @@ export function AuthorizationForm() {
             </div>
           </div>
           
-          {form.getValues('buyerType') === 'corporate' && socialContractPreview && (
-            <div className="pdf-social-contract-section pdf-data-section"> {/* Reuse data-section for consistency */}
+          {form.getValues('buyerType') === 'corporate' && (
+            <div className="pdf-social-contract-section pdf-data-section">
               <div className="pdf-data-section-title">CONTRATO SOCIAL / ESTATUTO SOCIAL</div>
               <div className="pdf-data-content-wrapper">
                 <div className="pdf-doc-column" style={{borderStyle: 'dashed', minHeight: '70mm', padding: '4mm'}}>
                     <div className="pdf-placeholder-box" style={{height: '60mm'}}>
-                        {socialContractPreview.startsWith('data:image') ? 
+                        {socialContractPreview ? 
+                           (socialContractPreview.startsWith('data:image') ? 
                             <img src={socialContractPreview} alt="Contrato Social" /> :
-                            <span className="pdf-placeholder-text">Preview não disponível para PDF. Submetido como PDF.</span>
+                            <span className="pdf-placeholder-text">Preview não disponível para PDF. Submetido como PDF.</span>)
+                           : <span className="pdf-placeholder-text">(Contrato social não fornecido)</span>
                         }
                     </div>
                 </div>
@@ -717,7 +722,7 @@ const FormFieldItem: React.FC<{ children: React.ReactNode; className?: string }>
 
 interface FormInputProps {
   control: any;
-  name: keyof AuthorizationFormData | string; // Allow general strings for non-schema fields if any
+  name: keyof AuthorizationFormData | string; 
   label: string;
   placeholder?: string;
   type?: string;
@@ -732,7 +737,7 @@ const FormInput: React.FC<FormInputProps> = ({ control, name, label, placeholder
     <Label htmlFor={name as string}>{label}</Label>
     <Controller
       control={control}
-      name={name as keyof AuthorizationFormData} // Cast to keyof for type safety with schema
+      name={name as keyof AuthorizationFormData} 
       render={({ field }) => <Input id={name as string} type={type} inputMode={inputMode} placeholder={placeholder} {...field} value={field.value || ''} maxLength={maxLength} className={error ? 'border-destructive' : ''} />}
     />
     {error && <FormErrorMessage message={error.message} />}
@@ -741,7 +746,7 @@ const FormInput: React.FC<FormInputProps> = ({ control, name, label, placeholder
 
 interface FormDatePickerProps {
   control: any;
-  name: "purchaseDate" | "pickupDate"; // Restrict name to valid date fields
+  name: "purchaseDate" | "pickupDate"; 
   label: string;
   error?: { message?: string };
 }
@@ -771,8 +776,8 @@ const FormDatePicker: React.FC<FormDatePickerProps> = ({ control, name, label, e
           <PopoverContent className="w-auto p-0">
             <Calendar
               mode="single"
-              selected={field.value as Date | undefined} // field.value can be Date or string
-              onSelect={(date) => field.onChange(date)} // Ensure date is passed correctly
+              selected={field.value as Date | undefined} 
+              onSelect={(date) => field.onChange(date)} 
               initialFocus
               locale={ptBR}
               disabled={(date) => date < new Date("1900-01-01") || date > new Date("2100-01-01")}
