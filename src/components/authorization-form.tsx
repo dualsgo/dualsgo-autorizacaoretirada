@@ -337,42 +337,42 @@ export function AuthorizationForm() {
         </CardContent>
       </Card>
       
-      <div ref={pdfTemplateRef} className="hidden">
+      <div ref={pdfTemplateRef} className="hidden" style={{ width: '210mm', height: '297mm', boxSizing: 'border-box', backgroundColor: 'white', color: 'black', fontFamily: "'Roboto', Arial, sans-serif" }}>
         <style>
           {`
             @page { 
               size: A4;
               margin: 0; 
             }
-            body { 
-              margin: 0;
+            body {
+              margin: 0; 
               color: #333333;
               font-family: 'Roboto', Arial, sans-serif;
             }
             .pdf-page-container {
-              width: 210mm; 
-              height: 297mm; 
+              width: 100%; 
+              height: 100%; 
               padding: 20mm; 
               box-sizing: border-box;
               font-size: 10pt;
-              line-height: 1.5;
-              background-color: #FFFFFF;
+              line-height: 1.3; /* Adjusted line height */
             }
             .pdf-header { 
-              text-align: center; 
-              margin-bottom: 8mm;
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              margin-bottom: 8mm; 
             }
             .pdf-logo { 
               max-width: 80px; 
-              margin: 0 auto 4mm auto;
-              display: block;
+              height: auto;
             }
             .pdf-main-title { 
-              font-size: 18pt; 
+              font-size: 16pt; /* Adjusted title size */
               font-weight: bold; 
-              margin-bottom: 6mm;
               text-transform: uppercase;
               text-align: center;
+              flex-grow: 1; /* Allows title to take space */
             }
             .pdf-title-separator {
               border: 0;
@@ -381,39 +381,34 @@ export function AuthorizationForm() {
               margin: 6mm 0 10mm 0;
             }
 
-            .pdf-info-card {
-              border: 1px solid #DDDDDD;
+            .pdf-data-card {
               background-color: #f9f9f9;
-              border-radius: 4px; /* Consistent with form cards */
+              border: 1px solid #DDDDDD;
+              border-radius: 4px;
               padding: 4mm;
-              margin-bottom: 8mm;
+              margin-bottom: 10mm; /* Increased spacing between sections */
             }
-            .pdf-info-card-title { /* Renamed from pdf-data-section-title for clarity */
-              font-size: 14pt;
+            .pdf-data-card-title {
+              font-size: 12pt; /* Adjusted subtitle size */
               font-weight: bold;
               color: white;
-              background-color: #4A4A4A; /* Darker gray for title bar */
+              background-color: #4A4A4A;
               padding: 2mm 3mm;
-              margin: -4mm -4mm 4mm -4mm; /* Pull title bar to edges of card */
-              border-top-left-radius: 3px; /* Match card radius */
+              margin: -4mm -4mm 4mm -4mm;
+              border-top-left-radius: 3px;
               border-top-right-radius: 3px;
               text-align: left;
             }
-            .pdf-info-card-content {
-              display: flex;
-              flex-direction: column;
-              gap: 2.5mm; /* Space between rows */
-            }
-            .pdf-field-row {
+            .pdf-data-content {
               display: grid;
               grid-template-columns: auto 1fr auto 1fr; /* Label, Value, Label, Value */
-              gap: 1mm 5mm; /* Small gap between label and value, larger between pairs */
+              gap: 2mm 5mm; 
               align-items: baseline;
             }
-            .pdf-field-row-single {
+            .pdf-data-content-full-width { /* For single full-width items */
               display: grid;
-              grid-template-columns: auto 1fr; /* Label, Value */
-              gap: 1mm 5mm;
+              grid-template-columns: auto 1fr;
+              gap: 2mm 5mm;
               align-items: baseline;
             }
             .pdf-field-label {
@@ -423,16 +418,19 @@ export function AuthorizationForm() {
             }
             .pdf-field-value {
               word-break: break-word;
-              min-height: 1em;
+              min-height: 1em; /* Ensures value takes space even if empty */
             }
             
             .pdf-text-block { 
-              margin: 8mm 0; 
+              margin: 10mm 0; 
               font-size: 10pt; 
-              text-align: left; /* Justify can be hard to read, left is safer */
+              text-align: left; 
             }
             .pdf-text-block p { 
               margin-bottom: 3mm; 
+            }
+            .pdf-text-block strong { 
+              font-weight: bold; 
             }
             .pdf-instructions-list {
               list-style: none;
@@ -442,24 +440,22 @@ export function AuthorizationForm() {
             .pdf-instructions-list li {
               margin-bottom: 2.5mm;
               display: flex;
-              align-items: flex-start; /* Align icon with first line of text */
+              align-items: flex-start;
             }
             .pdf-instructions-list .icon {
               margin-right: 2.5mm;
-              font-size: 12pt; /* Slightly larger icon */
-              line-height: 1.2; /* Adjust icon line height to match text */
-            }
-            .pdf-instructions-list strong {
-                font-weight: bold;
+              font-size: 12pt; 
+              line-height: 1.2; 
             }
             
-            .pdf-details-section {
-                margin-bottom: 8mm;
+            .pdf-order-details-section {
+                margin-bottom: 10mm;
             }
-            .pdf-details-section-title {
-                font-size: 14pt;
+            .pdf-order-details-title {
+                font-size: 12pt; /* Adjusted subtitle size */
                 font-weight: bold;
                 margin-bottom: 4mm;
+                color: #333333;
             }
             .pdf-order-table { 
               width: 100%; 
@@ -475,7 +471,7 @@ export function AuthorizationForm() {
             }
             .pdf-order-table th {
               font-weight: bold;
-              background-color: #f0f0f0; /* Light gray for table header */
+              background-color: #f0f0f0;
             }
             .pdf-pickup-date-highlight {
               margin-top: 5mm;
@@ -493,13 +489,13 @@ export function AuthorizationForm() {
             .pdf-signature-docs-container {
               display: flex;
               justify-content: space-between;
-              gap: 10mm; /* Space between the two columns */
+              gap: 10mm;
               margin-top: 8mm;
               margin-bottom: 8mm;
-              align-items: flex-start; /* Align top of boxes */
+              align-items: flex-start;
             }
             .pdf-doc-column {
-              flex: 1; /* Each column takes equal width */
+              flex: 1;
               text-align: center;
             }
             .pdf-column-title {
@@ -514,10 +510,10 @@ export function AuthorizationForm() {
               display: flex;
               align-items: center;
               justify-content: center;
-              background-color: #fdfdfd; /* Very light background for placeholder */
+              background-color: #fdfdfd;
             }
             .pdf-placeholder-box img {
-              max-width: 95%; /* Allow some padding inside the box */
+              max-width: 95%;
               max-height: 95%;
               object-fit: contain;
             }
@@ -526,11 +522,10 @@ export function AuthorizationForm() {
                 margin-top: 8mm;
                 text-align: center;
             }
-            /* Social contract shares placeholder style */
 
             .pdf-final-disclaimer { 
               font-size: 8pt; 
-              margin-top: auto; /* Pushes to bottom if there's space */
+              margin-top: auto; 
               padding-top: 5mm; 
               text-align: left;
               color: #555555;
@@ -544,60 +539,49 @@ export function AuthorizationForm() {
           </div>
           <hr className="pdf-title-separator" />
 
-          <div className="pdf-info-card">
-            <div className="pdf-info-card-title">DADOS DO COMPRADOR</div>
-            <div className="pdf-info-card-content">
-              <div className="pdf-field-row-single">
-                <span className="pdf-field-label">Nome/Razão Social:</span>
-                <span className="pdf-field-value">{form.getValues('buyerName') || ' '}</span>
-              </div>
+          <div className="pdf-data-card">
+            <div className="pdf-data-card-title">DADOS DO COMPRADOR</div>
+            <div className="pdf-data-content">
+                <span className="pdf-field-label" style={{gridColumn: '1 / span 1'}}>Nome/Razão Social:</span>
+                <span className="pdf-field-value" style={{gridColumn: '2 / span 3'}}>{form.getValues('buyerName') || ' '}</span>
+              
               {form.getValues('buyerType') === 'individual' ? (
-                <div className="pdf-field-row">
+                <>
                   <span className="pdf-field-label">RG:</span>
                   <span className="pdf-field-value">{form.getValues('buyerRG') || ' '}</span>
                   <span className="pdf-field-label">CPF:</span>
                   <span className="pdf-field-value">{form.getValues('buyerCPF') || ' '}</span>
-                </div>
+                </>
               ) : (
-                <div className="pdf-field-row-single">
-                  <span className="pdf-field-label">CNPJ:</span>
-                  <span className="pdf-field-value">{form.getValues('buyerCNPJ') || ' '}</span>
-                </div>
+                <>
+                  <span className="pdf-field-label" style={{gridColumn: '1 / span 1'}}>CNPJ:</span>
+                  <span className="pdf-field-value" style={{gridColumn: '2 / span 3'}}>{form.getValues('buyerCNPJ') || ' '}</span>
+                </>
               )}
             </div>
           </div>
 
-          <div className="pdf-info-card">
-            <div className="pdf-info-card-title">DADOS DA PESSOA AUTORIZADA A RETIRAR</div>
-            <div className="pdf-info-card-content">
-                <div className="pdf-field-row-single">
-                    <span className="pdf-field-label">Nome:</span>
-                    <span className="pdf-field-value">{form.getValues('representativeName') || ' '}</span>
-                </div>
-                <div className="pdf-field-row">
-                    <span className="pdf-field-label">RG:</span>
-                    <span className="pdf-field-value">{form.getValues('representativeRG') || ' '}</span>
-                    <span className="pdf-field-label">CPF:</span>
-                    <span className="pdf-field-value">{form.getValues('representativeCPF') || ' '}</span>
-                </div>
+          <div className="pdf-data-card">
+            <div className="pdf-data-card-title">DADOS DA PESSOA AUTORIZADA A RETIRAR</div>
+             <div className="pdf-data-content">
+                <span className="pdf-field-label" style={{gridColumn: '1 / span 1'}}>Nome:</span>
+                <span className="pdf-field-value" style={{gridColumn: '2 / span 3'}}>{form.getValues('representativeName') || ' '}</span>
+                <span className="pdf-field-label">RG:</span>
+                <span className="pdf-field-value">{form.getValues('representativeRG') || ' '}</span>
+                <span className="pdf-field-label">CPF:</span>
+                <span className="pdf-field-value">{form.getValues('representativeCPF') || ' '}</span>
             </div>
           </div>
           
           <div className="pdf-text-block">
             <p>O comprador autoriza o representante identificado acima a retirar os produtos do pedido na loja escolhida no momento da compra no site.</p>
-            <ul className="pdf-instructions-list">
-                <li><span className="icon">✅</span><span>Ter mais de 18 anos;</span></li>
-                <li><span className="icon">✅</span><span>Apresentar um documento oficial com foto;</span></li>
-                <li><span className="icon">✅</span><span>Apresentar o PDF da autorização gerado pelo comprador (não é necessário imprimir);</span></li>
-                <li><span className="icon">✅</span><span>Levar uma cópia do documento de identidade do comprador.</span></li>
-            </ul>
-            <p><span className="icon">🔔</span> <strong>Importante:</strong> O comprador deve enviar o PDF da autorização para o WhatsApp ou e-mail da loja, garantindo que um colaborador da loja confirme o recebimento.</p>
+            <p><span className="icon">🔔</span> <strong>Importante:</strong> O comprador deve enviar o PDF da autorização para o WhatsApp ou e-mail da loja, garantindo que um colaborador da loja confirme o recebimento. A pessoa autorizada a retirar deve ser maior de idade.</p>
             <p>Se o comprador for uma pessoa jurídica, também é necessário apresentar uma foto ou cópia autenticada do Contrato Social ou Estatuto Social da empresa.</p>
             <p><span className="icon">⚠️</span> <strong>Atenção:</strong> A retirada deve ser feita dentro do horário de funcionamento da loja escolhida.</p>
           </div>
 
-          <div className="pdf-details-section">
-            <div className="pdf-details-section-title">DETALHES DO PEDIDO</div>
+          <div className="pdf-order-details-section">
+            <div className="pdf-order-details-title">DETALHES DO PEDIDO</div>
             <table className="pdf-order-table">
               <thead>
                 <tr>
@@ -644,22 +628,15 @@ export function AuthorizationForm() {
             </div>
           </div>
           
-          {form.getValues('buyerType') === 'corporate' && socialContractPreview && (
-            <div className="pdf-social-contract-section">
-              <div className="pdf-column-title">Contrato Social / Estatuto Social</div>
-              <div className="pdf-placeholder-box" style={{height: '60mm'}}> {/* Potentially taller box for social contract */}
-                {socialContractPreview.startsWith('data:image') ? 
-                    <img src={socialContractPreview} alt="Contrato Social" /> :
-                    <span style={{color: '#AAAAAA', fontSize: '9pt'}}>Preview não disponível para PDF.</span>
-                }
-              </div>
-            </div>
-          )}
-           {form.getValues('buyerType') === 'corporate' && !socialContractPreview && (
+          {form.getValues('buyerType') === 'corporate' && (
             <div className="pdf-social-contract-section">
               <div className="pdf-column-title">Contrato Social / Estatuto Social</div>
               <div className="pdf-placeholder-box" style={{height: '60mm'}}>
-                 <span style={{color: '#AAAAAA', fontSize: '9pt'}}>(Documento não fornecido)</span>
+                {socialContractPreview ? (
+                    socialContractPreview.startsWith('data:image') ? 
+                        <img src={socialContractPreview} alt="Contrato Social" /> :
+                        <span style={{color: '#AAAAAA', fontSize: '9pt'}}>Preview não disponível para PDF.</span>
+                ) : <span style={{color: '#AAAAAA', fontSize: '9pt'}}>(Documento não fornecido)</span>}
               </div>
             </div>
            )}
@@ -762,3 +739,4 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 );
 
 export default AuthorizationForm;
+
