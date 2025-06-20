@@ -94,7 +94,7 @@ export function AuthorizationForm() {
 
     try {
       const canvas = await html2canvas(pdfContentElement, {
-        scale: 2,
+        scale: 2, // Increased scale for better quality
         useCORS: true,
         logging: false,
         width: pdfContentElement.scrollWidth,
@@ -103,8 +103,8 @@ export function AuthorizationForm() {
         windowHeight: pdfContentElement.scrollHeight,
       });
       
-      const imgData = canvas.toDataURL('image/png', 0.95);
-      const pdf = new jsPDF('p', 'mm', 'a4', true);
+      const imgData = canvas.toDataURL('image/png', 0.95); // Use a higher quality setting
+      const pdf = new jsPDF('p', 'mm', 'a4', true); // true for compress
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
@@ -114,6 +114,7 @@ export function AuthorizationForm() {
       let imgRenderWidth = pdfWidth;
       let imgRenderHeight = pdfWidth / aspectRatio;
 
+      // If height is too big, scale by height
       if (imgRenderHeight > pdfHeight) {
         imgRenderHeight = pdfHeight;
         imgRenderWidth = pdfHeight * aspectRatio;
@@ -160,10 +161,12 @@ export function AuthorizationForm() {
         socialContractDataUrl = await readFileAsDataURL(data.socialContractDocument);
       }
       
+      // This state update needs to complete before html2canvas runs
       await new Promise<void>(resolve => {
         setBuyerIdPreview(buyerIdDataUrl);
         setSocialContractPreview(socialContractDataUrl);
         setSignaturePreview(data.buyerSignature || null);
+        // Use requestAnimationFrame and a short timeout to ensure DOM updates
         requestAnimationFrame(() => setTimeout(resolve, 50)); 
       });
             
@@ -182,10 +185,13 @@ export function AuthorizationForm() {
       <Card className="shadow-xl">
         <CardHeader className="bg-primary/10">
           <CardTitle className="text-3xl font-headline text-center text-primary-foreground">
-            Autorização para Retirada por Terceiro
+            🎉 A diversão continua com você!
           </CardTitle>
-          <CardDescription className="text-center text-primary-foreground/80">
-            Preencha os dados abaixo para gerar sua autorização. Todos os campos são obrigatórios, exceto Complemento.
+          <CardDescription className="text-center text-primary-foreground/80 space-y-2 mt-2">
+            <p>Para garantir a segurança da sua compra, preencha o Termo de Autorização caso outra pessoa vá retirar seu pedido.</p>
+            <p>Alguém vai retirar seu pedido por você? Sem problemas! Basta preencher o formulário abaixo autorizando a retirada por terceiros.</p>
+            <p>Essa etapa é importante para proteger sua compra e garantir que tudo ocorra da forma mais segura possível 😉</p>
+            <p className="font-semibold">Atenção: você tem até 15 dias para retirar o pedido na loja escolhida. Após esse prazo, o pedido será cancelado e o pagamento estornado automaticamente.</p>
           </CardDescription>
         </CardHeader>
         <CardContent className="p-6 space-y-8">
@@ -626,4 +632,3 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 );
 
 export default AuthorizationForm;
-

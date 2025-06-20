@@ -1,5 +1,5 @@
+
 import { AuthorizationForm } from '@/components/authorization-form';
-import { Landmark } from 'lucide-react'; // Using Landmark as a placeholder for a generic "company" icon
 
 export default function HomePage() {
   return (
@@ -13,10 +13,8 @@ export default function HomePage() {
                 <path d="M2 12l10 5 10-5"/>
             </svg>
         </div>
-        <h1 className="text-4xl md:text-5xl font-headline font-bold text-foreground">
-          Autoriza<span className="text-primary">Terceiro</span>
-        </h1>
-        <p className="mt-2 text-lg text-muted-foreground">
+        {/* The main title "AutorizaTerceiro" has been removed */}
+        <p className="mt-2 text-2xl md:text-3xl font-headline text-foreground">
           Sistema de Autorização de Retirada de Pedidos
         </p>
       </header>
