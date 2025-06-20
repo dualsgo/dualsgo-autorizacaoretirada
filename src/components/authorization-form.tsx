@@ -50,7 +50,7 @@ export function AuthorizationForm() {
       representativeCityState: '',
       purchaseValue: '',
       orderNumber: '',
-      pickupStore: undefined, // Changed to undefined for Select placeholder
+      pickupStore: undefined, 
       buyerSignature: '',
       buyerIdDocument: null,
       socialContractDocument: null,
@@ -75,49 +75,44 @@ export function AuthorizationForm() {
       return;
     }
 
-    // Temporarily display the element to render it
-    pdfContentElement.style.position = 'fixed'; // Use fixed to ensure it's in viewport for rendering but out of sight
-    pdfContentElement.style.left = '-99999px'; // Position off-screen
+    pdfContentElement.style.position = 'fixed'; 
+    pdfContentElement.style.left = '-99999px'; 
     pdfContentElement.style.top = '0px';
     pdfContentElement.style.display = 'block';
-    pdfContentElement.style.width = '210mm'; // A4 width
-    pdfContentElement.style.height = 'auto'; // Auto height initially
-    pdfContentElement.style.backgroundColor = '#ffffff'; // Ensure background is white for canvas
+    pdfContentElement.style.width = '210mm'; 
+    pdfContentElement.style.height = 'auto'; 
+    pdfContentElement.style.backgroundColor = '#ffffff'; 
 
-    // Force repaint/reflow before capturing
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     pdfContentElement.offsetHeight;
 
 
     try {
       const canvas = await html2canvas(pdfContentElement, {
-        scale: 1.5, // Reduced scale to help fit, balance with quality
+        scale: 1, // Adjusted scale for potentially better single-page fit
         useCORS: true,
         logging: false,
-        width: pdfContentElement.scrollWidth, // Use scrollWidth
-        height: pdfContentElement.scrollHeight, // Use scrollHeight
+        width: pdfContentElement.scrollWidth, 
+        height: pdfContentElement.scrollHeight, 
         windowWidth: pdfContentElement.scrollWidth,
         windowHeight: pdfContentElement.scrollHeight,
       });
       
       const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4'); // Portrait, mm, A4
+      const pdf = new jsPDF('p', 'mm', 'a4'); 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      // Calculate the image height to fit the PDF page width while maintaining aspect ratio
       const imgProps = pdf.getImageProperties(imgData);
       const aspectRatio = imgProps.width / imgProps.height;
       let imgRenderWidth = pdfWidth;
       let imgRenderHeight = pdfWidth / aspectRatio;
 
-      // If the calculated height is still too much for one page, scale down width as well
       if (imgRenderHeight > pdfHeight) {
         imgRenderHeight = pdfHeight;
         imgRenderWidth = pdfHeight * aspectRatio;
       }
       
-      // Center the image on the page if it's smaller than the page
       const xOffset = (pdfWidth - imgRenderWidth) / 2;
       const yOffset = (pdfHeight - imgRenderHeight) / 2;
 
@@ -130,8 +125,8 @@ export function AuthorizationForm() {
       toast({ title: "Erro ao gerar PDF", description: "Ocorreu um problema ao tentar gerar o documento.", variant: "destructive" });
     } finally {
        if (pdfContentElement) {
-        pdfContentElement.style.display = 'none'; // Hide it again
-        pdfContentElement.style.position = 'absolute'; // Reset position
+        pdfContentElement.style.display = 'none'; 
+        pdfContentElement.style.position = 'absolute'; 
         pdfContentElement.style.left = '-9999px';
        }
     }
@@ -154,20 +149,21 @@ export function AuthorizationForm() {
       if (data.buyerIdDocument) {
         buyerIdDataUrl = await readFileAsDataURL(data.buyerIdDocument);
       }
-      setBuyerIdPreview(buyerIdDataUrl);
   
       let socialContractDataUrl: string | null = null;
       if (data.socialContractDocument && data.buyerType === 'corporate') {
         socialContractDataUrl = await readFileAsDataURL(data.socialContractDocument);
       }
-      setSocialContractPreview(socialContractDataUrl);
       
-      setSignaturePreview(data.buyerSignature || null);
-  
-      // Ensure state updates are processed before generating PDF
-      // Using a microtask delay
-      await new Promise(resolve => setTimeout(resolve, 0)); 
-      
+      // Set previews in state and wait for re-render
+      await new Promise<void>(resolve => {
+        setBuyerIdPreview(buyerIdDataUrl);
+        setSocialContractPreview(socialContractDataUrl);
+        setSignaturePreview(data.buyerSignature || null);
+        // Use a timeout to allow React to process state updates and re-render the hidden PDF template
+        setTimeout(resolve, 50); // A small delay, adjust if necessary
+      });
+            
       await generatePdf();
 
     } catch (error) {
@@ -187,12 +183,11 @@ export function AuthorizationForm() {
     if (cityStateString.length > 2) {
       const ufCandidate = cityStateString.slice(-2).trim().toUpperCase();
       const municipioCandidate = cityStateString.slice(0, -2).trim();
-      // Basic check if the last two chars look like a UF
       if (ufCandidate.length === 2 && /^[A-Z]{2}$/.test(ufCandidate) && municipioCandidate.length > 0) { 
          return { municipio: municipioCandidate, uf: ufCandidate };
       }
     }
-    return { municipio: cityStateString.trim(), uf: '' }; // Default if specific parsing fails
+    return { municipio: cityStateString.trim(), uf: '' }; 
   };
 
 
@@ -275,7 +270,7 @@ export function AuthorizationForm() {
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormDatePicker control={form.control} name="purchaseDate" label="Data da Compra" error={form.formState.errors.purchaseDate} />
                 <FormInput control={form.control} name="purchaseValue" label="Valor da Compra (R$)" placeholder="199,90" type="text" inputMode='decimal' error={form.formState.errors.purchaseValue} />
-                <FormInput control={form.control} name="orderNumber" label="Número do Pedido" placeholder="RIHP-0112345678" error={form.formState.errors.orderNumber} />
+                <FormInput control={form.control} name="orderNumber" label="Número do Pedido" placeholder="V12345678RIHP-01" error={form.formState.errors.orderNumber} />
                 
                 <FormFieldItem>
                     <Label htmlFor="pickupStore">Loja para Retirada</Label>
@@ -348,8 +343,8 @@ export function AuthorizationForm() {
                       label="Assinatura do Comprador"
                       onSignatureChange={(dataUrl) => field.onChange(dataUrl)}
                       signatureError={form.formState.errors.buyerSignature?.message}
-                      width={typeof window !== 'undefined' ? Math.min(window.innerWidth - 80, 450) : 450} // Adjusted width
-                      height={150} // Adjusted height
+                      width={typeof window !== 'undefined' ? Math.min(window.innerWidth - 80, 450) : 450} 
+                      height={150} 
                     />
                   )}
                 />
@@ -368,51 +363,54 @@ export function AuthorizationForm() {
         <style>
           {`
             @media print { body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } }
-            .pdf-page { padding: 7mm; width: 100%; box-sizing: border-box; background-color: #ffffff; }
-            .pdf-main-header { text-align: center; margin-bottom: 3mm; }
-            .pdf-main-header-brand { font-family: 'Poppins', sans-serif; font-size: 14pt; font-weight: bold; color: #1e3a5f; margin-bottom: 1mm; }
-            .pdf-main-header img { display: block; margin: 0 auto 2mm auto; max-width: 100px; height: auto; }
-            .pdf-main-header-title { font-family: 'Poppins', sans-serif; font-size: 11pt; font-weight: bold; color: #1e3a5f; margin-top: 2mm; text-transform: uppercase; }
+            .pdf-page { padding: 7mm; width: 100%; box-sizing: border-box; background-color: #ffffff; display: flex; flex-direction: column; justify-content: space-between; min-height: 280mm; /* Approx A4 height minus padding */}
+            .pdf-main-header { text-align: center; margin-bottom: 2mm; }
+            .pdf-main-header-brand { font-family: 'Poppins', sans-serif; font-size: 12pt; font-weight: bold; color: #1e3a5f; margin-bottom: 1mm; }
+            .pdf-main-header img { display: block; margin: 0 auto 1mm auto; max-width: 80px; height: auto; } /* Smaller logo */
+            .pdf-main-header-title { font-family: 'Poppins', sans-serif; font-size: 10pt; font-weight: bold; color: #1e3a5f; margin-top: 1mm; text-transform: uppercase; }
 
-            .pdf-section { margin-bottom: 3mm; padding: 2mm; border: 0.5px solid #cccccc; border-radius: 2px; }
-            .pdf-section-title { font-family: 'Poppins', sans-serif; font-size: 9pt; color: #A0D2EB; margin-bottom: 1.5mm; padding-bottom: 1mm; border-bottom: 0.5px solid #A0D2EB; text-transform: uppercase; }
+            .pdf-section { margin-bottom: 2mm; padding: 1.5mm; border: 0.25px solid #cccccc; border-radius: 1px; }
+            .pdf-section-title { font-family: 'Poppins', sans-serif; font-size: 8pt; color: #A0D2EB; margin-bottom: 1mm; padding-bottom: 0.5mm; border-bottom: 0.25px solid #A0D2EB; text-transform: uppercase; }
             
-            .pdf-kv-grid { display: grid; grid-template-columns: max-content 1fr max-content 1fr; gap: 0.5mm 4mm; align-items: baseline;}
-            .pdf-kv-label { font-weight: bold; text-align: left; font-size: 7.5pt; color: #444444; padding-right: 1mm;}
-            .pdf-kv-value { text-align: left; font-size: 8pt; word-break: break-word; }
+            .pdf-kv-grid { display: grid; grid-template-columns: max-content 1fr max-content 1fr; gap: 0.25mm 3mm; align-items: baseline;}
+            .pdf-kv-label { font-weight: bold; text-align: left; font-size: 7pt; color: #444444; padding-right: 0.5mm;}
+            .pdf-kv-value { text-align: left; font-size: 7.5pt; word-break: break-word; }
 
-            .pdf-text-block { margin-top: 3mm; margin-bottom: 3mm; font-size: 7.5pt; text-align: justify; }
-            .pdf-text-block p { margin-bottom: 1mm; }
+            .pdf-text-block { margin-top: 2mm; margin-bottom: 2mm; font-size: 7pt; text-align: justify; }
+            .pdf-text-block p { margin-bottom: 0.5mm; }
 
-            .pdf-order-details-table { margin-top: 2mm; width: 100%; border-collapse: collapse; }
-            .pdf-order-details-table th, .pdf-order-details-table td { border: 0.5px solid #dddddd; padding: 1mm; text-align: left; font-size: 7.5pt; word-break: break-word; }
+            .pdf-order-details-table { margin-top: 1.5mm; width: 100%; border-collapse: collapse; }
+            .pdf-order-details-table th, .pdf-order-details-table td { border: 0.25px solid #dddddd; padding: 0.5mm; text-align: left; font-size: 7pt; word-break: break-word; }
             .pdf-order-details-table th { background-color: #f0f0f0; font-weight: bold; }
 
 
-            .pdf-footer { margin-top: 3mm; font-size: 8pt; }
-            .pdf-footer-item { margin-bottom: 2mm; }
-            .pdf-signature-line { border-bottom: 0.5px solid #333333; width: 100%; min-height: 10px; margin-top: 0.5mm; }
-            .pdf-signature-image-container { text-align: left; margin-top: 1mm; margin-bottom: 2mm; min-height: 20mm; }
-            .pdf-signature-image-container img { max-width: 80mm; max-height: 20mm; border: 0.5px solid #eeeeee; }
+            .pdf-footer { margin-top: 2mm; font-size: 7.5pt; display: flex; justify-content: space-between; align-items: flex-end; width: 100%; }
+            .pdf-footer-item { margin-bottom: 1mm; }
+             .pdf-signature-section { display: flex; justify-content: space-between; align-items: flex-start; margin-top:1mm; }
+            .pdf-date-item { font-size: 7.5pt; margin-right: 10mm; }
+            .pdf-signature-block { text-align: left; }
+            .pdf-signature-line { border-bottom: 0.25px solid #333333; width: 60mm; min-height: 5px; margin-top: 0.5mm; }
+            .pdf-signature-image-container { text-align: left; margin-top: 0.5mm; margin-bottom: 1mm; min-height: 15mm; }
+            .pdf-signature-image-container img { max-width: 60mm; max-height: 15mm; border: 0.25px solid #eeeeee; } /* Smaller signature */
             
-            .pdf-document-image-container { text-align: center; margin-top: 2mm; }
-            .pdf-document-image-container img { max-width: 90%; height: auto; max-height: 45mm; border: 0.5px solid #cccccc; padding: 1mm; }
-            .pdf-document-placeholder { font-size: 7pt; color: #666666; text-align: center; padding: 5mm; border: 0.5px dashed #cccccc; }
+            .pdf-document-image-container { text-align: center; margin-top: 1mm; }
+            .pdf-document-image-container img { max-width: 80%; height: auto; max-height: 35mm; border: 0.25px solid #cccccc; padding: 0.5mm; } /* Smaller document images */
+            .pdf-document-placeholder { font-size: 6.5pt; color: #666666; text-align: center; padding: 3mm; border: 0.25px dashed #cccccc; }
             
-            .pdf-final-note { font-size: 6.5pt; color: #555555; margin-top: 4mm; text-align: left; border-top: 0.5px solid #eeeeee; padding-top: 2mm; }
-            .pdf-spacer { height: 2mm; }
+            .pdf-final-note { font-size: 6pt; color: #555555; margin-top: auto; text-align: left; border-top: 0.25px solid #eeeeee; padding-top: 1mm; width:100%; }
+            .pdf-spacer { height: 1mm; }
           `}
         </style>
-        <div className="pdf-page">
+        <div className="pdf-page-content" style={{flexGrow: 1}}>
           <div className="pdf-main-header">
             <div className="pdf-main-header-brand">RI HAPPY</div>
-            <img src="https://placehold.co/100x35.png" alt="Logo Ri Happy" data-ai-hint="company logo" />
+            <img src="https://placehold.co/80x28.png" alt="Logo Ri Happy" data-ai-hint="company logo" />
             <div className="pdf-main-header-title">TERMO DE AUTORIZAÇÃO PARA RETIRADA POR TERCEIROS</div>
           </div>
 
           <div className="pdf-section">
             <h2 className="pdf-section-title">COMPRADOR</h2>
-            <div className="pdf-kv-grid" style={{gridTemplateColumns: 'max-content 1fr max-content 1fr', gap: '0.5mm 5mm 0.5mm 2mm'}}>
+            <div className="pdf-kv-grid" style={{gridTemplateColumns: 'max-content 1fr max-content 1fr', gap: '0.25mm 3mm 0.25mm 1.5mm'}}>
               <div className="pdf-kv-label">Nome/Razão Social:</div> <div className="pdf-kv-value" style={{gridColumn: 'span 3'}}>{form.getValues('buyerName') || ''}</div>
               
               {form.getValues('buyerType') === 'individual' ? (
@@ -433,7 +431,7 @@ export function AuthorizationForm() {
 
           <div className="pdf-section">
             <h2 className="pdf-section-title">REPRESENTANTE</h2>
-            <div className="pdf-kv-grid" style={{gridTemplateColumns: 'max-content 1fr max-content 1fr', gap: '0.5mm 5mm 0.5mm 2mm'}}>
+            <div className="pdf-kv-grid" style={{gridTemplateColumns: 'max-content 1fr max-content 1fr', gap: '0.25mm 3mm 0.25mm 1.5mm'}}>
               <div className="pdf-kv-label">Nome/Razão Social:</div> <div className="pdf-kv-value" style={{gridColumn: 'span 3'}}>{form.getValues('representativeName') || ''}</div>
               <div className="pdf-kv-label">RG:</div> <div className="pdf-kv-value">{form.getValues('representativeRG') || ''}</div>
               <div className="pdf-kv-label">CPF:</div> <div className="pdf-kv-value">{form.getValues('representativeCPF') || ''}</div>
@@ -472,17 +470,16 @@ export function AuthorizationForm() {
             </table>
           </div>
           
-          <div className="pdf-footer">
-            <div className="pdf-footer-item" style={{float: 'left', marginRight: '20mm'}}>
+          <div className="pdf-signature-section">
+            <div className="pdf-date-item">
               Data da retirada: {form.getValues('pickupDate') ? format(form.getValues('pickupDate')!, 'dd / MM / yyyy', { locale: ptBR }) : '_____ / _____ / _____'}
             </div>
-            <div className="pdf-footer-item" style={{float: 'left'}}>
+            <div className="pdf-signature-block">
               Assinatura do comprador:
               <div className="pdf-signature-image-container">
-                {signaturePreview ? <img src={signaturePreview} alt="Assinatura do Comprador" /> : <div className="pdf-signature-line" style={{width: '150px', borderBottom: '0.5px solid #333'}}></div>}
+                {signaturePreview ? <img src={signaturePreview} alt="Assinatura do Comprador" /> : <div className="pdf-signature-line"></div>}
               </div>
             </div>
-            <div style={{clear: 'both'}}></div>
           </div>
           
           <div className="pdf-section" style={{pageBreakInside: 'avoid'}}>
@@ -492,7 +489,7 @@ export function AuthorizationForm() {
             </div>
           </div>
 
-          {form.getValues('buyerType') === 'corporate' && form.getValues('socialContractDocument') && (
+          {form.getValues('buyerType') === 'corporate' && (
             <div className="pdf-section" style={{pageBreakInside: 'avoid'}}>
               <h2 className="pdf-section-title">CONTRATO SOCIAL / ESTATUTO SOCIAL</h2>
               <div className="pdf-document-image-container">
@@ -502,10 +499,10 @@ export function AuthorizationForm() {
               </div>
             </div>
           )}
-          <div className="pdf-spacer"></div>
-          <div className="pdf-final-note">
-            (***) Os documentos mencionados são obrigatórios para entrega do(s) produto(s), não serão retidos em loja, após a conferência, serão devolvidos ao terceiro autorizado.
-          </div>
+        </div>
+        <div className="pdf-spacer"></div>
+        <div className="pdf-final-note">
+          (***) Os documentos mencionados são obrigatórios para entrega do(s) produto(s), não serão retidos em loja, após a conferência, serão devolvidos ao terceiro autorizado.
         </div>
       </div>
 
@@ -600,3 +597,4 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 );
 
 export default AuthorizationForm;
+

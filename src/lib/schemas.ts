@@ -50,7 +50,7 @@ export const authorizationSchema = z.object({
   purchaseValue: z.string().min(1, "Valor da compra é obrigatório.").transform(val => val.trim()),
   orderNumber: z.string()
     .min(1, "Número do pedido é obrigatório.")
-    .regex(/^RIHP-01\d{8}$/, "Número do pedido deve ser no formato RIHP-01 seguido por 8 números (ex: RIHP-0112345678).")
+    .regex(/^V\d{8}RIHP-01$/, "Número do pedido deve ser no formato V12345678RIHP-01.")
     .transform(val => val.trim().toUpperCase()),
   pickupStore: z.enum(storeOptions, { required_error: "Loja para retirada é obrigatória."}),
 
@@ -97,3 +97,4 @@ export const authorizationSchema = z.object({
 export type AuthorizationFormData = z.infer<typeof authorizationSchema>;
 
 export const storeOptionsList = storeOptions.map(store => ({ value: store, label: store }));
+
