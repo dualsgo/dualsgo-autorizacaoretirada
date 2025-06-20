@@ -12,10 +12,10 @@ h1, h2, h3, h4, h5, h6 {
 
 @layer base {
   :root {
-    --background: 51 100% 50%; /* Bright Yellow */
-    --foreground: 271 98% 33%; /* Purple */
+    --background: 0 0% 100%; /* White */
+    --foreground: 240 10% 3.9%; /* Dark Gray */
 
-    --card: 208 100% 100%; /* Slightly lighter than original background or white */
+    --card: 208 100% 100%;
     --card-foreground: 240 10% 3.9%;
 
     --popover: 208 100% 100%;
@@ -24,11 +24,11 @@ h1, h2, h3, h4, h5, h6 {
     --primary: 200 70% 83%; /* #A0D2EB - Light and airy blue */
     --primary-foreground: 200 50% 25%; /* Darker blue for text on primary */
 
-    --secondary: 208 60% 92%; /* Lighter variant of original background */
+    --secondary: 208 60% 92%;
     --secondary-foreground: 200 50% 25%;
 
     --muted: 208 50% 90%;
-    --muted-foreground: 240 5% 45%; /* Kept as gray for muted text */
+    --muted-foreground: 240 5% 45%;
 
     --accent: 20 100% 77%; /* #FFB38A - Soft Peach */
     --accent-foreground: 20 60% 30%; /* Darker peach/brown for text on accent */
@@ -58,9 +58,8 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .dark {
-    /* Dark theme adjustments would also primarily use the new foreground if not overridden */
-    --background: 240 10% 3.9%; /* Default dark bg */
-    --foreground: 51 100% 70%; /* Lighter yellow for dark mode text if purple is too dark */
+    --background: 240 10% 3.9%; 
+    --foreground: 0 0% 98%; /* Light Gray for dark mode text */
 
     --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;

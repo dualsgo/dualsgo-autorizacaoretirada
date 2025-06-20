@@ -6,7 +6,13 @@ export default function HomePage() {
   return (
     <main className="min-h-screen bg-background flex flex-col items-center justify-center py-8 px-4 selection:bg-accent/50 selection:text-accent-foreground">
       <header className="mb-8 text-center">
-        <Image src="/logo.png" alt="Logo da Empresa" width={160} height={56} className="mx-auto mb-6" data-ai-hint="company logo" />
+        <Image 
+          src="https://placehold.co/200x200.png" 
+          alt="Logo da Empresa" 
+          width={200} 
+          height={200} 
+          className="mx-auto mb-6" 
+          data-ai-hint="cartoon sun character" />
         
         <p className="text-2xl md:text-3xl font-headline text-foreground mb-2">
           Pedido prontinho para retirada!
