@@ -62,7 +62,7 @@ export const authorizationSchema = z.object({
   buyerSignature: z.string({required_error: "Assinatura do comprador é obrigatória."}).min(1, "Assinatura do comprador é obrigatória."),
 
   buyerIdDocument: fileSchema(ACCEPTED_IMAGE_TYPES, true, "Documento de identidade do comprador é obrigatório."),
-  socialContractDocument: fileSchema(ACCEPTED_DOCUMENT_TYPES, false, "Contrato social é obrigatório para Pessoa Jurídica."), // Requirement handled in superRefine
+  socialContractDocument: fileSchema(ACCEPTED_DOCUMENT_TYPES, false, "Contrato social é obrigatório para Pessoa Jurídica."),
 }).superRefine((data, ctx) => {
   if (data.buyerType === "individual") {
     if (!data.buyerRG || data.buyerRG.trim().length === 0) {
@@ -93,6 +93,21 @@ export const authorizationSchema = z.object({
             message: "Contrato Social / Estatuto Social é obrigatório para Pessoa Jurídica.",
             path: ["socialContractDocument"],
         });
+    }
+  }
+
+  if (data.purchaseDate && data.pickupDate) {
+    const purchaseDate = new Date(data.purchaseDate);
+    const pickupDate = new Date(data.pickupDate);
+    purchaseDate.setHours(0, 0, 0, 0); // Normalize to start of day
+    pickupDate.setHours(0, 0, 0, 0); // Normalize to start of day
+
+    if (pickupDate <= purchaseDate) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "A data da retirada deve ser posterior à data da compra.",
+        path: ["pickupDate"],
+      });
     }
   }
 });

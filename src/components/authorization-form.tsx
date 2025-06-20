@@ -94,7 +94,7 @@ export function AuthorizationForm() {
 
     try {
       const canvas = await html2canvas(pdfContentElement, {
-        scale: 2, // Increased scale for better quality
+        scale: 2, 
         useCORS: true,
         logging: false,
         width: pdfContentElement.scrollWidth,
@@ -103,8 +103,8 @@ export function AuthorizationForm() {
         windowHeight: pdfContentElement.scrollHeight,
       });
       
-      const imgData = canvas.toDataURL('image/png', 0.95); // Use a higher quality setting
-      const pdf = new jsPDF('p', 'mm', 'a4', true); // true for compress
+      const imgData = canvas.toDataURL('image/png', 0.95); 
+      const pdf = new jsPDF('p', 'mm', 'a4', true); 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
@@ -114,7 +114,6 @@ export function AuthorizationForm() {
       let imgRenderWidth = pdfWidth;
       let imgRenderHeight = pdfWidth / aspectRatio;
 
-      // If height is too big, scale by height
       if (imgRenderHeight > pdfHeight) {
         imgRenderHeight = pdfHeight;
         imgRenderWidth = pdfHeight * aspectRatio;
@@ -161,12 +160,10 @@ export function AuthorizationForm() {
         socialContractDataUrl = await readFileAsDataURL(data.socialContractDocument);
       }
       
-      // This state update needs to complete before html2canvas runs
       await new Promise<void>(resolve => {
         setBuyerIdPreview(buyerIdDataUrl);
         setSocialContractPreview(socialContractDataUrl);
         setSignaturePreview(data.buyerSignature || null);
-        // Use requestAnimationFrame and a short timeout to ensure DOM updates
         requestAnimationFrame(() => setTimeout(resolve, 50)); 
       });
             
@@ -189,7 +186,6 @@ export function AuthorizationForm() {
           </CardTitle>
           <CardDescription className="text-center text-primary-foreground/80 space-y-2 mt-2">
             <p>Para garantir a segurança da sua compra, preencha o Termo de Autorização caso outra pessoa vá retirar seu pedido.</p>
-            <p>Alguém vai retirar seu pedido por você? Sem problemas! Basta preencher o formulário abaixo autorizando a retirada por terceiros.</p>
             <p>Essa etapa é importante para proteger sua compra e garantir que tudo ocorra da forma mais segura possível 😉</p>
             <p className="font-semibold">Atenção: você tem até 15 dias para retirar o pedido na loja escolhida. Após esse prazo, o pedido será cancelado e o pagamento estornado automaticamente.</p>
           </CardDescription>
@@ -199,7 +195,7 @@ export function AuthorizationForm() {
             
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 font-headline"><User className="text-primary" /> Comprador</CardTitle>
+                <CardTitle className="flex items-center gap-2 font-headline"><User className="text-primary" /> Dados do Comprador</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormFieldItem className="md:col-span-2">
@@ -246,7 +242,8 @@ export function AuthorizationForm() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 font-headline"><Users className="text-primary" /> Representante (Terceiro)</CardTitle>
+                <CardTitle className="flex items-center gap-2 font-headline"><Users className="text-primary" /> Dados da pessoa autorizada a retirar</CardTitle>
+                <CardDescription>Essa pessoa precisa apresentar o PDF desta autorização na loja.</CardDescription>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
@@ -352,7 +349,6 @@ export function AuthorizationForm() {
         </CardContent>
       </Card>
 
-      {/* Hidden PDF Template. Keep structure and styling closely matching the provided RiHappy image. */}
       <div ref={pdfTemplateRef} className="hidden" style={{ width: '210mm', height: '297mm', boxSizing: 'border-box', backgroundColor: 'white', color: 'black', fontFamily: 'Arial, sans-serif' }}>
         <style>
           {`
@@ -383,6 +379,7 @@ export function AuthorizationForm() {
             .pdf-section-title-box { font-size: 9pt; font-weight: bold; margin-bottom: 1.5mm; background-color: #e0e0e0; padding: 1mm 1.5mm; border: 0.5px solid black; display: inline-block; }
             
             .pdf-info-grid { display: grid; grid-template-columns: auto 1fr auto 1fr; gap: 0.5mm 3mm; border: 0.5px solid black; padding: 1.5mm; }
+            .pdf-info-grid-buyer-address { display: grid; grid-template-columns: auto 1fr; gap: 0.5mm 3mm; border: 0.5px solid black; padding: 1.5mm; grid-column: span 4; }
             .pdf-info-grid-full { display: grid; grid-template-columns: auto 1fr; gap: 0.5mm 3mm; border: 0.5px solid black; padding: 1.5mm; }
             .pdf-info-label { font-weight: normal; white-space: nowrap; }
             .pdf-info-value { font-weight: normal; word-break: break-word; }
@@ -392,6 +389,8 @@ export function AuthorizationForm() {
             .pdf-text-block { margin: 4mm 0; font-size: 8pt; text-align: justify; }
             .pdf-text-block p { margin-bottom: 1.5mm; }
             .pdf-text-block strong { font-weight: bold; }
+            .pdf-text-block ul { list-style-type: disc; padding-left: 5mm; margin-bottom: 1.5mm; }
+            .pdf-text-block li { margin-bottom: 0.5mm; }
 
             .pdf-order-table { width: 100%; border-collapse: collapse; margin-bottom: 4mm; font-size: 8pt; }
             .pdf-order-table th, .pdf-order-table td { border: 0.5px solid black; padding: 1mm; text-align: left; vertical-align: middle; }
@@ -425,7 +424,7 @@ export function AuthorizationForm() {
           </div>
 
           <div className="pdf-section">
-            <div className="pdf-section-title-box">COMPRADOR</div>
+            <div className="pdf-section-title-box">DADOS DO COMPRADOR</div>
             <div className="pdf-info-grid">
                 <div className="pdf-info-label">Nome/Razão Social:</div>
                 <div className="pdf-info-value underline" style={{gridColumn: 'span 3'}}>{form.getValues('buyerName') || ''}</div>
@@ -443,21 +442,21 @@ export function AuthorizationForm() {
                         <div className="pdf-info-value underline" style={{gridColumn: 'span 3'}}>{form.getValues('buyerCNPJ') || ''}</div>
                     </>
                 )}
-                
+            </div>
+            <div className="pdf-info-grid-buyer-address" style={{marginTop: '1mm'}}>
                 <div className="pdf-info-label">Endereço:</div>
-                <div className="pdf-info-value underline" style={{gridColumn: 'span 3'}}>
-                    {`${form.getValues('buyerStreet') || ''}, ${form.getValues('buyerNumber') || ''}${form.getValues('buyerComplement') ? ` - ${form.getValues('buyerComplement')}` : ''} - ${form.getValues('buyerNeighborhood') || ''}`}
+                <div className="pdf-info-value underline">
+                    {`${form.getValues('buyerStreet') || ''}, ${form.getValues('buyerNumber') || ''}${form.getValues('buyerComplement') ? `, ${form.getValues('buyerComplement')}` : ''} - ${form.getValues('buyerNeighborhood') || ''}`}
                 </div>
-
                 <div className="pdf-info-label">Município:</div>
                 <div className="pdf-info-value underline">{form.getValues('buyerCity') || ''}</div>
                 <div className="pdf-info-label">UF:</div>
-                <div className="pdf-info-value underline">{form.getValues('buyerState') || ''}</div>
+                <div className="pdf-info-value underline" style={{gridColumnEnd: 'span 1'}}>{form.getValues('buyerState') || ''}</div> {/* Adjusted span for UF */}
             </div>
           </div>
 
           <div className="pdf-section">
-            <div className="pdf-section-title-box">REPRESENTANTE</div>
+            <div className="pdf-section-title-box">DADOS DA PESSOA AUTORIZADA A RETIRAR</div>
             <div className="pdf-info-grid">
                 <div className="pdf-info-label">Nome/Razão Social:</div>
                 <div className="pdf-info-value underline" style={{gridColumn: 'span 3'}}>{form.getValues('representativeName') || ''}</div>
@@ -470,9 +469,17 @@ export function AuthorizationForm() {
           </div>
           
           <div className="pdf-text-block">
-            <p>O <strong>COMPRADOR</strong> autoriza seu <strong>REPRESENTANTE</strong>, acima identificado, a retirar os produtos listados no Pedido, cujas informações estão detalhadas no quadro abaixo, na loja física escolhida pelo <strong>COMPRADOR</strong> no momento da realização de sua compra no site.</p>
-            <p>Para retirada dos produtos, o <strong>REPRESENTANTE</strong> deverá ser maior de 18 anos, estar munido de documento oficial com foto e deste termo devidamente assinado pelo <strong>COMPRADOR</strong> e uma cópia do documento de identidade oficial do <strong>COMPRADOR</strong>. Sendo o <strong>COMPRADOR</strong> pessoa jurídica, uma foto ou cópia autenticada do Contrato Social / Estatuto Social da empresa do <strong>COMPRADOR</strong> deverá ser apresentada. (*)</p>
-            <p>O horário de funcionamento da loja física escolhida para retirada do pedido, deverá ser respeitado.</p>
+            <p>O comprador autoriza o representante identificado acima a retirar os produtos do pedido na loja escolhida no momento da compra no site.</p>
+            <p>Para realizar a retirada, o representante deve:</p>
+            <ul>
+              <li>Ter mais de 18 anos;</li>
+              <li>Apresentar um documento oficial com foto;</li>
+              <li>Apresentar o PDF da autorização gerado pelo comprador (não é necessário imprimir);</li>
+              <li>Levar uma cópia do documento de identidade do comprador.</li>
+            </ul>
+            <p><strong>📨 Importante:</strong> O comprador deve enviar o PDF da autorização para o WhatsApp ou e-mail da loja, garantindo que um colaborador da loja confirme o recebimento.</p>
+            <p>Se o comprador for uma pessoa jurídica, também é necessário apresentar uma foto ou cópia autenticada do Contrato Social ou Estatuto Social da empresa.</p>
+            <p><strong>⚠️ A retirada deve ser feita dentro do horário de funcionamento da loja escolhida.</strong></p>
           </div>
 
           <div className="pdf-section">
