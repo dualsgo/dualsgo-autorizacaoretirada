@@ -79,7 +79,7 @@ export function AuthorizationForm() {
     pdfContentElement.style.left = '-9999px'; 
     pdfContentElement.style.top = '0px';
     pdfContentElement.style.width = '210mm'; 
-    pdfContentElement.style.height = '297mm';
+    pdfContentElement.style.minHeight = '297mm'; // Use minHeight to allow content to expand if needed
     pdfContentElement.style.backgroundColor = '#ffffff';
     pdfContentElement.style.padding = '0';
     pdfContentElement.style.margin = '0';
@@ -177,7 +177,7 @@ export function AuthorizationForm() {
       <Card className="shadow-xl">
         <CardHeader className="bg-primary/10">
           <CardTitle className="text-3xl font-headline text-center text-primary-foreground">
-            🎉 A diversão continua com você!
+             🎉 A diversão continua com você!
           </CardTitle>
           <CardDescription className="text-center text-primary-foreground/80 space-y-2 mt-2">
             <p>Para garantir a segurança da sua compra, preencha o Termo de Autorização caso outra pessoa vá retirar seu pedido.</p>
@@ -337,251 +337,287 @@ export function AuthorizationForm() {
         </CardContent>
       </Card>
       
-      <div ref={pdfTemplateRef} className="hidden" style={{ width: '210mm', height: '297mm', boxSizing: 'border-box', backgroundColor: 'white', color: 'black', fontFamily: "'Roboto', Arial, sans-serif" }}>
+      {/* PDF Template - hidden, used for generation */}
+      <div ref={pdfTemplateRef} className="hidden">
         <style>
           {`
             @page { 
               size: A4;
               margin: 0; 
             }
-            body {
+            body { /* Applied by html2canvas to the capture region, not document body */
               margin: 0; 
-              color: #333333;
+              color: #333333; /* Default dark gray for text */
               font-family: 'Roboto', Arial, sans-serif;
+              background-color: #FFFFFF; /* Ensure background is white for capture */
             }
             .pdf-page-container {
-              width: 100%; 
-              height: 100%; 
-              padding: 20mm; 
+              width: 210mm; 
+              min-height: 297mm; /* Ensure it tries to fill A4 */
+              padding: 15mm; /* Margins: reduced from 20mm to 15mm for more content space */
               box-sizing: border-box;
-              font-size: 10pt;
-              line-height: 1.3; /* Adjusted line height */
+              font-size: 10pt; /* Base font size */
+              line-height: 1.4; /* Slightly increased line spacing */
+              background-color: #FFFFFF;
             }
+
+            /* HEADER */
             .pdf-header { 
-              display: flex;
-              align-items: center;
-              justify-content: space-between;
+              text-align: center; 
               margin-bottom: 8mm; 
             }
             .pdf-logo { 
-              max-width: 80px; 
+              max-width: 70px; /* Slightly smaller logo */
               height: auto;
+              margin-bottom: 4mm;
             }
             .pdf-main-title { 
-              font-size: 16pt; /* Adjusted title size */
+              font-size: 16pt; /* Adjusted from 18pt */
               font-weight: bold; 
               text-transform: uppercase;
-              text-align: center;
-              flex-grow: 1; /* Allows title to take space */
-            }
-            .pdf-title-separator {
-              border: 0;
-              height: 1px;
-              background-color: #DDDDDD;
-              margin: 6mm 0 10mm 0;
+              margin-bottom: 5mm; 
+              padding-bottom: 2mm;
+              border-bottom: 1px solid #DDDDDD; /* Discrete line */
+              color: #000000; /* Black title */
             }
 
-            .pdf-data-card {
-              background-color: #f9f9f9;
-              border: 1px solid #DDDDDD;
-              border-radius: 4px;
-              padding: 4mm;
-              margin-bottom: 10mm; /* Increased spacing between sections */
+            /* DATA SECTIONS (COMPRADOR, REPRESENTANTE) */
+            .pdf-data-section { 
+              background-color: #f9f9f9; /* Light gray background for card */
+              border: 1px solid #DDDDDD; /* Soft border for card */
+              border-radius: 3px;
+              padding: 0; /* Padding will be on title and content */
+              margin-bottom: 7mm; /* Increased spacing between sections */
+              overflow: hidden; /* To contain floated elements or ensure border radius applies */
             }
-            .pdf-data-card-title {
-              font-size: 12pt; /* Adjusted subtitle size */
+            .pdf-data-section-title {
+              font-size: 12pt; /* Adjusted from 14pt */
               font-weight: bold;
-              color: white;
-              background-color: #4A4A4A;
-              padding: 2mm 3mm;
-              margin: -4mm -4mm 4mm -4mm;
-              border-top-left-radius: 3px;
-              border-top-right-radius: 3px;
+              color: #FFFFFF; /* White text */
+              background-color: #4A4A4A; /* Darker gray background for title bar */
+              padding: 2.5mm 4mm;
+              margin: 0; /* Reset margin for the title bar */
               text-align: left;
             }
-            .pdf-data-content {
-              display: grid;
-              grid-template-columns: auto 1fr auto 1fr; /* Label, Value, Label, Value */
-              gap: 2mm 5mm; 
-              align-items: baseline;
+            .pdf-data-content-wrapper {
+              padding: 4mm; /* Padding inside the card, below title */
             }
-            .pdf-data-content-full-width { /* For single full-width items */
+            .pdf-data-grid {
               display: grid;
-              grid-template-columns: auto 1fr;
-              gap: 2mm 5mm;
-              align-items: baseline;
+              grid-template-columns: repeat(2, 1fr); /* Two columns */
+              gap: 2mm 6mm; /* Row gap, Column gap */
+            }
+            .pdf-data-grid-item {
+              /* Each item takes one cell, label+value on same line where possible */
+            }
+            .pdf-data-grid-item.full-width {
+              grid-column: span 2; /* For items like Name, CNPJ to span both columns */
             }
             .pdf-field-label {
               font-weight: bold;
-              white-space: nowrap;
-              padding-right:1mm;
+              display: inline;
+              color: #000000;
             }
             .pdf-field-value {
+              display: inline;
+              margin-left: 1.5mm;
               word-break: break-word;
-              min-height: 1em; /* Ensures value takes space even if empty */
+              color: #000000;
             }
             
+            /* INSTRUCTIONS BLOCK */
             .pdf-text-block { 
-              margin: 10mm 0; 
-              font-size: 10pt; 
+              margin: 7mm 0; 
+              font-size: 9pt; /* Slightly smaller for dense text */
               text-align: left; 
+              color: #000000;
             }
             .pdf-text-block p { 
-              margin-bottom: 3mm; 
+              margin-bottom: 2.5mm; 
             }
             .pdf-text-block strong { 
               font-weight: bold; 
             }
-            .pdf-instructions-list {
-              list-style: none;
-              padding-left: 0;
-              margin: 4mm 0;
-            }
-            .pdf-instructions-list li {
+            .pdf-text-block ul { 
+              list-style-position: outside;
+              padding-left: 5mm; 
+              margin-top: 1mm;
               margin-bottom: 2.5mm;
-              display: flex;
-              align-items: flex-start;
             }
-            .pdf-instructions-list .icon {
-              margin-right: 2.5mm;
-              font-size: 12pt; 
-              line-height: 1.2; 
+            .pdf-text-block li {
+              margin-bottom: 1.5mm;
             }
-            
-            .pdf-order-details-section {
-                margin-bottom: 10mm;
-            }
-            .pdf-order-details-title {
-                font-size: 12pt; /* Adjusted subtitle size */
-                font-weight: bold;
-                margin-bottom: 4mm;
-                color: #333333;
+
+            /* ORDER DETAILS TABLE */
+            .pdf-order-details-section-title {
+              font-size: 12pt; /* Consistent with other section titles */
+              font-weight: bold;
+              margin-bottom: 3mm;
+              color: #000000;
             }
             .pdf-order-table { 
               width: 100%; 
-              border: 1px solid #DDDDDD;
               border-collapse: collapse; 
               margin-bottom: 5mm; 
-              font-size: 10pt;
+              font-size: 9pt; /* Smaller for table data */
             }
             .pdf-order-table th, .pdf-order-table td { 
-              border: 1px solid #DDDDDD;
+              border: 1px solid #DDDDDD; /* Discrete borders for table */
               padding: 2mm; 
               text-align: left;
+              color: #000000;
             }
             .pdf-order-table th {
               font-weight: bold;
-              background-color: #f0f0f0;
+              background-color: #f0f0f0; /* Light gray for table header */
             }
             .pdf-pickup-date-highlight {
               margin-top: 5mm;
-              margin-bottom: 8mm;
+              margin-bottom: 6mm;
               font-size: 10pt;
             }
-            .pdf-pickup-date-highlight strong {
+            .pdf-pickup-date-highlight .label {
               font-weight: bold;
+              color: #000000;
             }
-            .pdf-pickup-date-value {
+            .pdf-pickup-date-highlight .value {
               font-weight: bold;
-              color: #006400; /* Dark Green */
+              color: #006400; /* Dark Green for date value */
             }
 
+            /* SIGNATURE AND DOCUMENTS */
             .pdf-signature-docs-container {
               display: flex;
-              justify-content: space-between;
-              gap: 10mm;
-              margin-top: 8mm;
-              margin-bottom: 8mm;
-              align-items: flex-start;
+              gap: 8mm; /* Gap between document and signature */
+              margin-top: 6mm;
+              margin-bottom: 6mm;
+              align-items: flex-start; /* Align items to the top */
             }
-            .pdf-doc-column {
-              flex: 1;
+            .pdf-doc-column { /* Generic column for doc/sig */
               text-align: center;
+            }
+            .pdf-signature-docs-container .pdf-doc-column:first-child { /* Document Column */
+              flex-grow: 2; 
+              flex-basis: 0;
+              min-width: 0;
+            }
+            .pdf-signature-docs-container .pdf-doc-column:last-child { /* Signature Column */
+              flex-grow: 1;
+              flex-basis: 0;
+              min-width: 0;
             }
             .pdf-column-title {
               font-size: 10pt;
               font-weight: bold;
               margin-bottom: 2mm;
-              color: #333333;
+              color: #000000;
             }
             .pdf-placeholder-box {
-              border: 1px dashed #BBBBBB;
-              height: 50mm; 
+              border: 1px dashed #BBBBBB; /* Dashed border for placeholder */
+              height: 55mm; /* Consistent height */
               display: flex;
               align-items: center;
               justify-content: center;
               background-color: #fdfdfd;
+              padding: 2mm; /* Padding inside the box */
+              box-sizing: border-box;
+              overflow: hidden;
             }
             .pdf-placeholder-box img {
-              max-width: 95%;
-              max-height: 95%;
+              max-width: 100%;
+              max-height: 100%;
               object-fit: contain;
             }
+            .pdf-placeholder-text {
+              font-size: 8pt;
+              color: #777777;
+            }
             
+            /* SOCIAL CONTRACT (if applicable) */
             .pdf-social-contract-section {
-                margin-top: 8mm;
+                margin-top: 6mm; /* Space above if it appears */
                 text-align: center;
             }
+             .pdf-social-contract-section .pdf-placeholder-box {
+                height: 60mm; /* Slightly taller for potentially portrait docs */
+             }
 
+
+            /* FINAL DISCLAIMER */
             .pdf-final-disclaimer { 
               font-size: 8pt; 
-              margin-top: auto; 
-              padding-top: 5mm; 
+              margin-top: auto; /* Pushes to bottom if flex container */
+              padding-top: 4mm; 
               text-align: left;
               color: #555555;
+              border-top: 1px solid #EEEEEE; /* Subtle top border */
             }
           `}
         </style>
         <div className="pdf-page-container">
           <div className="pdf-header">
-            <img src="https://placehold.co/80x28.png" alt="Logo" className="pdf-logo" data-ai-hint="company logo" />
+            <img src="https://placehold.co/70x25.png" alt="Logo" className="pdf-logo" data-ai-hint="company logo" />
             <div className="pdf-main-title">TERMO DE AUTORIZAÇÃO PARA RETIRADA POR TERCEIROS</div>
           </div>
-          <hr className="pdf-title-separator" />
 
-          <div className="pdf-data-card">
-            <div className="pdf-data-card-title">DADOS DO COMPRADOR</div>
-            <div className="pdf-data-content">
-                <span className="pdf-field-label" style={{gridColumn: '1 / span 1'}}>Nome/Razão Social:</span>
-                <span className="pdf-field-value" style={{gridColumn: '2 / span 3'}}>{form.getValues('buyerName') || ' '}</span>
-              
-              {form.getValues('buyerType') === 'individual' ? (
-                <>
-                  <span className="pdf-field-label">RG:</span>
-                  <span className="pdf-field-value">{form.getValues('buyerRG') || ' '}</span>
-                  <span className="pdf-field-label">CPF:</span>
-                  <span className="pdf-field-value">{form.getValues('buyerCPF') || ' '}</span>
-                </>
-              ) : (
-                <>
-                  <span className="pdf-field-label" style={{gridColumn: '1 / span 1'}}>CNPJ:</span>
-                  <span className="pdf-field-value" style={{gridColumn: '2 / span 3'}}>{form.getValues('buyerCNPJ') || ' '}</span>
-                </>
-              )}
+          <div className="pdf-data-section">
+            <div className="pdf-data-section-title">DADOS DO COMPRADOR</div>
+            <div className="pdf-data-content-wrapper">
+              <div className="pdf-data-grid">
+                <div className="pdf-data-grid-item full-width">
+                  <span className="pdf-field-label">Nome/Razão Social:</span>
+                  <span className="pdf-field-value">{form.getValues('buyerName') || ' '}</span>
+                </div>
+                {form.getValues('buyerType') === 'individual' ? (
+                  <>
+                    <div className="pdf-data-grid-item">
+                      <span className="pdf-field-label">RG:</span>
+                      <span className="pdf-field-value">{form.getValues('buyerRG') || ' '}</span>
+                    </div>
+                    <div className="pdf-data-grid-item">
+                      <span className="pdf-field-label">CPF:</span>
+                      <span className="pdf-field-value">{form.getValues('buyerCPF') || ' '}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="pdf-data-grid-item full-width">
+                    <span className="pdf-field-label">CNPJ:</span>
+                    <span className="pdf-field-value">{form.getValues('buyerCNPJ') || ' '}</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="pdf-data-card">
-            <div className="pdf-data-card-title">DADOS DA PESSOA AUTORIZADA A RETIRAR</div>
-             <div className="pdf-data-content">
-                <span className="pdf-field-label" style={{gridColumn: '1 / span 1'}}>Nome:</span>
-                <span className="pdf-field-value" style={{gridColumn: '2 / span 3'}}>{form.getValues('representativeName') || ' '}</span>
-                <span className="pdf-field-label">RG:</span>
-                <span className="pdf-field-value">{form.getValues('representativeRG') || ' '}</span>
-                <span className="pdf-field-label">CPF:</span>
-                <span className="pdf-field-value">{form.getValues('representativeCPF') || ' '}</span>
+          <div className="pdf-data-section">
+            <div className="pdf-data-section-title">DADOS DA PESSOA AUTORIZADA A RETIRAR</div>
+            <div className="pdf-data-content-wrapper">
+              <div className="pdf-data-grid">
+                <div className="pdf-data-grid-item full-width">
+                  <span className="pdf-field-label">Nome:</span>
+                  <span className="pdf-field-value">{form.getValues('representativeName') || ' '}</span>
+                </div>
+                <div className="pdf-data-grid-item">
+                  <span className="pdf-field-label">RG:</span>
+                  <span className="pdf-field-value">{form.getValues('representativeRG') || ' '}</span>
+                </div>
+                <div className="pdf-data-grid-item">
+                  <span className="pdf-field-label">CPF:</span>
+                  <span className="pdf-field-value">{form.getValues('representativeCPF') || ' '}</span>
+                </div>
+              </div>
             </div>
           </div>
           
           <div className="pdf-text-block">
             <p>O comprador autoriza o representante identificado acima a retirar os produtos do pedido na loja escolhida no momento da compra no site.</p>
-            <p><span className="icon">🔔</span> <strong>Importante:</strong> O comprador deve enviar o PDF da autorização para o WhatsApp ou e-mail da loja, garantindo que um colaborador da loja confirme o recebimento. A pessoa autorizada a retirar deve ser maior de idade.</p>
+            <p><span>🔔</span> <strong style={{fontWeight: 'bold'}}>Importante:</strong> O comprador deve enviar o PDF da autorização para o WhatsApp ou e-mail da loja, garantindo que um colaborador da loja confirme o recebimento. A pessoa autorizada a retirar deve ser maior de idade.</p>
             <p>Se o comprador for uma pessoa jurídica, também é necessário apresentar uma foto ou cópia autenticada do Contrato Social ou Estatuto Social da empresa.</p>
-            <p><span className="icon">⚠️</span> <strong>Atenção:</strong> A retirada deve ser feita dentro do horário de funcionamento da loja escolhida.</p>
+            <p><span>⚠️</span> <strong style={{fontWeight: 'bold'}}>Atenção:</strong> A retirada deve ser feita dentro do horário de funcionamento da loja escolhida.</p>
           </div>
 
-          <div className="pdf-order-details-section">
-            <div className="pdf-order-details-title">DETALHES DO PEDIDO</div>
+          <div> {/* Removed pdf-data-section for a cleaner look before table */}
+            <div className="pdf-order-details-section-title">DETALHES DO PEDIDO</div>
             <table className="pdf-order-table">
               <thead>
                 <tr>
@@ -594,7 +630,7 @@ export function AuthorizationForm() {
               <tbody>
                 <tr>
                   <td>{form.getValues('purchaseDate') ? format(form.getValues('purchaseDate') as Date, 'dd/MM/yyyy', { locale: ptBR }) : ' '}</td>
-                  <td>R$ {(form.getValues('purchaseValue') || ' ').replace(',', '.')}</td>
+                  <td>R$ {(form.getValues('purchaseValue') || '0,00').replace('.', ',')}</td>
                   <td>{form.getValues('orderNumber') || ' '}</td>
                   <td>{storeOptionsList.find(s => s.value === form.getValues('pickupStore'))?.label || form.getValues('pickupStore') || ' '}</td>
                 </tr>
@@ -603,27 +639,27 @@ export function AuthorizationForm() {
           </div>
           
           <div className="pdf-pickup-date-highlight">
-            <strong>Data prevista para retirada:</strong>{' '}
-            <span className="pdf-pickup-date-value">
+            <span className="label">Data prevista para retirada:</span>{' '}
+            <span className="value">
                 {form.getValues('pickupDate') ? format(form.getValues('pickupDate') as Date, 'dd / MM / yyyy', { locale: ptBR }) : '_____ / _____ / _____'}
             </span>
           </div>
             
           <div className="pdf-signature-docs-container">
-             <div className="pdf-doc-column">
+             <div className="pdf-doc-column"> {/* Documento do Comprador */}
                 <div className="pdf-column-title">Documento do Comprador</div>
                 <div className="pdf-placeholder-box pdf-document-image-wrapper">
                     {buyerIdPreview ? (
                         <img src={buyerIdPreview} alt="Identidade do Comprador" />
-                    ) : <span style={{color: '#AAAAAA', fontSize: '9pt'}}>(Documento não fornecido)</span>}
+                    ) : <span className="pdf-placeholder-text">(Documento não fornecido)</span>}
                 </div>
             </div>
-            <div className="pdf-doc-column">
+            <div className="pdf-doc-column"> {/* Assinatura do Comprador */}
                 <div className="pdf-column-title">Assinatura do Comprador</div>
                 <div className="pdf-placeholder-box pdf-signature-box">
                 {signaturePreview ? (
                     <img src={signaturePreview} alt="Assinatura do Comprador" />
-                ) : <span style={{color: '#AAAAAA', fontSize: '9pt'}}>(Assinatura não fornecida)</span>}
+                ) : <span className="pdf-placeholder-text">(Assinatura não fornecida)</span>}
                 </div>
             </div>
           </div>
@@ -631,12 +667,12 @@ export function AuthorizationForm() {
           {form.getValues('buyerType') === 'corporate' && (
             <div className="pdf-social-contract-section">
               <div className="pdf-column-title">Contrato Social / Estatuto Social</div>
-              <div className="pdf-placeholder-box" style={{height: '60mm'}}>
+              <div className="pdf-placeholder-box">
                 {socialContractPreview ? (
                     socialContractPreview.startsWith('data:image') ? 
                         <img src={socialContractPreview} alt="Contrato Social" /> :
-                        <span style={{color: '#AAAAAA', fontSize: '9pt'}}>Preview não disponível para PDF.</span>
-                ) : <span style={{color: '#AAAAAA', fontSize: '9pt'}}>(Documento não fornecido)</span>}
+                        <span className="pdf-placeholder-text">Preview não disponível para PDF.</span>
+                ) : <span className="pdf-placeholder-text">(Documento não fornecido)</span>}
               </div>
             </div>
            )}
@@ -739,4 +775,3 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 );
 
 export default AuthorizationForm;
-
