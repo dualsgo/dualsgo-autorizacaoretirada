@@ -20,9 +20,8 @@ export default function HomePage() {
         </p>
       </header>
       <AuthorizationForm />
-      <footer className="mt-12 text-center text-sm text-muted-foreground">
-        <p>&copy; {new Date().getFullYear()} AutorizaTerceiro. Todos os direitos reservados.</p>
-        <p className="mt-1">Desenvolvido para facilitar suas retiradas.</p>
+      <footer className="mt-12 text-center text-xs text-muted-foreground px-4">
+        <p>Ri Happy é uma empresa do Grupo Ri Happy S/A, com escritório administrativo na Av. Engenheiro Luís Carlos Berrini, 105 - Cidade Monções, – São Paulo/SP, inscrita no CNPJ 58.731.662/0001-11 - atendimento@rihappy.com.br</p>
       </footer>
     </main>
   );
