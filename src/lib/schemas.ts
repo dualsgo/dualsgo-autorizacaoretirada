@@ -21,6 +21,30 @@ const capitalizeWords = (str: string | undefined) => {
     .join(' ');
 };
 
+const formatCPF = (cpf: string | undefined) => {
+  if (!cpf) return undefined;
+  const cleaned = cpf.replace(/\D/g, '');
+  if (cleaned.length !== 11) return cpf; // Return original if not 11 digits
+  return cleaned.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
+};
+
+const formatRG = (rg: string | undefined) => {
+  if (!rg) return undefined;
+  const cleaned = rg.replace(/\D/g, '');
+  // Basic RG format, can be adjusted for more specific state formats
+  if (cleaned.length === 9) { // Common format like XX.XXX.XXX-Y (SP)
+    return cleaned.replace(/^(\d{2})(\d{3})(\d{3})([0-9A-Za-z])$/, '$1.$2.$3-$4');
+  }
+  if (cleaned.length === 8) { // Another common format XX.XXX.XXX
+     return cleaned.replace(/^(\d{2})(\d{3})(\d{3})$/, '$1.$2.$3');
+  }
+   if (cleaned.length === 7 && !isNaN(Number(cleaned.charAt(cleaned.length -1)))) { // MG: X.XXX.XXX
+    return cleaned.replace(/^(\d{1})(\d{3})(\d{3})$/, '$1.$2.$3');
+  }
+  return rg; // Return original if no specific format matches
+};
+
+
 const storeOptions = [
   "1030 - NOVA AMÉRICA", "1033 - NORTESHOPPING", "1052 - BANGU", "1057 - IGUATEMI RJ",
   "1058 - VIA PARQUE", "1072 - GRANDE RIO", "1074 - NITERÓI PLAZA SHOP.", "1078 - ILHA PLAZA",
@@ -35,8 +59,8 @@ export const authorizationSchema = z.object({
     required_error: "Selecione o tipo de comprador.",
   }),
   buyerName: z.string().min(1, "Nome/Razão Social é obrigatório.").transform(val => capitalizeWords(val.trim())),
-  buyerRG: z.string().optional().transform(val => val ? val.trim() : undefined),
-  buyerCPF: z.string().optional().transform(val => val ? val.trim() : undefined),
+  buyerRG: z.string().optional().transform(val => val ? formatRG(val.trim()) : undefined),
+  buyerCPF: z.string().optional().transform(val => val ? formatCPF(val.trim()) : undefined),
   buyerCNPJ: z.string().optional().transform(val => val ? val.trim() : undefined),
   
   buyerStreet: z.string().min(1, "Rua é obrigatória.").transform(val => val.trim()),
@@ -47,8 +71,8 @@ export const authorizationSchema = z.object({
   buyerState: z.string().min(2, "UF é obrigatória e deve ter 2 caracteres.").max(2, "UF deve ter 2 caracteres.").transform(val => val.trim().toUpperCase()),
 
   representativeName: z.string().min(1, "Nome do representante é obrigatório.").transform(val => capitalizeWords(val.trim())),
-  representativeRG: z.string().min(1, "RG do representante é obrigatório.").transform(val => val.trim()),
-  representativeCPF: z.string().min(1, "CPF do representante é obrigatório.").transform(val => val.trim()),
+  representativeRG: z.string().min(1, "RG do representante é obrigatório.").transform(val => formatRG(val.trim())),
+  representativeCPF: z.string().min(1, "CPF do representante é obrigatório.").transform(val => formatCPF(val.trim())),
 
   purchaseDate: z.date({ required_error: "Data da compra é obrigatória." }),
   purchaseValue: z.string().min(1, "Valor da compra é obrigatório.").transform(val => val.trim()),
@@ -99,8 +123,8 @@ export const authorizationSchema = z.object({
   if (data.purchaseDate && data.pickupDate) {
     const purchaseDate = new Date(data.purchaseDate);
     const pickupDate = new Date(data.pickupDate);
-    purchaseDate.setHours(0, 0, 0, 0); // Normalize to start of day
-    pickupDate.setHours(0, 0, 0, 0); // Normalize to start of day
+    purchaseDate.setHours(0, 0, 0, 0); 
+    pickupDate.setHours(0, 0, 0, 0); 
 
     if (pickupDate <= purchaseDate) {
       ctx.addIssue({
@@ -115,3 +139,4 @@ export const authorizationSchema = z.object({
 export type AuthorizationFormData = z.infer<typeof authorizationSchema>;
 
 export const storeOptionsList = storeOptions.map(store => ({ value: store, label: store }));
+

@@ -85,6 +85,7 @@ export function AuthorizationForm() {
     pdfContentElement.style.left = '-9999px'; 
     pdfContentElement.style.top = '0px';
     pdfContentElement.style.width = '210mm'; 
+    pdfContentElement.style.height = '297mm';
     pdfContentElement.style.backgroundColor = '#ffffff';
     pdfContentElement.style.padding = '0';
     pdfContentElement.style.margin = '0';
@@ -350,95 +351,95 @@ export function AuthorizationForm() {
       </Card>
       
       {/* PDF Template - Hidden from view, used for PDF generation */}
-      <div ref={pdfTemplateRef} className="hidden" style={{ width: '210mm', boxSizing: 'border-box', backgroundColor: 'white', color: 'black', fontFamily: 'Arial, sans-serif' }}>
+      <div ref={pdfTemplateRef} className="hidden" style={{ width: '210mm', height: '297mm', boxSizing: 'border-box', backgroundColor: 'white', color: 'black', fontFamily: 'Arial, sans-serif' }}>
         <style>
           {`
             @page { 
               size: A4;
               margin: 0; 
             }
-            body {
+            body { /* Applied to the body *inside* this div if html2canvas processes it that way */
               margin: 0; 
               color: black;
               font-family: Arial, sans-serif;
             }
             .pdf-page-container {
               width: 100%; 
-              /* height: 297mm; Ensure it doesn't try to be infinitely tall */
-              min-height: 290mm; /* minimum height */
-              max-height: 297mm; /* maximum height */
-              padding: 10mm; 
+              height: 100%; /* Use full height of the parent */
+              padding: 15mm; /* Balanced margins */
               box-sizing: border-box;
               font-size: 10pt;
-              line-height: 1.3; /* Reduced line height */
+              line-height: 1.4; /* Slightly increased line height */
               display: flex;
               flex-direction: column;
             }
             .pdf-header { 
               text-align: center; 
-              margin-bottom: 6mm; /* Reduced margin */
+              margin-bottom: 6mm; 
             }
             .pdf-logo { 
-              max-width: 70px; /* Reduced logo size */
-              margin: 0 auto 3mm auto; /* Reduced margin */
+              max-width: 70px; 
+              margin: 0 auto 3mm auto; 
             }
             .pdf-main-title { 
-              font-size: 11pt; /* Reduced font size */
+              font-size: 11pt; 
               font-weight: bold; 
-              margin-bottom: 4mm; /* Reduced margin */
+              margin-bottom: 4mm; 
               text-transform: uppercase;
               text-align: center;
             }
 
             .pdf-data-section { 
-              margin-bottom: 4mm; /* Reduced margin */
+              margin-bottom: 6mm; /* Increased spacing between sections */
             }
             .pdf-data-section-title {
-              font-size: 10pt; /* Reduced font size */
+              font-size: 10pt;
               font-weight: bold;
-              margin-bottom: 2mm; /* Reduced margin */
-              padding-bottom: 0.5mm; /* Reduced padding */
-              /* border-bottom: 1px solid #eee; Removed as per request */
+              margin-bottom: 2mm;
+              padding-bottom: 0.5mm;
             }
             .pdf-data-content {
               display: grid;
-              grid-template-columns: max-content 1fr;
-              gap: 1.5mm 3mm; /* Reduced gap */
+              grid-template-columns: max-content 1fr; /* Label and value/grouped values */
+              gap: 2mm 4mm; /* row-gap column-gap */
             }
             .pdf-field-label {
-              font-weight: 600; /* Using numeric weight for Arial */
+              font-weight: 600; 
               white-space: nowrap;
               padding-right: 1mm; 
             }
             .pdf-field-value {
               word-break: break-word;
-              /* border-bottom: 0.4px solid #333; Underlines removed as per general "no lines" request */
-              padding-bottom: 0.2mm;
-              min-height: 1em; /* Reduced min-height */
+              min-height: 1em; 
             }
-             .full-width-label {
-              grid-column: 1 / -1;
-              font-weight: bold;
-              margin-top: 1.5mm; /* Reduced margin */
-            }
+             .pdf-field-group { /* For RG/CPF and Município/UF pairs */
+                display: flex;
+                align-items: baseline;
+             }
+             .pdf-field-group .pdf-field-label {
+                margin-left: 5mm; /* Space before the second label in a pair */
+             }
+             .pdf-field-group .pdf-field-value {
+                 flex-grow: 1;
+                 min-width: 0; /* Allow shrinking */
+             }
 
 
             .pdf-text-block { 
-              margin: 4mm 0; /* Reduced margin */
-              font-size: 9pt; /* Reduced font size */
+              margin: 4mm 0; 
+              font-size: 9pt; 
               text-align: justify;
-              line-height: 1.3;
             }
             .pdf-text-block p { 
-              margin-bottom: 1.5mm; /* Reduced margin */
+              margin-bottom: 1.5mm; 
             }
             .pdf-text-block strong { 
               font-weight: bold; 
             }
             .pdf-text-block ul { 
               list-style-type: disc; 
-              padding-left: 5mm; /* Reduced padding */
-              margin-bottom: 1.5mm; /* Reduced margin */
+              padding-left: 5mm; 
+              margin-bottom: 1.5mm; 
             }
              .pdf-text-block li {
               margin-bottom: 0.5mm;
@@ -447,27 +448,24 @@ export function AuthorizationForm() {
             .pdf-order-table { 
               width: 100%; 
               border-collapse: collapse; 
-              margin-bottom: 4mm; /* Reduced margin */
-              font-size: 9pt; /* Reduced font size */
+              margin-bottom: 4mm; 
+              font-size: 9pt; 
             }
             .pdf-order-table th { 
               font-weight: bold; 
               text-align: left;
-              padding: 1mm 0; /* No horizontal padding for max space */
-              /* border-bottom: 1px solid #ccc; Removed */
+              padding: 1mm 0; 
             }
             .pdf-order-table td { 
               padding: 1mm 0; 
-              /* border-bottom: 1px dotted #eee; Removed */
             }
              .pdf-order-table tr:not(:last-child) th,
              .pdf-order-table tr:not(:last-child) td {
-                padding-bottom: 1.5mm; /* Reduced padding */
+                padding-bottom: 1.5mm; 
             }
 
-
             .pdf-signature-section { 
-              margin: 4mm 0 6mm 0; /* Adjusted margin */
+              margin: 4mm 0 6mm 0; 
             }
             .pdf-signature-label { 
               font-weight: bold;
@@ -475,60 +473,50 @@ export function AuthorizationForm() {
               margin-bottom: 1mm;
             }
             .pdf-signature-box { 
-              width: 100%; /* Make box full width to allow centering of potentially smaller image */
-              height: 25mm; /* Max height for the box */
+              width: 100%; 
+              height: 20mm; /* Reduced from 25mm to allow more space for docs */
               margin-top: 1mm;
               display: flex;
               align-items: center;
               justify-content: center;
-              /* border: 0.5px solid #ccc; Border removed */
-              /* background-color: #f9f9f9; Background removed */
             }
-            /* Signature image itself will be styled inline for maxHeight */
             
             .pdf-documents-area { 
-              margin-top: 4mm; /* Reduced margin */
-              flex-grow: 1; /* Allow this area to take remaining space if needed */
+              margin-top: 4mm; 
+              flex-grow: 1; 
               display: flex;
               flex-direction: column;
-              justify-content: flex-start; /* Align items to the start */
+              justify-content: flex-start; 
             }
             .pdf-document-item {
                 page-break-inside: avoid;
-                margin-bottom: 3mm; /* Reduced margin */
+                margin-bottom: 3mm; 
             }
             .pdf-document-title { 
               font-weight: bold;
               font-size: 10pt;
               margin-bottom: 1mm;
               text-align: center;
-              padding: 0.5mm; /* Reduced padding */
-              /* background-color: #f0f0f0; Background removed */
-              /* border: 0.5px solid #ccc; Border removed */
+              padding: 0.5mm; 
             }
             .pdf-document-image-wrapper { 
               margin-top: 1mm;
-              width: 100%; /* Ensure wrapper takes full width */
-              /* min-height removed */
-              /* border: 0.5px solid #ccc; Border removed */
-              /* background-color: #f9f9f9; Background removed */
-              padding: 1mm; /* Minimal padding */
-              display: flex; /* Added for centering image */
-              align-items: center; /* Added for centering image */
-              justify-content: center; /* Added for centering image */
+              width: 100%; 
+              padding: 1mm; 
+              display: flex; 
+              align-items: center; 
+              justify-content: center; 
               box-sizing: border-box;
             }
-            /* Document images themselves will be styled inline for maxHeight */
             .pdf-document-placeholder {
                 font-size: 9pt; color: #777; text-align: center; padding: 10mm 0;
             }
 
             .pdf-final-disclaimer { 
-              font-size: 8pt; /* Reduced font size */
-              margin-top: auto; /* Pushes to bottom if container is flex */
-              padding-top: 2mm; /* Reduced padding */
+              font-size: 8pt; 
+              margin-top: auto; 
+              padding-top: 2mm; 
               text-align: left;
-              /* border-top: 1px solid #eee; Removed */
             }
           `}
         </style>
@@ -541,42 +529,54 @@ export function AuthorizationForm() {
           <div className="pdf-data-section">
             <div className="pdf-data-section-title">DADOS DO COMPRADOR</div>
             <div className="pdf-data-content">
-              <span className="full-width-label">Nome/Razão Social:</span>
-              <span className="pdf-field-value">{form.getValues('buyerName') || ' '}</span>
+              <span className="pdf-field-label" style={{gridColumn: '1 / -1', fontWeight:'bold'}}>Nome/Razão Social:</span>
+              <span className="pdf-field-value" style={{gridColumn: '1 / -1', borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>{form.getValues('buyerName') || ' '}</span>
               
               {form.getValues('buyerType') === 'individual' ? (
                 <>
                   <span className="pdf-field-label">RG:</span>
-                  <span className="pdf-field-value">{form.getValues('buyerRG') || ' '}</span>
-                  <span className="pdf-field-label">CPF:</span>
-                  <span className="pdf-field-value">{form.getValues('buyerCPF') || ' '}</span>
+                  <div className="pdf-field-group">
+                     <span className="pdf-field-value" style={{ borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>{form.getValues('buyerRG') || ' '}</span>
+                     <span className="pdf-field-label">CPF:</span>
+                     <span className="pdf-field-value" style={{ borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>{form.getValues('buyerCPF') || ' '}</span>
+                  </div>
                 </>
               ) : (
                 <>
                   <span className="pdf-field-label">CNPJ:</span>
-                  <span className="pdf-field-value">{form.getValues('buyerCNPJ') || ' '}</span>
+                  <span className="pdf-field-value" style={{ borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>{form.getValues('buyerCNPJ') || ' '}</span>
                 </>
               )}
               
-              <span className="full-width-label">Endereço:</span>
-              <span className="pdf-field-value" style={{ gridColumn: '1 / -1' }}>
+              <span className="pdf-field-label" style={{gridColumn: '1 / -1', fontWeight:'bold'}}>Endereço:</span>
+              <span className="pdf-field-value" style={{gridColumn: '1 / -1', borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>
                 {`${form.getValues('buyerStreet') || ''}${form.getValues('buyerNumber') ? `, ${form.getValues('buyerNumber')}` : ''}${form.getValues('buyerComplement') ? `, ${form.getValues('buyerComplement')}` : ''}`}
               </span>
-              <span className="pdf-field-value" style={{ gridColumn: '1 / -1' }}>
-                {`${form.getValues('buyerNeighborhood') || ''}${form.getValues('buyerCity') ? ` - ${form.getValues('buyerCity')}` : ''}${form.getValues('buyerState') ? `/${form.getValues('buyerState')}` : ''}`}
+              <span className="pdf-field-label" style={{gridColumn: '1 / -1', fontWeight:'bold'}}>Bairro:</span>
+              <span className="pdf-field-value" style={{gridColumn: '1 / -1', borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>
+                 {form.getValues('buyerNeighborhood') || ' '}
               </span>
+              <span className="pdf-field-label">Município:</span>
+              <div className="pdf-field-group">
+                <span className="pdf-field-value" style={{ borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>{form.getValues('buyerCity') || ' '}</span>
+                <span className="pdf-field-label">UF:</span>
+                <span className="pdf-field-value" style={{ borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>{form.getValues('buyerState') || ' '}</span>
+              </div>
             </div>
           </div>
 
           <div className="pdf-data-section">
             <div className="pdf-data-section-title">DADOS DA PESSOA AUTORIZADA A RETIRAR</div>
             <div className="pdf-data-content">
-              <span className="full-width-label">Nome:</span>
-              <span className="pdf-field-value">{form.getValues('representativeName') || ' '}</span>
+              <span className="pdf-field-label" style={{gridColumn: '1 / -1', fontWeight:'bold'}}>Nome:</span>
+              <span className="pdf-field-value" style={{gridColumn: '1 / -1', borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>{form.getValues('representativeName') || ' '}</span>
+              
               <span className="pdf-field-label">RG:</span>
-              <span className="pdf-field-value">{form.getValues('representativeRG') || ' '}</span>
-              <span className="pdf-field-label">CPF:</span>
-              <span className="pdf-field-value">{form.getValues('representativeCPF') || ' '}</span>
+              <div className="pdf-field-group">
+                <span className="pdf-field-value" style={{ borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>{form.getValues('representativeRG') || ' '}</span>
+                <span className="pdf-field-label">CPF:</span>
+                <span className="pdf-field-value" style={{ borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>{form.getValues('representativeCPF') || ' '}</span>
+              </div>
             </div>
           </div>
           
@@ -608,7 +608,7 @@ export function AuthorizationForm() {
               <tbody>
                 <tr>
                   <td>{form.getValues('purchaseDate') ? format(form.getValues('purchaseDate'), 'dd/MM/yyyy', { locale: ptBR }) : ' '}</td>
-                  <td>R$ {form.getValues('purchaseValue') || ' '}</td>
+                  <td>R$ {(form.getValues('purchaseValue') || ' ').replace(',', '.')}</td>
                   <td>{form.getValues('orderNumber') || ' '}</td>
                   <td>{storeOptionsList.find(s => s.value === form.getValues('pickupStore'))?.label || form.getValues('pickupStore') || ' '}</td>
                 </tr>
@@ -617,7 +617,7 @@ export function AuthorizationForm() {
           </div>
           
           <div className="pdf-field-label" style={{fontWeight: 'bold', fontSize: '10pt'}}>Data prevista para retirada:</div>
-          <div className="pdf-field-value" style={{marginBottom: '4mm'}}>
+          <div className="pdf-field-value" style={{marginBottom: '4mm', borderBottom: '0.5px solid #333', paddingBottom: '0.5mm'}}>
             {form.getValues('pickupDate') ? format(form.getValues('pickupDate'), 'dd / MM / yyyy', { locale: ptBR }) : '_____ / _____ / _____'}
           </div>
             
@@ -752,3 +752,4 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 );
 
 export default AuthorizationForm;
+
