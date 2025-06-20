@@ -13,11 +13,10 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileUploader } from '@/components/file-uploader';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, FileText, User, Users, ShoppingBag, AlertTriangle, Info } from 'lucide-react';
+import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, Info, ShieldAlert, MessageSquareWarning } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -29,10 +28,6 @@ export function AuthorizationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showGlobalError, setShowGlobalError] = useState(false);
   const pdfTemplateRef = useRef<HTMLDivElement>(null);
-  
-  const [buyerIdPreview, setBuyerIdPreview] = useState<string | null>(null);
-  const [socialContractPreview, setSocialContractPreview] = useState<string | null>(null);
-  const [representativeIdPreview, setRepresentativeIdPreview] = useState<string | null>(null);
 
 
   const form = useForm<AuthorizationFormData>({
@@ -40,7 +35,7 @@ export function AuthorizationForm() {
     defaultValues: {
       buyerType: 'individual',
       buyerName: '',
-      buyerEmail: '', 
+      buyerEmail: '',
       buyerPhone: '',
       buyerCPF: '',
       buyerDocumentType: undefined,
@@ -50,12 +45,9 @@ export function AuthorizationForm() {
       representativeDocumentNumber: '',
       purchaseValue: '',
       orderNumber: '',
-      pickupStore: undefined, 
-      buyerIdDocument: null,
-      socialContractDocument: null,
-      representativeIdDocument: null,
+      pickupStore: undefined,
     },
-     mode: "onChange", 
+     mode: "onChange",
   });
 
   const buyerType = form.watch('buyerType');
@@ -64,14 +56,10 @@ export function AuthorizationForm() {
   useEffect(() => {
     if (buyerType === 'individual') {
         form.resetField('buyerCNPJ');
-        form.resetField('socialContractDocument');
-        setSocialContractPreview(null);
     } else {
         form.resetField('buyerCPF');
         form.resetField('buyerDocumentType');
         form.resetField('buyerDocumentNumber');
-        form.resetField('buyerIdDocument');
-        setBuyerIdPreview(null);
     }
     form.clearErrors();
   }, [buyerType, form]);
@@ -82,25 +70,25 @@ export function AuthorizationForm() {
       toast({ title: "Erro", description: "Template do PDF não encontrado.", variant: "destructive" });
       return;
     }
-    
-    pdfContentElement.style.display = 'flex'; 
-    pdfContentElement.style.position = 'fixed'; 
-    pdfContentElement.style.left = '-300mm'; 
+
+    pdfContentElement.style.display = 'flex';
+    pdfContentElement.style.position = 'fixed';
+    pdfContentElement.style.left = '-300mm';
     pdfContentElement.style.top = '0px';
-    pdfContentElement.style.width = '210mm'; 
-    pdfContentElement.style.height = 'auto'; 
-    pdfContentElement.style.minHeight = '297mm'; 
+    pdfContentElement.style.width = '210mm';
+    pdfContentElement.style.height = 'auto';
+    pdfContentElement.style.minHeight = '297mm';
     pdfContentElement.style.backgroundColor = '#FFFFFF';
-    pdfContentElement.style.padding = '0'; 
-    pdfContentElement.style.margin = '0'; 
-    pdfContentElement.style.overflow = 'hidden'; 
-    
+    pdfContentElement.style.padding = '0';
+    pdfContentElement.style.margin = '0';
+    pdfContentElement.style.overflow = 'hidden';
+
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    pdfContentElement.offsetHeight; 
+    pdfContentElement.offsetHeight;
 
     try {
       const canvas = await html2canvas(pdfContentElement, {
-        scale: 2, 
+        scale: 2,
         useCORS: true,
         logging: false,
         width: pdfContentElement.scrollWidth,
@@ -108,12 +96,12 @@ export function AuthorizationForm() {
         windowWidth: pdfContentElement.scrollWidth,
         windowHeight: pdfContentElement.scrollHeight,
       });
-      
-      const imgData = canvas.toDataURL('image/png', 0.95); 
-      const pdf = new jsPDF('p', 'mm', 'a4', true); 
+
+      const imgData = canvas.toDataURL('image/png', 0.95);
+      const pdf = new jsPDF('p', 'mm', 'a4', true);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      
+
       const imgProps = pdf.getImageProperties(imgData);
       const aspectRatio = imgProps.width / imgProps.height;
 
@@ -124,7 +112,7 @@ export function AuthorizationForm() {
         imgRenderHeight = pdfHeight;
         imgRenderWidth = pdfHeight * aspectRatio;
       }
-      
+
       const xOffset = (pdfWidth - imgRenderWidth) / 2;
       const yOffset = (pdfHeight - imgRenderHeight) / 2;
 
@@ -137,29 +125,20 @@ export function AuthorizationForm() {
       toast({ title: "Erro ao gerar PDF", description: "Ocorreu um problema ao tentar gerar o documento.", variant: "destructive" });
     } finally {
        if (pdfContentElement) {
-        pdfContentElement.style.display = 'none'; 
-        pdfContentElement.style.position = 'absolute'; 
+        pdfContentElement.style.display = 'none';
+        pdfContentElement.style.position = 'absolute';
        }
     }
   };
 
-  const readFileAsDataURL = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
 
-  const onSubmit: SubmitHandler<AuthorizationFormData> = async (data) => {
+  const onSubmit: SubmitHandler<AuthorizationFormData> = async () => {
     setIsSubmitting(true);
     setShowGlobalError(false);
-    
+
     if (Object.keys(form.formState.errors).length > 0) {
         setShowGlobalError(true);
         setIsSubmitting(false);
-        // Scroll to first error
         const firstErrorField = Object.keys(form.formState.errors)[0] as keyof AuthorizationFormData;
         const element = document.getElementsByName(firstErrorField)[0];
         if (element) {
@@ -167,30 +146,12 @@ export function AuthorizationForm() {
         }
         return;
     }
-    
-    try {
-      let buyerIdDataUrl: string | null = null;
-      if (data.buyerIdDocument && data.buyerType === 'individual') {
-        buyerIdDataUrl = await readFileAsDataURL(data.buyerIdDocument);
-      }
-  
-      let socialContractDataUrl: string | null = null;
-      if (data.socialContractDocument && data.buyerType === 'corporate') {
-        socialContractDataUrl = await readFileAsDataURL(data.socialContractDocument);
-      }
 
-      let representativeIdDataUrl: string | null = null;
-      if (data.representativeIdDocument && (data.representativeDocumentType === 'RG' || data.representativeDocumentType === 'CNH')) {
-        representativeIdDataUrl = await readFileAsDataURL(data.representativeIdDocument);
-      }
-      
+    try {
       await new Promise<void>(resolve => {
-        setBuyerIdPreview(buyerIdDataUrl);
-        setSocialContractPreview(socialContractDataUrl);
-        setRepresentativeIdPreview(representativeIdDataUrl);
-        requestAnimationFrame(() => setTimeout(resolve, 50)); 
+        requestAnimationFrame(() => setTimeout(resolve, 50));
       });
-            
+
       await generatePdf();
 
     } catch (error) {
@@ -200,7 +161,7 @@ export function AuthorizationForm() {
       setIsSubmitting(false);
     }
   };
-  
+
   const buyerDocType = useWatch({ control: form.control, name: 'buyerDocumentType' });
   const repDocType = useWatch({ control: form.control, name: 'representativeDocumentType' });
 
@@ -221,6 +182,17 @@ export function AuthorizationForm() {
         </ShadAlertDescription>
       </Alert>
 
+      <Alert variant="default" className="mb-8 bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400">
+        <MessageSquareWarning className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+        <ShadAlertTitle className="font-headline text-lg text-amber-700 dark:text-amber-500">Atenção aos Documentos!</ShadAlertTitle>
+        <ShadAlertDescription className="text-amber-600 dark:text-amber-400 space-y-1">
+          <p>Para sua segurança, <strong>não solicitamos anexos de documentos</strong> através deste formulário.</p>
+          <p>Será necessário apresentar os documentos originais (do comprador e da pessoa autorizada) e enviar uma cópia digital (foto ou PDF) diretamente para o <strong>WhatsApp ou e-mail corporativo da loja</strong> no momento da retirada. Os colaboradores da loja fornecerão o contato correto.</p>
+          <p>Certifique-se de que as cópias digitais estejam legíveis.</p>
+        </ShadAlertDescription>
+      </Alert>
+
+
       <Card className="shadow-xl overflow-hidden">
         <CardHeader className="bg-primary/10 p-6">
           <CardDescription className="text-center text-primary-foreground/90 space-y-3 text-sm md:text-base">
@@ -231,7 +203,7 @@ export function AuthorizationForm() {
         </CardHeader>
         <CardContent className="p-6 space-y-8">
           <form onSubmit={form.handleSubmit(onSubmit, () => setShowGlobalError(true))} className="space-y-8">
-            
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline"><User className="text-primary" /> Dados do Comprador</CardTitle>
@@ -258,7 +230,7 @@ export function AuthorizationForm() {
                   />
                   {form.formState.errors.buyerType && <FormErrorMessage message={form.formState.errors.buyerType.message} />}
                 </FormFieldItem>
-                
+
                 <div className="md:col-span-2">
                   <FormInput control={form.control} name="buyerName" label="Nome Completo / Razão Social" placeholder="João Silva / Empresa XYZ LTDA" error={form.formState.errors.buyerName} />
                 </div>
@@ -266,57 +238,28 @@ export function AuthorizationForm() {
                 {buyerType === 'individual' && (
                   <>
                     <FormInput control={form.control} name="buyerCPF" label="CPF do Comprador" placeholder="000.000.000-00" error={form.formState.errors.buyerCPF} inputMode="numeric" maxLength={14}/>
-                    <FormSelect 
-                        control={form.control} 
-                        name="buyerDocumentType" 
-                        label="Tipo de Documento com Foto" 
+                    <FormSelect
+                        control={form.control}
+                        name="buyerDocumentType"
+                        label="Tipo de Documento com Foto do Comprador"
                         placeholder="Selecione RG ou CNH"
                         options={documentTypeOptionsBuyer}
                         error={form.formState.errors.buyerDocumentType}
                     />
-                    <FormInput 
-                        control={form.control} 
-                        name="buyerDocumentNumber" 
-                        label={`Número do ${buyerDocType === 'CNH' ? 'CNH' : 'RG'}`}
-                        placeholder={buyerDocType === 'CNH' ? '00000000000' : '00.000.000-0'}
-                        error={form.formState.errors.buyerDocumentNumber} 
+                    <FormInput
+                        control={form.control}
+                        name="buyerDocumentNumber"
+                        label={`Número do ${buyerDocType === 'CNH' ? 'CNH' : buyerDocType === 'RG' ? 'RG' : 'Documento'} do Comprador`}
+                        placeholder={buyerDocType === 'CNH' ? '00000000000' : buyerDocType === 'RG' ? '00.000.000-0' : 'Número do Documento'}
+                        error={form.formState.errors.buyerDocumentNumber}
                         inputMode={buyerDocType === 'CNH' ? 'numeric' : 'text'}
                         maxLength={buyerDocType === 'CNH' ? 11 : 12}
-                    />
-                     <Controller
-                        control={form.control}
-                        name="buyerIdDocument"
-                        render={({ field: { onChange }}) => (
-                            <FileUploader
-                                id="buyerIdDocument"
-                                label="Anexo do Documento com Foto do Comprador"
-                                description="RG ou CNH (frente e verso legíveis). Formatos: JPG, PNG. Max: 5MB."
-                                onFileChange={onChange}
-                                accept="image/jpeg,image/png"
-                                fileError={form.formState.errors.buyerIdDocument?.message as string | undefined}
-                            />
-                        )}
                     />
                   </>
                 )}
                 {buyerType === 'corporate' && (
                   <>
                     <FormInput control={form.control} name="buyerCNPJ" label="CNPJ" placeholder="00.000.000/0000-00" error={form.formState.errors.buyerCNPJ} inputMode="numeric" className="md:col-span-2" maxLength={18}/>
-                    <Controller
-                        control={form.control}
-                        name="socialContractDocument"
-                        render={({ field: { onChange } }) => (
-                            <FileUploader
-                                id="socialContractDocument"
-                                label="Contrato Social / Estatuto Social Autenticado"
-                                description="Documento obrigatório para Pessoa Jurídica. Formatos: PDF, JPG, PNG. Max: 5MB."
-                                onFileChange={onChange}
-                                accept="application/pdf,image/jpeg,image/png"
-                                fileError={form.formState.errors.socialContractDocument?.message as string | undefined}
-                                className="md:col-span-2"
-                            />
-                        )}
-                    />
                   </>
                 )}
                  <FormInput control={form.control} name="buyerEmail" label="E-mail do Comprador" placeholder="comprador@exemplo.com" type="email" error={form.formState.errors.buyerEmail} />
@@ -327,53 +270,36 @@ export function AuthorizationForm() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline"><Users className="text-primary" /> Dados da pessoa autorizada a retirar</CardTitle>
-                <CardDescription>Essa pessoa precisa apresentar o PDF desta autorização na loja.</CardDescription>
+                <CardDescription>Essa pessoa precisa apresentar o PDF desta autorização e um documento original com foto na loja.</CardDescription>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
                  <FormInput control={form.control} name="representativeName" label="Nome Completo da Pessoa Autorizada" placeholder="Maria Oliveira" error={form.formState.errors.representativeName} />
                 </div>
-                <FormSelect 
-                    control={form.control} 
-                    name="representativeDocumentType" 
-                    label="Tipo de Documento da Pessoa Autorizada" 
+                <FormSelect
+                    control={form.control}
+                    name="representativeDocumentType"
+                    label="Tipo de Documento da Pessoa Autorizada"
                     placeholder="Selecione RG, CNH ou CPF"
                     options={documentTypeOptionsRepresentative}
                     error={form.formState.errors.representativeDocumentType}
                 />
-                <FormInput 
-                    control={form.control} 
-                    name="representativeDocumentNumber" 
-                    label={`Número do ${repDocType || 'Documento'}`}
+                <FormInput
+                    control={form.control}
+                    name="representativeDocumentNumber"
+                    label={`Número do ${repDocType || 'Documento'} da Pessoa Autorizada`}
                     placeholder={
-                        repDocType === 'RG' ? '00.000.000-0' : 
-                        repDocType === 'CNH' ? '00000000000' : 
+                        repDocType === 'RG' ? '00.000.000-0' :
+                        repDocType === 'CNH' ? '00000000000' :
                         repDocType === 'CPF' ? '000.000.000-00' : 'Número do Documento'}
-                    error={form.formState.errors.representativeDocumentNumber} 
+                    error={form.formState.errors.representativeDocumentNumber}
                     inputMode={repDocType === 'CPF' || repDocType === 'CNH' ? 'numeric' : 'text'}
                     maxLength={
-                        repDocType === 'RG' ? 12 : 
-                        repDocType === 'CNH' ? 11 : 
+                        repDocType === 'RG' ? 12 :
+                        repDocType === 'CNH' ? 11 :
                         repDocType === 'CPF' ? 14 : 20
                     }
                 />
-                {(representativeDocType === 'RG' || representativeDocType === 'CNH') && (
-                    <Controller
-                        control={form.control}
-                        name="representativeIdDocument"
-                        render={({ field: { onChange }}) => (
-                            <FileUploader
-                                id="representativeIdDocument"
-                                label="Anexo do Documento com Foto da Pessoa Autorizada"
-                                description="📎 Anexe um documento com foto da pessoa autorizada: Pode ser RG ou CNH. A imagem deve mostrar claramente a foto e as informações legíveis (nome, número do documento, validade, etc.). Anexos borrados, cortados ou sem foto não serão aceitos."
-                                onFileChange={onChange}
-                                accept="image/jpeg,image/png"
-                                fileError={form.formState.errors.representativeIdDocument?.message as string | undefined}
-                                className="md:col-span-2"
-                            />
-                        )}
-                    />
-                )}
               </CardContent>
             </Card>
 
@@ -384,10 +310,10 @@ export function AuthorizationForm() {
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormDatePicker control={form.control} name="purchaseDate" label="Data da Compra" error={form.formState.errors.purchaseDate} />
                 <FormDatePicker control={form.control} name="pickupDate" label="Data Prevista da Retirada" error={form.formState.errors.pickupDate} />
-                
+
                 <FormInput control={form.control} name="purchaseValue" label="Valor da Compra (R$)" placeholder="Ex: 199,90" type="text" inputMode='decimal' error={form.formState.errors.purchaseValue} />
                 <FormInput control={form.control} name="orderNumber" label="Número do Pedido" placeholder="Ex: V12345678RIHP-01" error={form.formState.errors.orderNumber} />
-                
+
                 <FormFieldItem className="md:col-span-2">
                     <Label htmlFor="pickupStore">Loja para Retirada</Label>
                     <Controller
@@ -410,7 +336,13 @@ export function AuthorizationForm() {
                 </FormFieldItem>
               </CardContent>
             </Card>
-            
+
+             <div className="mt-6 p-4 border border-gray-300 rounded-md bg-gray-50 text-sm text-gray-700">
+                <p className="font-semibold mb-2">Tratamento de Dados:</p>
+                <p>Os dados informados aqui serão utilizados exclusivamente para autorizar a retirada do pedido. Nenhuma informação será armazenada ou compartilhada com terceiros para outras finalidades.</p>
+                <p className="mt-1">Ao enviar este formulário, você concorda com esse uso.</p>
+            </div>
+
             {showGlobalError && Object.keys(form.formState.errors).length > 0 && (
                 <Alert variant="destructive" className="fixed bottom-4 right-4 w-auto max-w-md z-50">
                     <AlertTriangle className="h-4 w-4" />
@@ -436,204 +368,172 @@ export function AuthorizationForm() {
           </form>
         </CardContent>
       </Card>
-      
+
       {/* PDF Template - Hidden */}
       <div ref={pdfTemplateRef} className="hidden">
         <style>
           {`
-      @page { 
+      @page {
         size: A4;
-        margin: 0; 
-      }
-      body { 
         margin: 0;
-        color: #333333; 
-        font-family: 'Inter', Arial, sans-serif; 
-        background-color: #FFFFFF; 
+      }
+      body {
+        margin: 0;
+        color: #333333;
+        font-family: 'Inter', Arial, sans-serif;
+        background-color: #FFFFFF;
       }
       .pdf-page-container {
-        width: 100%; 
-        min-height: 297mm; 
-        height: auto; 
-        padding: 5mm; 
+        width: 100%;
+        min-height: 297mm;
+        height: auto;
+        padding: 10mm; /* Increased padding */
         box-sizing: border-box;
-        font-size: 11.5pt; 
-        line-height: 1.5; 
+        font-size: 10pt; /* Adjusted base font size */
+        line-height: 1.4;
         background-color: #FFFFFF;
         color: #333333;
         display: flex;
         flex-direction: column;
-        gap: 4mm; 
+        gap: 5mm; /* Adjusted gap */
       }
-      
-      .pdf-header { 
-        text-align: center; 
-        margin-bottom: 3mm; 
+
+      .pdf-header {
+        text-align: center;
+        margin-bottom: 3mm;
       }
-      .pdf-logo { 
-        max-width: 60px; 
+      .pdf-logo {
+        max-width: 60px; /* Adjusted logo size */
         height: auto;
-        margin: 0 auto 1.5mm auto; 
+        margin: 0 auto 1.5mm auto;
       }
-      .pdf-main-title { 
-        font-size: 18pt; 
-        font-weight: 600; 
-        margin-bottom: 4mm; 
+      .pdf-main-title {
+        font-size: 16pt; /* Adjusted title size */
+        font-weight: 600;
+        margin-bottom: 4mm;
         padding-bottom: 1.5mm;
-        border-bottom: 1px solid #EEEEEE; 
-        color: #000000; 
+        border-bottom: 1px solid #EEEEEE;
+        color: #000000;
       }
-      
+
       .pdf-section {
-        margin-bottom: 0; 
+        margin-bottom: 0;
       }
       .pdf-section-title {
-        font-size: 14pt; 
+        font-size: 12pt; /* Adjusted section title size */
         font-weight: 600;
-        color: #333333; 
+        color: #333333;
         padding-bottom: 1mm;
         border-bottom: 1px solid #EEEEEE;
-        margin-bottom: 2.5mm; 
+        margin-bottom: 2.5mm;
         display: flex;
         align-items: center;
-        gap: 2mm; 
+        gap: 2mm;
       }
-      
+
       .pdf-data-grid {
         display: grid;
-        grid-template-columns: repeat(2, 1fr); 
-        gap: 2mm 5mm; 
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2mm 5mm;
       }
       .pdf-data-item {
         display: flex;
-        flex-direction: column; 
+        flex-direction: column;
       }
       .pdf-field-label {
-        font-weight: 500; 
+        font-weight: 500;
         color: #555555;
-        font-size: 9.5pt; 
+        font-size: 8.5pt; /* Adjusted label size */
         margin-bottom: 0.5mm;
       }
       .pdf-field-value {
-        padding: 2mm;
-        background: #F8F9FA; 
+        padding: 2mm; /* Adjusted padding */
+        background: #F8F9FA;
         border-radius: 2px;
-        min-height: 6mm; 
+        min-height: 5mm; /* Adjusted height */
         display: flex;
-        align-items: center; 
-        justify-content: flex-start; 
-        word-break: break-all; 
-        font-size: 10.5pt;
+        align-items: center;
+        justify-content: flex-start;
+        word-break: break-all;
+        font-size: 9.5pt; /* Adjusted value size */
       }
-      
+
       .pdf-data-item.full-width {
-        grid-column: span 2; 
+        grid-column: span 2;
       }
-      
+
       .pdf-notes {
-        background: #FEFCE8; /* Lighter yellow */
-        border-left: 2px solid #FACC15; /* Amber */
+        background: #FEFCE8;
+        border-left: 2px solid #FACC15;
         padding: 2.5mm;
-        border-radius: 0 2px 2px 0; 
-        margin: 3mm 0; 
-        font-size: 9.5pt;
+        border-radius: 0 2px 2px 0;
+        margin: 2.5mm 0;
+        font-size: 8.5pt; /* Adjusted note size */
       }
       .pdf-note-item {
-        display: block; 
+        display: block;
         margin-bottom: 1.5mm;
       }
       .pdf-note-item:last-child {
         margin-bottom: 0;
       }
-      .pdf-note-item span { 
+      .pdf-note-item span {
         margin-right: 1.5mm;
       }
-      
-      .pdf-order-table { 
-        width: 100%; 
-        border-collapse: collapse; 
-        margin: 2.5mm 0; 
-        font-size: 9.5pt; 
+      .pdf-note-item strong {
+        font-weight: 600;
       }
-      .pdf-order-table th, .pdf-order-table td { 
-        border: 1px solid #E5E7EB; 
-        padding: 1.5mm; 
+
+      .pdf-order-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 2.5mm 0;
+        font-size: 9pt; /* Adjusted table font size */
+      }
+      .pdf-order-table th, .pdf-order-table td {
+        border: 1px solid #E5E7EB;
+        padding: 1.5mm;
         text-align: left;
       }
       .pdf-order-table th {
         font-weight: 500;
-        background-color: #F9FAFB; 
+        background-color: #F9FAFB;
       }
-      
+
       .pdf-pickup-date {
         text-align: center;
-        font-size: 11pt; 
+        font-size: 10pt; /* Adjusted pickup date font */
         padding: 2mm;
-        background: #EFF6FF; /* Lighter blue */
+        background: #EFF6FF;
         border: 1px solid #DBEAFE;
         border-radius: 2px;
         margin: 2.5mm 0;
       }
       .pdf-pickup-date strong {
         font-weight: 600;
-        color: #1D4ED8; /* Darker blue */
+        color: #1D4ED8;
       }
       
-      .pdf-documents-grid { /* Changed from flex to grid for better control */
-        display: grid;
-        grid-template-columns: 1fr; /* Default to single column */
-        gap: 3mm;
-        margin-top: 3mm;
-      }
-      .pdf-documents-grid.two-columns { /* Class to apply when there are two document boxes */
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .pdf-document-box { 
-        border: 1px dashed #D1D5DB;
-        border-radius: 2px;
-        padding: 2mm;
-        display: flex;
-        flex-direction: column;
-        min-height: 40mm; 
-      }
-     
-      .pdf-doc-title {
-        font-size: 10pt;
-        font-weight: 500;
-        margin-bottom: 2mm;
-        text-align: center;
-        color: #374151;
-      }
-      .pdf-doc-content { 
-        flex: 1; 
-        display: flex;
-        align-items: center; 
-        justify-content: center; 
-        background: #F9FAFB; 
-        border-radius: 2px;
-        padding: 2mm;
-      }
-      .pdf-doc-placeholder {
-        color: #6B7280;
+      .pdf-document-verification-note {
+        margin-top: 5mm;
+        padding: 3mm;
+        background-color: #f0f8ff; /* Light blue background */
+        border: 1px solid #a0d2eb; /* Primary blue border */
+        border-radius: 3px;
         font-size: 9pt;
         text-align: center;
-        padding: 3mm; 
-        width: 100%;
       }
-      .pdf-doc-content img {
-        max-width: 98%; 
-        max-height: 98%; 
-        object-fit: contain; 
+      .pdf-document-verification-note strong {
+        font-weight: 600;
       }
-      
+
       .pdf-footer {
-        font-size: 8pt; 
-        color: #6B7280; 
+        font-size: 7.5pt; /* Adjusted footer font */
+        color: #6B7280;
         text-align: center;
-        margin-top: auto; 
-        padding-top: 3mm; 
-        border-top: 1px solid #E5E7EB; 
+        margin-top: auto;
+        padding-top: 3mm;
+        border-top: 1px solid #E5E7EB;
       }
     `}
         </style>
@@ -648,7 +548,7 @@ export function AuthorizationForm() {
           <div className="pdf-section">
             <div className="pdf-section-title">👤 Dados do Comprador</div>
             <div className="pdf-data-grid">
-              <div className="pdf-data-item full-width"> 
+              <div className="pdf-data-item full-width">
                 <span className="pdf-field-label">{form.getValues('buyerType') === 'individual' ? 'Nome Completo' : 'Razão Social'}</span>
                 <div className="pdf-field-value">{form.getValues('buyerName') || ' '}</div>
               </div>
@@ -665,7 +565,7 @@ export function AuthorizationForm() {
                   </div>
                 </>
               ) : (
-                <div className="pdf-data-item full-width"> 
+                <div className="pdf-data-item full-width">
                   <span className="pdf-field-label">CNPJ</span>
                   <div className="pdf-field-value">{form.getValues('buyerCNPJ') || ' '}</div>
                 </div>
@@ -686,7 +586,7 @@ export function AuthorizationForm() {
           <div className="pdf-section">
             <div className="pdf-section-title">👥 Dados da Pessoa Autorizada</div>
             <div className="pdf-data-grid">
-              <div className="pdf-data-item full-width"> 
+              <div className="pdf-data-item full-width">
                 <span className="pdf-field-label">Nome Completo</span>
                 <div className="pdf-field-value">{form.getValues('representativeName') || ' '}</div>
               </div>
@@ -696,12 +596,15 @@ export function AuthorizationForm() {
               </div>
             </div>
           </div>
-          
-          {/* Notes Section */}
+
            <div className="pdf-notes">
             <div className="pdf-note-item">
               <span>🔔</span>
-              <strong>Envie este documento</strong> para o WhatsApp ou e-mail da loja e aguarde a confirmação de recebimento. A pessoa autorizada a retirar deve ser maior de idade e apresentar um documento com foto.
+              <strong>Envie este documento PDF</strong> para o WhatsApp ou e-mail da loja (fornecido no local) e aguarde a confirmação.
+            </div>
+            <div className="pdf-note-item">
+                <span>📄</span>
+                <strong>Documentos na Retirada:</strong> A pessoa autorizada deve apresentar seu documento original com foto e uma cópia (digital ou física) do documento com foto do comprador.
             </div>
             <div className="pdf-note-item">
               <span>⚠️</span>
@@ -709,8 +612,8 @@ export function AuthorizationForm() {
             </div>
             {form.getValues('buyerType') === 'corporate' && (
               <div className="pdf-note-item">
-                <span>📄</span>
-                <strong>Documento adicional:</strong> Para PJ, é necessário apresentar Contrato Social ou Estatuto Social.
+                <span>🏢</span>
+                <strong>Para PJ:</strong> Adicionalmente, apresentar cópia do Contrato Social/Estatuto Social.
               </div>
             )}
           </div>
@@ -742,59 +645,13 @@ export function AuthorizationForm() {
             </div>
           </div>
           
-          {/* Documents Section */}
-            <div className={`pdf-documents-grid ${
-                (form.getValues('buyerType') === 'individual' && buyerIdPreview) || 
-                (form.getValues('buyerType') === 'corporate' && socialContractPreview) ||
-                ((form.getValues('representativeDocumentType') === 'RG' || form.getValues('representativeDocumentType') === 'CNH') && representativeIdPreview)
-                 ? 'two-columns' : ''}`}>
-
-                {form.getValues('buyerType') === 'individual' && (
-                    <div className="pdf-document-box">
-                        <div className="pdf-doc-title">📄 Documento do Comprador ({form.getValues('buyerDocumentType')})</div>
-                        <div className="pdf-doc-content">
-                            {buyerIdPreview ? (
-                                <img src={buyerIdPreview || ""} alt="Documento do Comprador" data-ai-hint="identity document" />
-                            ) : (
-                                <div className="pdf-doc-placeholder">Documento não fornecido</div>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {form.getValues('buyerType') === 'corporate' && (
-                    <div className="pdf-document-box">
-                        <div className="pdf-doc-title">🏢 Contrato Social / Estatuto</div>
-                        <div className="pdf-doc-content">
-                        {socialContractPreview ? (
-                            socialContractPreview.startsWith('data:image') ? 
-                            <img src={socialContractPreview || ""} alt="Contrato Social" data-ai-hint="legal document" /> :
-                            <div className="pdf-doc-placeholder">Documento PDF enviado</div> 
-                        ) : (
-                            <div className="pdf-doc-placeholder">Documento não fornecido</div>
-                        )}
-                        </div>
-                    </div>
-                )}
-                
-                {(form.getValues('representativeDocumentType') === 'RG' || form.getValues('representativeDocumentType') === 'CNH') && (
-                     <div className="pdf-document-box">
-                        <div className="pdf-doc-title">🆔 Documento da Pessoa Autorizada ({form.getValues('representativeDocumentType')})</div>
-                        <div className="pdf-doc-content">
-                            {representativeIdPreview ? (
-                                <img src={representativeIdPreview || ""} alt="Documento da Pessoa Autorizada" data-ai-hint="identity document" />
-                            ) : (
-                                <div className="pdf-doc-placeholder">Documento não fornecido</div>
-                            )}
-                        </div>
-                    </div>
-                )}
-            </div>
-
+          <div className="pdf-document-verification-note">
+            <strong>Importante:</strong> Os documentos originais (do comprador e da pessoa autorizada) serão conferidos no ato da retirada. Prepare cópias digitais (fotos legíveis ou PDFs) para enviar à loja via WhatsApp/email, conforme orientação no local.
+          </div>
 
           <div className="pdf-footer">
-          * Os documentos apresentados serão conferidos e devolvidos no ato da retirada do pedido. A Ri Happy Brinquedos S.A reserva-se o
-          direito de não entregar o pedido caso haja divergência nas informações ou suspeita de fraude.
+          * Os dados informados neste formulário são para uso exclusivo da autorização de retirada e não serão compartilhados.
+          A Ri Happy Brinquedos S.A reserva-se o direito de não entregar o pedido caso haja divergência nas informações ou suspeita de fraude.
           </div>
         </div>
       </div>
@@ -810,7 +667,7 @@ const FormFieldItem: React.FC<{ children: React.ReactNode; className?: string }>
 
 interface FormInputProps {
   control: any;
-  name: keyof AuthorizationFormData | string; 
+  name: keyof AuthorizationFormData | string;
   label: string;
   placeholder?: string;
   type?: string;
@@ -825,7 +682,7 @@ const FormInput: React.FC<FormInputProps> = ({ control, name, label, placeholder
     <Label htmlFor={name as string}>{label}</Label>
     <Controller
       control={control}
-      name={name as keyof AuthorizationFormData} 
+      name={name as keyof AuthorizationFormData}
       render={({ field }) => <Input id={name as string} type={type} inputMode={inputMode} placeholder={placeholder} {...field} value={field.value || ''} maxLength={maxLength} className={error ? 'border-destructive' : ''} />}
     />
     {error && <FormErrorMessage message={error.message} />}
@@ -851,13 +708,12 @@ const FormSelect: React.FC<FormSelectProps> = ({ control, name, label, placehold
             render={({ field }) => (
                 <Select onValueChange={(value) => {
                     field.onChange(value);
-                    // Trigger validation for dependent fields if necessary, e.g., document number
                     if (name === 'buyerDocumentType' || name === 'representativeDocumentType') {
                         const dependentField = name === 'buyerDocumentType' ? 'buyerDocumentNumber' : 'representativeDocumentNumber';
                         (control as any).formContext.trigger(dependentField);
                     }
-                }} 
-                value={field.value || undefined} 
+                }}
+                value={field.value || undefined}
                 defaultValue={field.value}
                 >
                     <SelectTrigger id={name} className={error ? 'border-destructive' : ''}>
@@ -878,7 +734,7 @@ const FormSelect: React.FC<FormSelectProps> = ({ control, name, label, placehold
 
 interface FormDatePickerProps {
   control: any;
-  name: "purchaseDate" | "pickupDate"; 
+  name: "purchaseDate" | "pickupDate";
   label: string;
   error?: { message?: string };
 }
@@ -902,8 +758,8 @@ const FormDatePicker: React.FC<FormDatePickerProps> = ({ control, name, label, e
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {field.value && field.value instanceof Date && !isNaN(field.value.getTime()) ? format(field.value, "PPP", { locale: ptBR }) : 
-               field.value && typeof field.value === 'string' && !isNaN(new Date(field.value).getTime())? format(new Date(field.value), "PPP", { locale: ptBR }) : 
+              {field.value && field.value instanceof Date && !isNaN(field.value.getTime()) ? format(field.value, "PPP", { locale: ptBR }) :
+               field.value && typeof field.value === 'string' && !isNaN(new Date(field.value).getTime())? format(new Date(field.value), "PPP", { locale: ptBR }) :
                <span>Selecione uma data</span>}
             </Button>
           </PopoverTrigger>
@@ -911,7 +767,7 @@ const FormDatePicker: React.FC<FormDatePickerProps> = ({ control, name, label, e
             <Calendar
               mode="single"
               selected={field.value ? (field.value instanceof Date ? field.value : new Date(field.value as string)) : undefined}
-              onSelect={(date) => field.onChange(date)} 
+              onSelect={(date) => field.onChange(date)}
               initialFocus
               locale={ptBR}
               disabled={(date) => date < new Date("1900-01-01") || date > new Date("2100-01-01")}
