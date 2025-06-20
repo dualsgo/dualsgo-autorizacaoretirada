@@ -24,24 +24,23 @@ const capitalizeWords = (str: string | undefined) => {
 const formatCPF = (cpf: string | undefined): string | undefined => {
   if (!cpf) return undefined;
   const cleaned = cpf.replace(/\D/g, '');
-  if (cleaned.length !== 11) return cpf; // Return original if not 11 digits
+  if (cleaned.length !== 11) return cpf;
   return cleaned.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
 };
 
 const formatRG = (rg: string | undefined): string | undefined => {
   if (!rg) return undefined;
   const cleaned = rg.replace(/\D/g, '');
-   if (cleaned.length === 9) { // Common format like XX.XXX.XXX-Y (SP) or XX.XXX.XXX.Y
+  if (cleaned.length === 9) {
     return cleaned.replace(/^(\d{2})(\d{3})(\d{3})([0-9A-Za-z])$/, '$1.$2.$3-$4');
   }
-  if (cleaned.length === 8 && !isNaN(Number(cleaned.charAt(cleaned.length -1))) ) { // XX.XXX.XX-Y
+  if (cleaned.length === 8 && !isNaN(Number(cleaned.charAt(cleaned.length -1))) ) {
      return cleaned.replace(/^(\d{2})(\d{3})(\d{2})([0-9A-Za-z])$/, '$1.$2.$3-$4');
   }
-   if (cleaned.length === 7 && !isNaN(Number(cleaned.charAt(cleaned.length -1)))) { // MG: X.XXX.XXX or other 7-digit RGs
-    return cleaned.replace(/^(\d{1})(\d{3})(\d{2})([0-9A-Za-z])$/, '$1.$2.$3-$4'); // A bit generic for 7 digits
+  if (cleaned.length === 7 && !isNaN(Number(cleaned.charAt(cleaned.length -1)))) {
+    return cleaned.replace(/^(\d{1})(\d{3})(\d{2})([0-9A-Za-z])$/, '$1.$2.$3-$4');
   }
-  // Fallback for RGs that don't fit typical formatting, or very short ones
-  if (cleaned.length > 4) { // Attempt a generic split if long enough
+  if (cleaned.length > 4) {
     const firstPart = cleaned.slice(0, cleaned.length - 1);
     const lastChar = cleaned.slice(-1);
     if (firstPart.length > 3) {
@@ -52,7 +51,19 @@ const formatRG = (rg: string | undefined): string | undefined => {
     }
     return `${firstPart}-${lastChar}`;
   }
-  return rg; // Return original if no specific format matches or too short
+  return rg;
+};
+
+const formatPhoneNumber = (phone: string | undefined): string | undefined => {
+    if (!phone) return undefined;
+    const cleaned = phone.replace(/\D/g, '');
+    if (cleaned.length === 11) { // Celular (XX) XXXXX-XXXX
+        return cleaned.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+    }
+    if (cleaned.length === 10) { // Fixo (XX) XXXX-XXXX
+        return cleaned.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
+    }
+    return phone; // Retorna original se não se encaixar nos formatos comuns
 };
 
 
@@ -73,12 +84,22 @@ export const authorizationSchema = z.object({
   buyerRG: z.string().optional().transform(val => val ? formatRG(val.trim()) : undefined),
   buyerCPF: z.string().optional().transform(val => val ? formatCPF(val.trim()) : undefined),
   buyerCNPJ: z.string().optional().transform(val => val ? val.trim() : undefined),
+  buyerEmail: z.string().email("E-mail inválido.").min(1, "E-mail do comprador é obrigatório.").transform(val => val.trim().toLowerCase()),
+  buyerPhone: z.string().min(1, "Telefone do comprador é obrigatório.")
+    .transform(val => val.trim())
+    .refine(val => val.replace(/\D/g, '').length >= 10, "Telefone inválido. Deve conter DDD + número.")
+    .transform(val => formatPhoneNumber(val)),
   
   representativeName: z.string().min(1, "Nome do representante é obrigatório.").transform(val => capitalizeWords(val.trim())),
   representativeRG: z.string().min(1, "RG do representante é obrigatório.").transform(val => formatRG(val.trim())),
   representativeCPF: z.string().min(1, "CPF do representante é obrigatório.").transform(val => formatCPF(val.trim())),
 
-  purchaseDate: z.date({ required_error: "Data da compra é obrigatória." }),
+  purchaseDate: z.date({ required_error: "Data da compra é obrigatória." })
+    .refine(date => {
+        const today = new Date();
+        today.setHours(0,0,0,0); // Compare dates only
+        return date <= today;
+    }, "A data da compra não pode ser no futuro."),
   purchaseValue: z.string().min(1, "Valor da compra é obrigatório.").transform(val => val.trim()),
   orderNumber: z.string()
     .min(1, "Número do pedido é obrigatório.")
@@ -125,17 +146,26 @@ export const authorizationSchema = z.object({
   }
 
   if (data.purchaseDate && data.pickupDate) {
-    const purchaseDate = new Date(data.purchaseDate);
-    const pickupDate = new Date(data.pickupDate);
-    purchaseDate.setHours(0, 0, 0, 0); 
-    pickupDate.setHours(0, 0, 0, 0); 
+    const purchaseD = new Date(data.purchaseDate);
+    const pickupD = new Date(data.pickupDate);
+    purchaseD.setHours(0, 0, 0, 0); 
+    pickupD.setHours(0, 0, 0, 0); 
 
-    if (pickupDate <= purchaseDate) {
+    if (pickupD < purchaseD) { // Changed to strictly less than
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "A data da retirada deve ser posterior à data da compra.",
+        message: "A data da retirada não pode ser anterior à data da compra.",
         path: ["pickupDate"],
       });
+    }
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    if (pickupD < today) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "A data da retirada não pode ser anterior à data atual.",
+            path: ["pickupDate"],
+        });
     }
   }
 });
@@ -143,3 +173,4 @@ export const authorizationSchema = z.object({
 export type AuthorizationFormData = z.infer<typeof authorizationSchema>;
 
 export const storeOptionsList = storeOptions.map(store => ({ value: store, label: store }));
+
