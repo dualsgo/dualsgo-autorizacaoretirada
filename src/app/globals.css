@@ -12,10 +12,10 @@ h1, h2, h3, h4, h5, h6 {
 
 @layer base {
   :root {
-    --background: 208 100% 97%; /* #F0F8FF - Very light, desaturated blue */
-    --foreground: 240 10% 3.9%; /* Default dark text */
+    --background: 51 100% 50%; /* Bright Yellow */
+    --foreground: 271 98% 33%; /* Purple */
 
-    --card: 208 100% 100%; /* Slightly lighter than background or white */
+    --card: 208 100% 100%; /* Slightly lighter than original background or white */
     --card-foreground: 240 10% 3.9%;
 
     --popover: 208 100% 100%;
@@ -24,11 +24,11 @@ h1, h2, h3, h4, h5, h6 {
     --primary: 200 70% 83%; /* #A0D2EB - Light and airy blue */
     --primary-foreground: 200 50% 25%; /* Darker blue for text on primary */
 
-    --secondary: 208 60% 92%; /* Lighter variant of background */
+    --secondary: 208 60% 92%; /* Lighter variant of original background */
     --secondary-foreground: 200 50% 25%;
 
     --muted: 208 50% 90%;
-    --muted-foreground: 240 5% 45%;
+    --muted-foreground: 240 5% 45%; /* Kept as gray for muted text */
 
     --accent: 20 100% 77%; /* #FFB38A - Soft Peach */
     --accent-foreground: 20 60% 30%; /* Darker peach/brown for text on accent */
@@ -36,9 +36,9 @@ h1, h2, h3, h4, h5, h6 {
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 200 30% 80%; /* Adjusted to fit theme */
-    --input: 200 30% 90%; /* Adjusted to fit theme */
-    --ring: 200 70% 75%; /* Adjusted primary for ring */
+    --border: 200 30% 80%; 
+    --input: 200 30% 90%; 
+    --ring: 200 70% 75%; 
 
     --chart-1: 12 76% 61%;
     --chart-2: 173 58% 39%;
@@ -58,8 +58,9 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+    /* Dark theme adjustments would also primarily use the new foreground if not overridden */
+    --background: 240 10% 3.9%; /* Default dark bg */
+    --foreground: 51 100% 70%; /* Lighter yellow for dark mode text if purple is too dark */
 
     --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;

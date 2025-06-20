@@ -1,20 +1,21 @@
 
 import { AuthorizationForm } from '@/components/authorization-form';
+import Image from 'next/image';
 
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-background flex flex-col items-center justify-center py-8 px-4 selection:bg-accent/50 selection:text-accent-foreground">
       <header className="mb-8 text-center">
-        <div className="inline-flex items-center justify-center p-3 bg-primary rounded-full mb-4 shadow-md">
-            {/* Using a generic placeholder icon */}
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary-foreground h-10 w-10">
-                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                <path d="M2 17l10 5 10-5"/>
-                <path d="M2 12l10 5 10-5"/>
-            </svg>
-        </div>
-        {/* The main title "AutorizaTerceiro" has been removed */}
-        <p className="mt-2 text-2xl md:text-3xl font-headline text-foreground">
+        <Image src="/logo.png" alt="Logo da Empresa" width={160} height={56} className="mx-auto mb-6" data-ai-hint="company logo" />
+        
+        <p className="text-2xl md:text-3xl font-headline text-foreground mb-2">
+          Pedido prontinho para retirada!
+        </p>
+        <h1 className="text-4xl md:text-5xl font-headline font-bold text-foreground text-center mb-6">
+          A DIVERSÃO CONTINUA COM VOCÊ!
+        </h1>
+        
+        <p className="mt-4 text-xl md:text-2xl font-headline text-foreground/80">
           Sistema de Autorização de Retirada de Pedidos
         </p>
       </header>
