@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useForm, Controller, SubmitHandler, useWatch } from 'react-hook-form';
+import { useForm, Controller, SubmitHandler, useWatch, type Control, type FieldError, type UseFormTrigger } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { authorizationSchema, AuthorizationFormData, storeOptionsList, documentTypeOptionsBuyer, documentTypeOptionsRepresentative } from '@/lib/schemas';
 import { Button } from '@/components/ui/button';
@@ -51,7 +51,6 @@ export function AuthorizationForm() {
   });
 
   const buyerType = form.watch('buyerType');
-  const representativeDocType = form.watch('representativeDocumentType');
 
   useEffect(() => {
     if (buyerType === 'individual') {
@@ -73,7 +72,7 @@ export function AuthorizationForm() {
 
     pdfContentElement.style.display = 'flex';
     pdfContentElement.style.position = 'fixed';
-    pdfContentElement.style.left = '-300mm';
+    pdfContentElement.style.left = '-300mm'; // Off-screen
     pdfContentElement.style.top = '0px';
     pdfContentElement.style.width = '210mm';
     pdfContentElement.style.height = 'auto';
@@ -83,22 +82,25 @@ export function AuthorizationForm() {
     pdfContentElement.style.margin = '0';
     pdfContentElement.style.overflow = 'hidden';
 
+
+    // Force reflow/repaint before capturing
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     pdfContentElement.offsetHeight;
 
+
     try {
       const canvas = await html2canvas(pdfContentElement, {
-        scale: 2,
+        scale: 2, // Increase scale for better quality
         useCORS: true,
-        logging: false,
+        logging: false, // Set to true for debugging if needed
         width: pdfContentElement.scrollWidth,
         height: pdfContentElement.scrollHeight,
         windowWidth: pdfContentElement.scrollWidth,
         windowHeight: pdfContentElement.scrollHeight,
       });
 
-      const imgData = canvas.toDataURL('image/png', 0.95);
-      const pdf = new jsPDF('p', 'mm', 'a4', true);
+      const imgData = canvas.toDataURL('image/png', 0.95); // Use PNG for better quality, adjust compression if needed
+      const pdf = new jsPDF('p', 'mm', 'a4', true); // true for compress
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
@@ -108,11 +110,13 @@ export function AuthorizationForm() {
       let imgRenderWidth = pdfWidth;
       let imgRenderHeight = pdfWidth / aspectRatio;
 
+      // If the image height is still greater than the PDF height, adjust based on height
       if (imgRenderHeight > pdfHeight) {
         imgRenderHeight = pdfHeight;
         imgRenderWidth = pdfHeight * aspectRatio;
       }
-
+      
+      // Center the image on the page (optional)
       const xOffset = (pdfWidth - imgRenderWidth) / 2;
       const yOffset = (pdfHeight - imgRenderHeight) / 2;
 
@@ -125,8 +129,9 @@ export function AuthorizationForm() {
       toast({ title: "Erro ao gerar PDF", description: "Ocorreu um problema ao tentar gerar o documento.", variant: "destructive" });
     } finally {
        if (pdfContentElement) {
+        // Reset styles after generation
         pdfContentElement.style.display = 'none';
-        pdfContentElement.style.position = 'absolute';
+        pdfContentElement.style.position = 'absolute'; // Or whatever its original position was
        }
     }
   };
@@ -136,9 +141,14 @@ export function AuthorizationForm() {
     setIsSubmitting(true);
     setShowGlobalError(false);
 
+    // Manually trigger validation for all fields if some errors are not caught by onChange
+    // const isValid = await form.trigger();
+    // if (!isValid) {
+
     if (Object.keys(form.formState.errors).length > 0) {
         setShowGlobalError(true);
         setIsSubmitting(false);
+        // Find the first field with an error and scroll to it
         const firstErrorField = Object.keys(form.formState.errors)[0] as keyof AuthorizationFormData;
         const element = document.getElementsByName(firstErrorField)[0];
         if (element) {
@@ -147,9 +157,13 @@ export function AuthorizationForm() {
         return;
     }
 
+    // Ensure data is fully updated in the form state for the PDF
+    // This can sometimes be an issue if relying purely on async state updates
+    // One way to ensure is to give React a cycle to process state updates
     try {
+      // A small delay to ensure state updates for PDF generation are processed
       await new Promise<void>(resolve => {
-        requestAnimationFrame(() => setTimeout(resolve, 50));
+        requestAnimationFrame(() => setTimeout(resolve, 50)); // Delay of ~50ms
       });
 
       await generatePdf();
@@ -195,6 +209,7 @@ export function AuthorizationForm() {
 
       <Card className="shadow-xl overflow-hidden">
         <CardHeader className="bg-primary/10 p-6">
+          {/* <CardTitle className="text-center text-2xl font-headline text-primary-foreground">Formulário de Autorização para Retirada por Terceiro</CardTitle> */}
           <CardDescription className="text-center text-primary-foreground/90 space-y-3 text-sm md:text-base">
             <p>Para garantir a segurança da sua compra, preencha o Termo de Autorização caso outra pessoa vá retirar seu pedido.</p>
             <p>Essa etapa é importante para proteger sua compra e garantir que tudo ocorra da forma mais segura possível 😉</p>
@@ -204,6 +219,7 @@ export function AuthorizationForm() {
         <CardContent className="p-6 space-y-8">
           <form onSubmit={form.handleSubmit(onSubmit, () => setShowGlobalError(true))} className="space-y-8">
 
+            {/* Buyer Information Card */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline"><User className="text-primary" /> Dados do Comprador</CardTitle>
@@ -218,7 +234,7 @@ export function AuthorizationForm() {
                       <RadioGroup
                         onValueChange={(value) => {
                             field.onChange(value);
-                            form.trigger();
+                            form.trigger(); // Trigger validation on related fields if needed
                         }}
                         defaultValue={field.value}
                         className="flex space-x-4 pt-2"
@@ -240,6 +256,7 @@ export function AuthorizationForm() {
                     <FormInput control={form.control} name="buyerCPF" label="CPF do Comprador" placeholder="000.000.000-00" error={form.formState.errors.buyerCPF} inputMode="numeric" maxLength={14}/>
                     <FormSelect
                         control={form.control}
+                        trigger={form.trigger}
                         name="buyerDocumentType"
                         label="Tipo de Documento com Foto do Comprador"
                         placeholder="Selecione RG ou CNH"
@@ -252,8 +269,8 @@ export function AuthorizationForm() {
                         label={`Número do ${buyerDocType === 'CNH' ? 'CNH' : buyerDocType === 'RG' ? 'RG' : 'Documento'} do Comprador`}
                         placeholder={buyerDocType === 'CNH' ? '00000000000' : buyerDocType === 'RG' ? '00.000.000-0' : 'Número do Documento'}
                         error={form.formState.errors.buyerDocumentNumber}
-                        inputMode={buyerDocType === 'CNH' ? 'numeric' : 'text'}
-                        maxLength={buyerDocType === 'CNH' ? 11 : 12}
+                        inputMode={buyerDocType === 'CNH' ? 'numeric' : 'text'} // CNH is numeric
+                        maxLength={buyerDocType === 'CNH' ? 11 : 12} // Max length for RG or CNH
                     />
                   </>
                 )}
@@ -267,6 +284,7 @@ export function AuthorizationForm() {
               </CardContent>
             </Card>
 
+            {/* Representative Information Card */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline"><Users className="text-primary" /> Dados da pessoa autorizada a retirar</CardTitle>
@@ -278,6 +296,7 @@ export function AuthorizationForm() {
                 </div>
                 <FormSelect
                     control={form.control}
+                    trigger={form.trigger}
                     name="representativeDocumentType"
                     label="Tipo de Documento da Pessoa Autorizada"
                     placeholder="Selecione RG, CNH ou CPF"
@@ -295,14 +314,15 @@ export function AuthorizationForm() {
                     error={form.formState.errors.representativeDocumentNumber}
                     inputMode={repDocType === 'CPF' || repDocType === 'CNH' ? 'numeric' : 'text'}
                     maxLength={
-                        repDocType === 'RG' ? 12 :
+                        repDocType === 'RG' ? 12 : // Max length for RG with potential formatting
                         repDocType === 'CNH' ? 11 :
-                        repDocType === 'CPF' ? 14 : 20
+                        repDocType === 'CPF' ? 14 : 20 // Default max length
                     }
                 />
               </CardContent>
             </Card>
 
+            {/* Purchase and Pickup Details Card */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline"><ShoppingBag className="text-primary" /> Detalhes da Compra e Retirada</CardTitle>
@@ -320,7 +340,7 @@ export function AuthorizationForm() {
                         control={form.control}
                         name="pickupStore"
                         render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value || undefined} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value || undefined}>
                             <SelectTrigger id="pickupStore" className={form.formState.errors.pickupStore ? 'border-destructive' : ''}>
                                 <SelectValue placeholder="Selecione uma loja" />
                             </SelectTrigger>
@@ -343,6 +363,7 @@ export function AuthorizationForm() {
                 <p className="mt-1">Ao enviar este formulário, você concorda com esse uso.</p>
             </div>
 
+            {/* Global Error Message */}
             {showGlobalError && Object.keys(form.formState.errors).length > 0 && (
                 <Alert variant="destructive" className="fixed bottom-4 right-4 w-auto max-w-md z-50">
                     <AlertTriangle className="h-4 w-4" />
@@ -354,6 +375,7 @@ export function AuthorizationForm() {
             )}
 
 
+            {/* Submit Button */}
             <Button type="submit" size="lg" className="w-full font-headline bg-accent hover:bg-accent/90 text-accent-foreground text-lg" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
@@ -463,8 +485,8 @@ export function AuthorizationForm() {
       }
 
       .pdf-notes {
-        background: #FEFCE8;
-        border-left: 2px solid #FACC15;
+        background: #FEFCE8; /* Light yellow */
+        border-left: 2px solid #FACC15; /* Yellow accent */
         padding: 2.5mm;
         border-radius: 0 2px 2px 0;
         margin: 2.5mm 0;
@@ -504,14 +526,14 @@ export function AuthorizationForm() {
         text-align: center;
         font-size: 10pt; /* Adjusted pickup date font */
         padding: 2mm;
-        background: #EFF6FF;
-        border: 1px solid #DBEAFE;
+        background: #EFF6FF; /* Light blue */
+        border: 1px solid #DBEAFE; /* Blue border */
         border-radius: 2px;
         margin: 2.5mm 0;
       }
       .pdf-pickup-date strong {
         font-weight: 600;
-        color: #1D4ED8;
+        color: #1D4ED8; /* Darker blue text */
       }
       
       .pdf-document-verification-note {
@@ -666,13 +688,13 @@ const FormFieldItem: React.FC<{ children: React.ReactNode; className?: string }>
 );
 
 interface FormInputProps {
-  control: any;
-  name: keyof AuthorizationFormData | string;
+  control: Control<AuthorizationFormData>;
+  name: keyof AuthorizationFormData | string; // Keep string for flexibility if needed, but prefer keyof
   label: string;
   placeholder?: string;
   type?: string;
   inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'];
-  error?: { message?: string };
+  error?: FieldError;
   className?: string;
   maxLength?: number;
 }
@@ -682,7 +704,7 @@ const FormInput: React.FC<FormInputProps> = ({ control, name, label, placeholder
     <Label htmlFor={name as string}>{label}</Label>
     <Controller
       control={control}
-      name={name as keyof AuthorizationFormData}
+      name={name as keyof AuthorizationFormData} // Cast to keyof for Controller
       render={({ field }) => <Input id={name as string} type={type} inputMode={inputMode} placeholder={placeholder} {...field} value={field.value || ''} maxLength={maxLength} className={error ? 'border-destructive' : ''} />}
     />
     {error && <FormErrorMessage message={error.message} />}
@@ -690,16 +712,17 @@ const FormInput: React.FC<FormInputProps> = ({ control, name, label, placeholder
 );
 
 interface FormSelectProps {
-    control: any;
+    control: Control<AuthorizationFormData>;
+    trigger: UseFormTrigger<AuthorizationFormData>;
     name: keyof AuthorizationFormData;
     label: string;
     placeholder: string;
     options: { value: string; label: string }[];
-    error?: { message?: string };
+    error?: FieldError;
     className?: string;
 }
 
-const FormSelect: React.FC<FormSelectProps> = ({ control, name, label, placeholder, options, error, className }) => (
+const FormSelect: React.FC<FormSelectProps> = ({ control, trigger, name, label, placeholder, options, error, className }) => (
     <FormFieldItem className={className}>
         <Label htmlFor={name}>{label}</Label>
         <Controller
@@ -709,12 +732,11 @@ const FormSelect: React.FC<FormSelectProps> = ({ control, name, label, placehold
                 <Select onValueChange={(value) => {
                     field.onChange(value);
                     if (name === 'buyerDocumentType' || name === 'representativeDocumentType') {
-                        const dependentField = name === 'buyerDocumentType' ? 'buyerDocumentNumber' : 'representativeDocumentNumber';
-                        (control as any).formContext.trigger(dependentField);
+                        const dependentField = (name === 'buyerDocumentType' ? 'buyerDocumentNumber' : 'representativeDocumentNumber') as keyof AuthorizationFormData;
+                        trigger(dependentField);
                     }
                 }}
                 value={field.value || undefined}
-                defaultValue={field.value}
                 >
                     <SelectTrigger id={name} className={error ? 'border-destructive' : ''}>
                         <SelectValue placeholder={placeholder} />
@@ -733,10 +755,10 @@ const FormSelect: React.FC<FormSelectProps> = ({ control, name, label, placehold
 
 
 interface FormDatePickerProps {
-  control: any;
+  control: Control<AuthorizationFormData>;
   name: "purchaseDate" | "pickupDate";
   label: string;
-  error?: { message?: string };
+  error?: FieldError;
 }
 
 const FormDatePicker: React.FC<FormDatePickerProps> = ({ control, name, label, error }) => (
@@ -792,3 +814,4 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 );
 
 export default AuthorizationForm;
+
