@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -363,14 +364,14 @@ export function AuthorizationForm() {
             }
             .pdf-page-container {
               width: 100%; 
-              height: 100%; /* Try to use full height for fitting content */
-              padding: 7mm; /* Reduced padding */
+              height: 100%; 
+              padding: 7mm; 
               box-sizing: border-box;
-              font-size: 8pt; /* Base font size */
+              font-size: 8pt; 
               line-height: 1.2; 
               display: flex;
               flex-direction: column;
-              color: black; /* Ensure text is black */
+              color: black; 
             }
             .pdf-header { text-align: center; margin-bottom: 4mm; }
             .pdf-logo { max-width: 80px; max-height: 28px; margin: 0 auto 3mm auto; display:block; }
@@ -392,22 +393,22 @@ export function AuthorizationForm() {
               background-color: #e0e0e0; 
               padding: 0.8mm 1.2mm; 
               border: 0.5px solid black; 
-              display: inline-block; /* To match image */
-              width: auto; /* Fit content */
+              display: inline-block;
+              width: auto;
             }
             .pdf-data-content {
-              border: 0.5px solid black;
-              padding: 1.5mm;
+              /* border removed as per request */
+              /* padding removed as per request */
               display: grid;
               gap: 0.8mm 2mm; /* Row gap, Column gap */
+              margin-top: 1mm; /* Add some space below the title bar */
             }
             
-            /* Grid for Comprador and Representante */
             .pdf-data-content.buyer-info, .pdf-data-content.rep-info {
-              grid-template-columns: auto 1fr auto 1fr; /* Label, Value, Label, Value */
+              grid-template-columns: auto 1fr auto 1fr; 
             }
             .pdf-data-content .pdf-field-label {
-              font-weight: normal; /* Image shows normal weight labels */
+              font-weight: normal; 
               white-space: nowrap;
               padding-right: 1mm;
               align-self: baseline;
@@ -415,17 +416,17 @@ export function AuthorizationForm() {
             .pdf-data-content .pdf-field-value {
               border-bottom: 0.4px solid #333;
               word-break: break-word;
-              min-height: 7pt; /* Ensure underline is visible */
-              padding: 0 0.5mm 0.2mm 0.5mm; /* top right bottom left */
+              min-height: 7pt; 
+              padding: 0 0.5mm 0.2mm 0.5mm; 
               align-self: baseline;
             }
             .pdf-data-content .full-width-label {
                 grid-column: 1 / 2;
             }
             .pdf-data-content .full-width-value {
-                grid-column: 2 / -1; /* Span all remaining columns */
+                grid-column: 2 / -1; 
             }
-             .pdf-data-content .address-value { /* For the concatenated address */
+             .pdf-data-content .address-value { 
                 grid-column: 2 / -1;
             }
 
@@ -446,7 +447,7 @@ export function AuthorizationForm() {
             .pdf-signature-label { display: block; font-size: 8pt; margin-bottom: 0.5mm; }
             .pdf-signature-box { 
               width: 100%; 
-              height: 20mm; /* Increased height for signature */
+              height: 20mm; 
               border: 0.5px solid #ccc; 
               display: flex; 
               align-items: center; 
@@ -472,15 +473,15 @@ export function AuthorizationForm() {
               border: 0.5px solid black; 
               padding: 1.5mm; 
               background-color: #f9f9f9; 
-              min-height: 60mm; /* Significantly increased height */
-              max-height: 75mm; /* Max height */
+              min-height: 60mm; 
+              max-height: 75mm; 
               display: flex; 
               justify-content: center; 
               align-items: center; 
             }
             .pdf-document-image-wrapper img { 
               max-width: 100%; 
-              max-height: 72mm; /* Corresponds to wrapper height */
+              max-height: 72mm; 
               object-fit: contain; 
             }
             .pdf-document-placeholder { font-size: 7pt; color: #666; text-align: center; }
