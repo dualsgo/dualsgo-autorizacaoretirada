@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Alert, AlertDescription as ShadAlertDescription, AlertTitle as ShadAlertTitle } from "@/components/ui/alert";
+import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -220,17 +221,6 @@ export function AuthorizationForm() {
     setIsSubmitting(true);
     setShowGlobalError(false);
 
-    if (Object.keys(form.formState.errors).length > 0) {
-        setShowGlobalError(true);
-        setIsSubmitting(false);
-        const firstErrorField = Object.keys(form.formState.errors)[0] as keyof AuthorizationFormData;
-        const element = document.getElementsByName(firstErrorField)[0];
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-        return;
-    }
-
     try {
       await new Promise<void>(resolve => {
         requestAnimationFrame(() => setTimeout(resolve, 50));
@@ -264,7 +254,17 @@ export function AuthorizationForm() {
 
       <Card className="shadow-xl overflow-hidden">
         <CardContent className="p-6 space-y-8">
-          <form onSubmit={form.handleSubmit(onSubmit, () => setShowGlobalError(true))} className="space-y-8">
+          <form 
+            onSubmit={form.handleSubmit(onSubmit, (errors) => {
+              setShowGlobalError(true);
+              const firstErrorField = Object.keys(errors)[0] as keyof AuthorizationFormData;
+              const element = document.querySelector(`[name="${firstErrorField}"]`);
+              if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            })}
+            className="space-y-8"
+          >
 
             <Card>
               <CardHeader>
@@ -444,19 +444,25 @@ export function AuthorizationForm() {
                          </p>
                     </div>
                 </div>
-                 {form.formState.errors.agreedToTerms && <FormErrorMessage message={form.formState.errors.agreedToTerms.message} />}
+                 {form.formState.errors.agreedToTerms && !agreedToTerms && <FormErrorMessage message={form.formState.errors.agreedToTerms.message} />}
             </FormFieldItem>
 
-
-            {showGlobalError && Object.keys(form.formState.errors).length > 0 && (
-                <Alert variant="destructive" className="fixed bottom-4 right-4 w-auto max-w-md z-50">
-                    <AlertTriangle className="h-4 w-4" />
-                    <ShadAlertTitle>Erro de Validação</ShadAlertTitle>
-                    <ShadAlertDescription>
+            <AlertDialog open={showGlobalError} onOpenChange={setShowGlobalError}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-destructive" />
+                    Erro de Validação
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
                     ❗ Verifique os campos obrigatórios acima e preencha todos corretamente para continuar.
-                    </ShadAlertDescription>
-                </Alert>
-            )}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogAction>Fechar</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
 
             <Button type="submit" size="lg" className="w-full font-headline bg-accent hover:bg-accent/90 text-accent-foreground text-lg" disabled={isSubmitting || !agreedToTerms}>
               {isSubmitting ? (
