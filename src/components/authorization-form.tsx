@@ -217,7 +217,7 @@ export function AuthorizationForm() {
 
       pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgRenderWidth, imgRenderHeight, undefined, 'FAST');
       pdf.save('autorizacao_retirada.pdf');
-      toast({ title: "Sucesso!", description: "PDF gerado e download iniciado." });
+      toast({ variant: "success", title: "Sucesso!", description: "PDF gerado e download iniciado." });
 
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
@@ -260,10 +260,10 @@ export function AuthorizationForm() {
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
       
-       <Alert variant="default" className="mb-8 bg-amber-100 border-amber-500/80 text-amber-900 dark:bg-amber-950 dark:border-amber-600 dark:text-amber-300">
-        <MessageSquareWarning className="h-5 w-5 text-amber-600 dark:text-amber-500" />
-        <ShadAlertTitle className="font-headline text-lg text-amber-800 dark:text-amber-400">Atenção aos Documentos!</ShadAlertTitle>
-        <ShadAlertDescription className="text-amber-800 dark:text-amber-400 space-y-2">
+       <Alert variant="warning" className="mb-8">
+        <MessageSquareWarning className="h-5 w-5" />
+        <ShadAlertTitle className="font-headline text-lg">Atenção aos Documentos!</ShadAlertTitle>
+        <ShadAlertDescription className="space-y-2">
           <p>Para sua segurança, <strong>não solicitamos anexos de documentos</strong> através deste formulário.</p>
           <p>Será necessário enviar uma cópia digital (foto ou PDF) do <strong>documento com foto do comprador</strong> junto com este termo de autorização para o <strong>WhatsApp ou e-mail corporativo da loja</strong> no momento da retirada. Os colaboradores da loja fornecerão o contato correto.</p>
           <p>Certifique-se de que as cópias digitais estejam legíveis.</p>
@@ -468,35 +468,35 @@ export function AuthorizationForm() {
             </FormFieldItem>
 
             <AlertDialog open={showGlobalError} onOpenChange={setShowGlobalError}>
-              <AlertDialogContent>
+              <AlertDialogContent className="bg-destructive text-destructive-foreground border-destructive-foreground/50">
                 <AlertDialogHeader>
                   <AlertDialogTitle className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-destructive" />
+                    <AlertTriangle className="h-5 w-5" />
                     Erro de Validação
                   </AlertDialogTitle>
-                  <AlertDialogDescription>
+                  <AlertDialogDescription className="text-destructive-foreground/90">
                     ❗ Verifique os campos obrigatórios acima e preencha todos corretamente para continuar.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogAction>Fechar</AlertDialogAction>
+                  <AlertDialogAction className="bg-destructive-foreground text-destructive hover:bg-destructive-foreground/90">Fechar</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
             
             <AlertDialog open={showDateWarningModal} onOpenChange={setShowDateWarningModal}>
-              <AlertDialogContent>
+              <AlertDialogContent className="bg-warning text-warning-foreground border-warning-foreground/50">
                 <AlertDialogHeader>
                   <AlertDialogTitle className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-amber-500" />
+                    <AlertTriangle className="h-5 w-5" />
                     Aviso de Prazo de Retirada
                   </AlertDialogTitle>
-                  <AlertDialogDescription>
+                  <AlertDialogDescription className="text-warning-foreground/90">
                      Atenção: A data de retirada informada está mais de 15 dias após a data da compra. Se o pedido tiver sido cancelado por inatividade, será necessário realizar uma nova compra. Recomendamos que você verifique o status do seu pedido antes de continuar o preenchimento deste documento.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogAction onClick={() => setShowDateWarningModal(false)}>
+                  <AlertDialogAction className="bg-warning-foreground text-warning hover:bg-warning-foreground/90" onClick={() => setShowDateWarningModal(false)}>
                     Fechar
                   </AlertDialogAction>
                 </AlertDialogFooter>
