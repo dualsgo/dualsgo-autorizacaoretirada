@@ -16,11 +16,102 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, Info, MessageSquareWarning } from 'lucide-react';
+import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, Info, MessageSquareWarning, HelpCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Alert, AlertDescription as ShadAlertDescription, AlertTitle as ShadAlertTitle } from "@/components/ui/alert";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+
+// --- Formatting Utilities ---
+const formatPhone = (value: string) => {
+  if (!value) return "";
+  const cleaned = value.replace(/\D/g, '');
+  if (cleaned.length <= 2) return `(${cleaned}`;
+  if (cleaned.length <= 6) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2)}`;
+  if (cleaned.length <= 10) return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 6)}-${cleaned.slice(6)}`;
+  return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7, 11)}`;
+};
+
+const formatCPF = (value: string) => {
+  if (!value) return "";
+  const cleaned = value.replace(/\D/g, '');
+  if (cleaned.length <= 3) return cleaned;
+  if (cleaned.length <= 6) return `${cleaned.slice(0, 3)}.${cleaned.slice(3)}`;
+  if (cleaned.length <= 9) return `${cleaned.slice(0, 3)}.${cleaned.slice(3, 6)}.${cleaned.slice(6)}`;
+  return `${cleaned.slice(0, 3)}.${cleaned.slice(3, 6)}.${cleaned.slice(6, 9)}-${cleaned.slice(9, 11)}`;
+};
+
+const formatCNPJ = (value: string) => {
+    if (!value) return "";
+    const cleaned = value.replace(/\D/g, '');
+    if (cleaned.length <= 2) return cleaned;
+    if (cleaned.length <= 5) return `${cleaned.slice(0, 2)}.${cleaned.slice(2)}`;
+    if (cleaned.length <= 8) return `${cleaned.slice(0, 2)}.${cleaned.slice(2, 5)}.${cleaned.slice(5)}`;
+    if (cleaned.length <= 12) return `${cleaned.slice(0, 2)}.${cleaned.slice(2, 5)}.${cleaned.slice(5, 8)}/${cleaned.slice(8)}`;
+    return `${cleaned.slice(0, 2)}.${cleaned.slice(2, 5)}.${cleaned.slice(5, 8)}/${cleaned.slice(8, 12)}-${cleaned.slice(12, 14)}`;
+};
+
+const formatCurrency = (value: string) => {
+    if (!value) return "";
+    let cleaned = value.replace(/\D/g, '');
+    if (!cleaned) return "";
+    cleaned = (parseInt(cleaned, 10) / 100).toFixed(2);
+    return cleaned.replace('.', ',');
+};
+
+const formatRG = (value: string) => {
+    if (!value) return "";
+    return value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+}
+
+
+const InstructionGuide = () => (
+    <Card className="mb-8 bg-primary/5">
+        <CardHeader>
+            <CardTitle className="font-headline text-lg">Como Preencher a Autorização</CardTitle>
+        </CardHeader>
+        <CardContent>
+            <ol className="space-y-3 text-sm text-foreground/90">
+                <li className="flex items-start gap-3">
+                    <span className="font-bold text-primary text-lg">1️⃣</span>
+                    <div>
+                        <strong>Dados do Comprador:</strong> Preencha suas informações exatamente como constam na nota fiscal da compra.
+                    </div>
+                </li>
+                <li className="flex items-start gap-3">
+                    <span className="font-bold text-primary text-lg">2️⃣</span>
+                    <div>
+                        <strong>Dados da Pessoa Autorizada:</strong> Informe os dados de quem irá retirar o pedido. Essa pessoa deve ser maior de idade.
+                    </div>
+                </li>
+                 <li className="flex items-start gap-3">
+                    <span className="font-bold text-primary text-lg">3️⃣</span>
+                     <div>
+                        <strong>Detalhes da Compra:</strong> Use as informações do e-mail de aprovação do pagamento para preencher os detalhes do pedido.
+                         <TooltipProvider>
+                             <Tooltip>
+                                 <TooltipTrigger asChild>
+                                     <HelpCircle className="inline-block ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
+                                 </TooltipTrigger>
+                                 <TooltipContent>
+                                     <p>O número do pedido, data e valor estão no e-mail que recebeste.</p>
+                                 </TooltipContent>
+                             </Tooltip>
+                         </TooltipProvider>
+                    </div>
+                </li>
+                <li className="flex items-start gap-3">
+                    <span className="font-bold text-primary text-lg">4️⃣</span>
+                    <div>
+                        <strong>Gerar PDF:</strong> Após preencher tudo, clique em "Gerar PDF" e envie o arquivo para o WhatsApp ou e-mail da loja.
+                    </div>
+                </li>
+            </ol>
+        </CardContent>
+    </Card>
+);
 
 
 export function AuthorizationForm() {
@@ -51,6 +142,8 @@ export function AuthorizationForm() {
   });
 
   const buyerType = form.watch('buyerType');
+  const buyerDocType = useWatch({ control: form.control, name: 'buyerDocumentType' });
+  const repDocType = useWatch({ control: form.control, name: 'representativeDocumentType' });
 
   useEffect(() => {
     if (buyerType === 'individual') {
@@ -167,25 +260,10 @@ export function AuthorizationForm() {
     }
   };
 
-  const buyerDocType = useWatch({ control: form.control, name: 'buyerDocumentType' });
-  const repDocType = useWatch({ control: form.control, name: 'representativeDocumentType' });
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
-      <Alert className="mb-8 bg-primary/10 border-primary/30 text-primary-foreground">
-        <Info className="h-5 w-5 text-primary" />
-        <ShadAlertTitle className="font-headline text-lg text-primary-foreground/90">Importante!</ShadAlertTitle>
-        <ShadAlertDescription className="text-primary-foreground/80 space-y-1">
-          <p>Para preencher os dados corretamente, acesse o e-mail de <strong>aprovação do pagamento</strong>. Nele você encontrará:</p>
-          <ul className="list-disc list-inside pl-4">
-            <li>Número do pedido</li>
-            <li>Data da compra</li>
-            <li>Valor da compra</li>
-            <li>Loja de retirada</li>
-          </ul>
-          <p>Essas informações são essenciais para autorizarmos a retirada por outra pessoa.</p>
-        </ShadAlertDescription>
-      </Alert>
+      <InstructionGuide />
 
       <Alert variant="default" className="mb-8 bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400">
         <MessageSquareWarning className="h-5 w-5 text-amber-600 dark:text-amber-500" />
@@ -243,7 +321,7 @@ export function AuthorizationForm() {
 
                 {buyerType === 'individual' && (
                   <>
-                    <FormInput control={form.control} name="buyerCPF" label="CPF do Comprador" placeholder="000.000.000-00" error={form.formState.errors.buyerCPF} inputMode="numeric" maxLength={14}/>
+                    <FormInput control={form.control} name="buyerCPF" label="CPF do Comprador" placeholder="000.000.000-00" error={form.formState.errors.buyerCPF} inputMode="numeric" maxLength={14} formatter={formatCPF} />
                     <FormSelect
                         control={form.control}
                         trigger={form.trigger}
@@ -256,21 +334,23 @@ export function AuthorizationForm() {
                     <FormInput
                         control={form.control}
                         name="buyerDocumentNumber"
-                        label={`Número do ${buyerDocType === 'CNH' ? 'CNH' : buyerDocType === 'RG' ? 'RG' : 'Documento'} do Comprador`}
-                        placeholder={buyerDocType === 'CNH' ? '00000000000' : buyerDocType === 'RG' ? '00.000.000-0' : 'Número do Documento'}
+                        label={`Número do ${buyerDocType || 'Documento'} do Comprador`}
+                        placeholder={!buyerDocType ? "Selecione o tipo primeiro" : (buyerDocType === 'CNH' ? '00000000000' : '00.000.000-0')}
                         error={form.formState.errors.buyerDocumentNumber}
                         inputMode={buyerDocType === 'CNH' ? 'numeric' : 'text'}
                         maxLength={buyerDocType === 'CNH' ? 11 : 12}
+                        disabled={!buyerDocType}
+                        formatter={buyerDocType === 'RG' ? formatRG : undefined}
                     />
                   </>
                 )}
                 {buyerType === 'corporate' && (
                   <>
-                    <FormInput control={form.control} name="buyerCNPJ" label="CNPJ" placeholder="00.000.000/0000-00" error={form.formState.errors.buyerCNPJ} inputMode="numeric" className="md:col-span-2" maxLength={18}/>
+                    <FormInput control={form.control} name="buyerCNPJ" label="CNPJ" placeholder="00.000.000/0000-00" error={form.formState.errors.buyerCNPJ} inputMode="numeric" className="md:col-span-2" maxLength={18} formatter={formatCNPJ} />
                   </>
                 )}
                  <FormInput control={form.control} name="buyerEmail" label="E-mail do Comprador" placeholder="comprador@exemplo.com" type="email" error={form.formState.errors.buyerEmail} />
-                 <FormInput control={form.control} name="buyerPhone" label="Telefone do Comprador" placeholder="(XX) XXXXX-XXXX" type="tel" error={form.formState.errors.buyerPhone} inputMode="tel" maxLength={15}/>
+                 <FormInput control={form.control} name="buyerPhone" label="Telefone do Comprador" placeholder="(XX) XXXXX-XXXX" type="tel" error={form.formState.errors.buyerPhone} inputMode="tel" maxLength={15} formatter={formatPhone} />
               </CardContent>
             </Card>
 
@@ -297,16 +377,19 @@ export function AuthorizationForm() {
                     control={form.control}
                     name="representativeDocumentNumber"
                     label={`Número do ${repDocType || 'Documento'} da Pessoa Autorizada`}
-                    placeholder={
-                        repDocType === 'RG' ? '00.000.000-0' :
-                        repDocType === 'CNH' ? '00000000000' :
-                        repDocType === 'CPF' ? '000.000.000-00' : 'Número do Documento'}
+                    placeholder={!repDocType ? 'Selecione o tipo primeiro' : 'Digite o número'}
                     error={form.formState.errors.representativeDocumentNumber}
                     inputMode={repDocType === 'CPF' || repDocType === 'CNH' ? 'numeric' : 'text'}
                     maxLength={
                         repDocType === 'RG' ? 12 :
                         repDocType === 'CNH' ? 11 :
                         repDocType === 'CPF' ? 14 : 20
+                    }
+                    disabled={!repDocType}
+                    formatter={
+                        repDocType === 'CPF' ? formatCPF :
+                        repDocType === 'RG' ? formatRG :
+                        undefined
                     }
                 />
               </CardContent>
@@ -321,8 +404,15 @@ export function AuthorizationForm() {
                 <FormDatePicker control={form.control} name="purchaseDate" label="Data da Compra" error={form.formState.errors.purchaseDate} />
                 <FormDatePicker control={form.control} name="pickupDate" label="Data Prevista da Retirada" error={form.formState.errors.pickupDate} />
 
-                <FormInput control={form.control} name="purchaseValue" label="Valor da Compra (R$)" placeholder="Ex: 199,90" type="text" inputMode='decimal' error={form.formState.errors.purchaseValue} />
-                <FormInput control={form.control} name="orderNumber" label="Número do Pedido" placeholder="Ex: V12345678RIHP-01" error={form.formState.errors.orderNumber} />
+                <FormInput control={form.control} name="purchaseValue" label="Valor da Compra (R$)" placeholder="Ex: 199,90" type="text" inputMode='decimal' error={form.formState.errors.purchaseValue} formatter={formatCurrency}/>
+                <FormInput 
+                    control={form.control} 
+                    name="orderNumber" 
+                    label="Número do Pedido" 
+                    placeholder="Ex: V12345678RIHP-01" 
+                    error={form.formState.errors.orderNumber}
+                    tooltip="O formato é uma letra V, seguida por 8 números, e finaliza com 'RIHP-01'." 
+                />
 
                 <FormFieldItem className="md:col-span-2">
                     <Label htmlFor="pickupStore">Loja para Retirada</Label>
@@ -639,7 +729,7 @@ export function AuthorizationForm() {
               <tbody>
                 <tr>
                   <td>{form.getValues('purchaseDate') && form.getValues('purchaseDate') instanceof Date && !isNaN((form.getValues('purchaseDate') as Date).getTime()) ? format(form.getValues('purchaseDate') as Date, 'dd/MM/yyyy', { locale: ptBR }) : ' '}</td>
-                  <td>{form.getValues('purchaseValue') ? parseFloat(form.getValues('purchaseValue')).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00'}</td>
+                  <td>{form.getValues('purchaseValue') ? parseFloat(form.getValues('purchaseValue').replace(',', '.')).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00'}</td>
                   <td>{form.getValues('orderNumber') || ' '}</td>
                   <td>{storeOptionsList.find(s => s.value === form.getValues('pickupStore'))?.label || form.getValues('pickupStore') || ' '}</td>
                 </tr>
@@ -681,15 +771,46 @@ interface FormInputProps {
   error?: FieldError;
   className?: string;
   maxLength?: number;
+  disabled?: boolean;
+  tooltip?: string;
+  formatter?: (value: string) => string;
 }
 
-const FormInput: React.FC<FormInputProps> = ({ control, name, label, placeholder, type = "text", inputMode, error, className, maxLength }) => (
+const FormInput: React.FC<FormInputProps> = ({ control, name, label, placeholder, type = "text", inputMode, error, className, maxLength, disabled, tooltip, formatter }) => (
   <FormFieldItem className={className}>
-    <Label htmlFor={name as string}>{label}</Label>
+      <div className="flex items-center gap-1.5">
+        <Label htmlFor={name as string}>{label}</Label>
+        {tooltip && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{tooltip}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+    </div>
     <Controller
       control={control}
       name={name}
-      render={({ field }) => <Input id={name as string} type={type} inputMode={inputMode} placeholder={placeholder} {...field} value={field.value || ''} maxLength={maxLength} className={error ? 'border-destructive' : ''} />}
+      render={({ field }) => <Input 
+        id={name as string} 
+        type={type} 
+        inputMode={inputMode} 
+        placeholder={placeholder} 
+        {...field} 
+        onChange={(e) => {
+            const value = e.target.value;
+            field.onChange(formatter ? formatter(value) : value);
+        }}
+        value={field.value || ''} 
+        maxLength={maxLength} 
+        className={error ? 'border-destructive' : ''} 
+        disabled={disabled}
+      />}
     />
     {error && <FormErrorMessage message={error.message} />}
   </FormFieldItem>
