@@ -235,3 +235,5 @@ export const storeOptionsList = [
   "1239 - SHOPPING RECREIO", "1300 - ECO VILLA", "1301 - IPANEMA", "1304 - PARK JACAREPAGUÁ",
   "9014 - RIO DESIGN"
 ].map(store => ({ value: store, label: store }));
+
+    

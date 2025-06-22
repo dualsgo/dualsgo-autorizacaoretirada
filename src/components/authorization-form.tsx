@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, Info, ShieldAlert, MessageSquareWarning } from 'lucide-react';
+import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, Info, MessageSquareWarning } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -141,14 +141,9 @@ export function AuthorizationForm() {
     setIsSubmitting(true);
     setShowGlobalError(false);
 
-    // Manually trigger validation for all fields if some errors are not caught by onChange
-    // const isValid = await form.trigger();
-    // if (!isValid) {
-
     if (Object.keys(form.formState.errors).length > 0) {
         setShowGlobalError(true);
         setIsSubmitting(false);
-        // Find the first field with an error and scroll to it
         const firstErrorField = Object.keys(form.formState.errors)[0] as keyof AuthorizationFormData;
         const element = document.getElementsByName(firstErrorField)[0];
         if (element) {
@@ -157,13 +152,9 @@ export function AuthorizationForm() {
         return;
     }
 
-    // Ensure data is fully updated in the form state for the PDF
-    // This can sometimes be an issue if relying purely on async state updates
-    // One way to ensure is to give React a cycle to process state updates
     try {
-      // A small delay to ensure state updates for PDF generation are processed
       await new Promise<void>(resolve => {
-        requestAnimationFrame(() => setTimeout(resolve, 50)); // Delay of ~50ms
+        requestAnimationFrame(() => setTimeout(resolve, 50));
       });
 
       await generatePdf();
@@ -201,7 +192,7 @@ export function AuthorizationForm() {
         <ShadAlertTitle className="font-headline text-lg text-amber-700 dark:text-amber-500">Atenção aos Documentos!</ShadAlertTitle>
         <ShadAlertDescription className="text-amber-600 dark:text-amber-400 space-y-1">
           <p>Para sua segurança, <strong>não solicitamos anexos de documentos</strong> através deste formulário.</p>
-          <p>Será necessário apresentar os documentos originais (do comprador e da pessoa autorizada) e enviar uma cópia digital (foto ou PDF) diretamente para o <strong>WhatsApp ou e-mail corporativo da loja</strong> no momento da retirada. Os colaboradores da loja fornecerão o contato correto.</p>
+          <p>Será necessário enviar uma cópia digital (foto ou PDF) do documento do comprador diretamente para o <strong>WhatsApp ou e-mail corporativo da loja</strong> no momento da retirada. Os colaboradores da loja fornecerão o contato correto.</p>
           <p>Certifique-se de que as cópias digitais estejam legíveis.</p>
         </ShadAlertDescription>
       </Alert>
@@ -209,7 +200,6 @@ export function AuthorizationForm() {
 
       <Card className="shadow-xl overflow-hidden">
         <CardHeader className="bg-primary/10 p-6">
-          {/* <CardTitle className="text-center text-2xl font-headline text-primary-foreground">Formulário de Autorização para Retirada por Terceiro</CardTitle> */}
           <CardDescription className="text-center text-primary-foreground/90 space-y-3 text-sm md:text-base">
             <p>Para garantir a segurança da sua compra, preencha o Termo de Autorização caso outra pessoa vá retirar seu pedido.</p>
             <p>Essa etapa é importante para proteger sua compra e garantir que tudo ocorra da forma mais segura possível 😉</p>
@@ -234,7 +224,7 @@ export function AuthorizationForm() {
                       <RadioGroup
                         onValueChange={(value) => {
                             field.onChange(value);
-                            form.trigger(); // Trigger validation on related fields if needed
+                            form.trigger();
                         }}
                         defaultValue={field.value}
                         className="flex space-x-4 pt-2"
@@ -269,8 +259,8 @@ export function AuthorizationForm() {
                         label={`Número do ${buyerDocType === 'CNH' ? 'CNH' : buyerDocType === 'RG' ? 'RG' : 'Documento'} do Comprador`}
                         placeholder={buyerDocType === 'CNH' ? '00000000000' : buyerDocType === 'RG' ? '00.000.000-0' : 'Número do Documento'}
                         error={form.formState.errors.buyerDocumentNumber}
-                        inputMode={buyerDocType === 'CNH' ? 'numeric' : 'text'} // CNH is numeric
-                        maxLength={buyerDocType === 'CNH' ? 11 : 12} // Max length for RG or CNH
+                        inputMode={buyerDocType === 'CNH' ? 'numeric' : 'text'}
+                        maxLength={buyerDocType === 'CNH' ? 11 : 12}
                     />
                   </>
                 )}
@@ -288,7 +278,7 @@ export function AuthorizationForm() {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline"><Users className="text-primary" /> Dados da pessoa autorizada a retirar</CardTitle>
-                <CardDescription>Essa pessoa precisa apresentar o PDF desta autorização e um documento original com foto na loja.</CardDescription>
+                <CardDescription>Essa pessoa precisa apresentar um documento original com foto na loja.</CardDescription>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
@@ -314,9 +304,9 @@ export function AuthorizationForm() {
                     error={form.formState.errors.representativeDocumentNumber}
                     inputMode={repDocType === 'CPF' || repDocType === 'CNH' ? 'numeric' : 'text'}
                     maxLength={
-                        repDocType === 'RG' ? 12 : // Max length for RG with potential formatting
+                        repDocType === 'RG' ? 12 :
                         repDocType === 'CNH' ? 11 :
-                        repDocType === 'CPF' ? 14 : 20 // Default max length
+                        repDocType === 'CPF' ? 14 : 20
                     }
                 />
               </CardContent>
@@ -363,7 +353,6 @@ export function AuthorizationForm() {
                 <p className="mt-1">Ao enviar este formulário, você concorda com esse uso.</p>
             </div>
 
-            {/* Global Error Message */}
             {showGlobalError && Object.keys(form.formState.errors).length > 0 && (
                 <Alert variant="destructive" className="fixed bottom-4 right-4 w-auto max-w-md z-50">
                     <AlertTriangle className="h-4 w-4" />
@@ -374,8 +363,6 @@ export function AuthorizationForm() {
                 </Alert>
             )}
 
-
-            {/* Submit Button */}
             <Button type="submit" size="lg" className="w-full font-headline bg-accent hover:bg-accent/90 text-accent-foreground text-lg" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
@@ -409,15 +396,15 @@ export function AuthorizationForm() {
         width: 100%;
         min-height: 297mm;
         height: auto;
-        padding: 10mm; /* Increased padding */
+        padding: 10mm;
         box-sizing: border-box;
-        font-size: 10pt; /* Adjusted base font size */
+        font-size: 10pt;
         line-height: 1.4;
         background-color: #FFFFFF;
         color: #333333;
         display: flex;
         flex-direction: column;
-        gap: 5mm; /* Adjusted gap */
+        gap: 5mm;
       }
 
       .pdf-header {
@@ -425,12 +412,12 @@ export function AuthorizationForm() {
         margin-bottom: 3mm;
       }
       .pdf-logo {
-        max-width: 60px; /* Adjusted logo size */
+        max-width: 60px;
         height: auto;
         margin: 0 auto 1.5mm auto;
       }
       .pdf-main-title {
-        font-size: 16pt; /* Adjusted title size */
+        font-size: 16pt;
         font-weight: 600;
         margin-bottom: 4mm;
         padding-bottom: 1.5mm;
@@ -442,7 +429,7 @@ export function AuthorizationForm() {
         margin-bottom: 0;
       }
       .pdf-section-title {
-        font-size: 12pt; /* Adjusted section title size */
+        font-size: 12pt;
         font-weight: 600;
         color: #333333;
         padding-bottom: 1mm;
@@ -465,19 +452,19 @@ export function AuthorizationForm() {
       .pdf-field-label {
         font-weight: 500;
         color: #555555;
-        font-size: 8.5pt; /* Adjusted label size */
+        font-size: 8.5pt;
         margin-bottom: 0.5mm;
       }
       .pdf-field-value {
-        padding: 2mm; /* Adjusted padding */
+        padding: 2mm;
         background: #F8F9FA;
         border-radius: 2px;
-        min-height: 5mm; /* Adjusted height */
+        min-height: 5mm;
         display: flex;
         align-items: center;
         justify-content: flex-start;
         word-break: break-all;
-        font-size: 9.5pt; /* Adjusted value size */
+        font-size: 9.5pt;
       }
 
       .pdf-data-item.full-width {
@@ -490,7 +477,7 @@ export function AuthorizationForm() {
         padding: 2.5mm;
         border-radius: 0 2px 2px 0;
         margin: 2.5mm 0;
-        font-size: 8.5pt; /* Adjusted note size */
+        font-size: 8.5pt;
       }
       .pdf-note-item {
         display: block;
@@ -510,7 +497,7 @@ export function AuthorizationForm() {
         width: 100%;
         border-collapse: collapse;
         margin: 2.5mm 0;
-        font-size: 9pt; /* Adjusted table font size */
+        font-size: 9pt;
       }
       .pdf-order-table th, .pdf-order-table td {
         border: 1px solid #E5E7EB;
@@ -524,7 +511,7 @@ export function AuthorizationForm() {
 
       .pdf-pickup-date {
         text-align: center;
-        font-size: 10pt; /* Adjusted pickup date font */
+        font-size: 10pt;
         padding: 2mm;
         background: #EFF6FF; /* Light blue */
         border: 1px solid #DBEAFE; /* Blue border */
@@ -550,7 +537,7 @@ export function AuthorizationForm() {
       }
 
       .pdf-footer {
-        font-size: 7.5pt; /* Adjusted footer font */
+        font-size: 7.5pt;
         color: #6B7280;
         text-align: center;
         margin-top: auto;
@@ -566,7 +553,6 @@ export function AuthorizationForm() {
             <div className="pdf-main-title">📝 Autorização para Retirada por Terceiros</div>
           </div>
 
-          {/* Buyer Data Section */}
           <div className="pdf-section">
             <div className="pdf-section-title">👤 Dados do Comprador</div>
             <div className="pdf-data-grid">
@@ -604,7 +590,6 @@ export function AuthorizationForm() {
             </div>
           </div>
 
-          {/* Authorized Person Data Section */}
           <div className="pdf-section">
             <div className="pdf-section-title">👥 Dados da Pessoa Autorizada</div>
             <div className="pdf-data-grid">
@@ -612,7 +597,7 @@ export function AuthorizationForm() {
                 <span className="pdf-field-label">Nome Completo</span>
                 <div className="pdf-field-value">{form.getValues('representativeName') || ' '}</div>
               </div>
-              <div className="pdf-data-item">
+              <div className="pdf-data-item full-width">
                 <span className="pdf-field-label">Documento ({form.getValues('representativeDocumentType') || 'Não informado'})</span>
                 <div className="pdf-field-value">{form.getValues('representativeDocumentNumber') || ' '}</div>
               </div>
@@ -640,7 +625,6 @@ export function AuthorizationForm() {
             )}
           </div>
 
-          {/* Order Details Section */}
           <div className="pdf-section">
             <div className="pdf-section-title">🛒 Detalhes do Pedido</div>
             <table className="pdf-order-table">
@@ -689,7 +673,7 @@ const FormFieldItem: React.FC<{ children: React.ReactNode; className?: string }>
 
 interface FormInputProps {
   control: Control<AuthorizationFormData>;
-  name: keyof AuthorizationFormData | string; // Keep string for flexibility if needed, but prefer keyof
+  name: keyof AuthorizationFormData;
   label: string;
   placeholder?: string;
   type?: string;
@@ -704,7 +688,7 @@ const FormInput: React.FC<FormInputProps> = ({ control, name, label, placeholder
     <Label htmlFor={name as string}>{label}</Label>
     <Controller
       control={control}
-      name={name as keyof AuthorizationFormData} // Cast to keyof for Controller
+      name={name}
       render={({ field }) => <Input id={name as string} type={type} inputMode={inputMode} placeholder={placeholder} {...field} value={field.value || ''} maxLength={maxLength} className={error ? 'border-destructive' : ''} />}
     />
     {error && <FormErrorMessage message={error.message} />}
@@ -815,3 +799,4 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 
 export default AuthorizationForm;
 
+    
