@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 
 const capitalizeWords = (str: string | undefined) => {
@@ -152,7 +151,7 @@ export const authorizationSchema = z.object({
   pickupDate: z.date({ required_error: "Data da retirada é obrigatória." }),
 
   agreedToTerms: z.literal(true, {
-    required_error: "Você deve concordar com os termos para gerar o PDF.",
+    invalid_type_error: "Você deve concordar com os termos para gerar o PDF.",
   }),
 
 }).superRefine((data, ctx) => {

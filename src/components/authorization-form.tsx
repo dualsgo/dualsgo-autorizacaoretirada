@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -451,7 +450,6 @@ export function AuthorizationForm() {
                          </p>
                     </div>
                 </div>
-                {form.formState.errors.agreedToTerms && <FormErrorMessage message={form.formState.errors.agreedToTerms.message} />}
             </FormFieldItem>
 
 
