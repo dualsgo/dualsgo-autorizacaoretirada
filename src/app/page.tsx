@@ -1,10 +1,15 @@
 
 import { AuthorizationForm } from '@/components/authorization-form';
+import { ThemeToggle } from '@/components/theme-toggle';
 import Image from 'next/image';
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-background flex flex-col items-center justify-center py-8 px-4 selection:bg-accent/50 selection:text-accent-foreground">
+    <main className="relative min-h-screen bg-background flex flex-col items-center justify-center py-8 px-4 selection:bg-accent/50 selection:text-accent-foreground">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      
       <header className="mb-6 text-center">
         <Image 
           src="https://rihappynovo.vtexassets.com/arquivos/solzinhoFooterNew.png" 

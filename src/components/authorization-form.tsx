@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, Info, MessageSquareWarning, HelpCircle } from 'lucide-react';
+import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, HelpCircle, MessageSquareWarning } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -96,7 +96,7 @@ const InstructionGuide = () => (
                                      <HelpCircle className="inline-block ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
                                  </TooltipTrigger>
                                  <TooltipContent>
-                                     <p>O número do pedido, data e valor estão no e-mail que recebeste.</p>
+                                     <p>O número do pedido, data e valor estão no e-mail que você recebeu.</p>
                                  </TooltipContent>
                              </Tooltip>
                          </TooltipProvider>
@@ -175,7 +175,6 @@ export function AuthorizationForm() {
     pdfContentElement.style.margin = '0';
     pdfContentElement.style.overflow = 'hidden';
 
-
     // Force reflow/repaint before capturing
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     pdfContentElement.offsetHeight;
@@ -192,8 +191,8 @@ export function AuthorizationForm() {
         windowHeight: pdfContentElement.scrollHeight,
       });
 
-      const imgData = canvas.toDataURL('image/png', 0.95); // Use PNG for better quality, adjust compression if needed
-      const pdf = new jsPDF('p', 'mm', 'a4', true); // true for compress
+      const imgData = canvas.toDataURL('image/png', 0.95);
+      const pdf = new jsPDF('p', 'mm', 'a4', true);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
@@ -203,13 +202,11 @@ export function AuthorizationForm() {
       let imgRenderWidth = pdfWidth;
       let imgRenderHeight = pdfWidth / aspectRatio;
 
-      // If the image height is still greater than the PDF height, adjust based on height
       if (imgRenderHeight > pdfHeight) {
         imgRenderHeight = pdfHeight;
         imgRenderWidth = pdfHeight * aspectRatio;
       }
       
-      // Center the image on the page (optional)
       const xOffset = (pdfWidth - imgRenderWidth) / 2;
       const yOffset = (pdfHeight - imgRenderHeight) / 2;
 
@@ -222,9 +219,8 @@ export function AuthorizationForm() {
       toast({ title: "Erro ao gerar PDF", description: "Ocorreu um problema ao tentar gerar o documento.", variant: "destructive" });
     } finally {
        if (pdfContentElement) {
-        // Reset styles after generation
         pdfContentElement.style.display = 'none';
-        pdfContentElement.style.position = 'absolute'; // Or whatever its original position was
+        pdfContentElement.style.position = 'absolute';
        }
     }
   };
@@ -287,14 +283,13 @@ export function AuthorizationForm() {
         <CardContent className="p-6 space-y-8">
           <form onSubmit={form.handleSubmit(onSubmit, () => setShowGlobalError(true))} className="space-y-8">
 
-            {/* Buyer Information Card */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline"><User className="text-primary" /> Dados do Comprador</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormFieldItem className="md:col-span-2">
-                  <Label>Tipo de Comprador</Label>
+                  <Label>Tipo de Comprador *</Label>
                   <Controller
                     control={form.control}
                     name="buyerType"
@@ -316,17 +311,17 @@ export function AuthorizationForm() {
                 </FormFieldItem>
 
                 <div className="md:col-span-2">
-                  <FormInput control={form.control} name="buyerName" label="Nome Completo / Razão Social" placeholder="João Silva / Empresa XYZ LTDA" error={form.formState.errors.buyerName} />
+                  <FormInput control={form.control} name="buyerName" label="Nome Completo / Razão Social *" placeholder="João Silva / Empresa XYZ LTDA" error={form.formState.errors.buyerName} />
                 </div>
 
                 {buyerType === 'individual' && (
                   <>
-                    <FormInput control={form.control} name="buyerCPF" label="CPF do Comprador" placeholder="000.000.000-00" error={form.formState.errors.buyerCPF} inputMode="numeric" maxLength={14} formatter={formatCPF} />
+                    <FormInput control={form.control} name="buyerCPF" label="CPF do Comprador *" placeholder="000.000.000-00" error={form.formState.errors.buyerCPF} inputMode="numeric" maxLength={14} formatter={formatCPF} tooltip="Digite apenas os números. A formatação é automática."/>
                     <FormSelect
                         control={form.control}
                         trigger={form.trigger}
                         name="buyerDocumentType"
-                        label="Tipo de Documento com Foto do Comprador"
+                        label="Tipo de Documento com Foto *"
                         placeholder="Selecione RG ou CNH"
                         options={documentTypeOptionsBuyer}
                         error={form.formState.errors.buyerDocumentType}
@@ -334,7 +329,7 @@ export function AuthorizationForm() {
                     <FormInput
                         control={form.control}
                         name="buyerDocumentNumber"
-                        label={`Número do ${buyerDocType || 'Documento'} do Comprador`}
+                        label={`Número do ${buyerDocType || 'Documento'} *`}
                         placeholder={!buyerDocType ? "Selecione o tipo primeiro" : (buyerDocType === 'CNH' ? '00000000000' : '00.000.000-0')}
                         error={form.formState.errors.buyerDocumentNumber}
                         inputMode={buyerDocType === 'CNH' ? 'numeric' : 'text'}
@@ -346,15 +341,14 @@ export function AuthorizationForm() {
                 )}
                 {buyerType === 'corporate' && (
                   <>
-                    <FormInput control={form.control} name="buyerCNPJ" label="CNPJ" placeholder="00.000.000/0000-00" error={form.formState.errors.buyerCNPJ} inputMode="numeric" className="md:col-span-2" maxLength={18} formatter={formatCNPJ} />
+                    <FormInput control={form.control} name="buyerCNPJ" label="CNPJ *" placeholder="00.000.000/0000-00" error={form.formState.errors.buyerCNPJ} inputMode="numeric" className="md:col-span-2" maxLength={18} formatter={formatCNPJ} tooltip="Digite apenas os números. A formatação é automática." />
                   </>
                 )}
-                 <FormInput control={form.control} name="buyerEmail" label="E-mail do Comprador" placeholder="comprador@exemplo.com" type="email" error={form.formState.errors.buyerEmail} />
-                 <FormInput control={form.control} name="buyerPhone" label="Telefone do Comprador" placeholder="(XX) XXXXX-XXXX" type="tel" error={form.formState.errors.buyerPhone} inputMode="tel" maxLength={15} formatter={formatPhone} />
+                 <FormInput control={form.control} name="buyerEmail" label="E-mail do Comprador *" placeholder="comprador@exemplo.com" type="email" error={form.formState.errors.buyerEmail} />
+                 <FormInput control={form.control} name="buyerPhone" label="Telefone do Comprador *" placeholder="(XX) XXXXX-XXXX" type="tel" error={form.formState.errors.buyerPhone} inputMode="tel" maxLength={15} formatter={formatPhone} tooltip="Digite apenas os números. A formatação é automática." />
               </CardContent>
             </Card>
 
-            {/* Representative Information Card */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline"><Users className="text-primary" /> Dados da pessoa autorizada a retirar</CardTitle>
@@ -362,13 +356,13 @@ export function AuthorizationForm() {
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
-                 <FormInput control={form.control} name="representativeName" label="Nome Completo da Pessoa Autorizada" placeholder="Maria Oliveira" error={form.formState.errors.representativeName} />
+                 <FormInput control={form.control} name="representativeName" label="Nome Completo da Pessoa Autorizada *" placeholder="Maria Oliveira" error={form.formState.errors.representativeName} />
                 </div>
                 <FormSelect
                     control={form.control}
                     trigger={form.trigger}
                     name="representativeDocumentType"
-                    label="Tipo de Documento da Pessoa Autorizada"
+                    label="Tipo de Documento da Pessoa Autorizada *"
                     placeholder="Selecione RG, CNH ou CPF"
                     options={documentTypeOptionsRepresentative}
                     error={form.formState.errors.representativeDocumentType}
@@ -376,7 +370,7 @@ export function AuthorizationForm() {
                 <FormInput
                     control={form.control}
                     name="representativeDocumentNumber"
-                    label={`Número do ${repDocType || 'Documento'} da Pessoa Autorizada`}
+                    label={`Número do ${repDocType || 'Documento'} *`}
                     placeholder={!repDocType ? 'Selecione o tipo primeiro' : 'Digite o número'}
                     error={form.formState.errors.representativeDocumentNumber}
                     inputMode={repDocType === 'CPF' || repDocType === 'CNH' ? 'numeric' : 'text'}
@@ -391,31 +385,31 @@ export function AuthorizationForm() {
                         repDocType === 'RG' ? formatRG :
                         undefined
                     }
+                    tooltip="Digite o número do documento. Para CPF, a formatação é automática."
                 />
               </CardContent>
             </Card>
 
-            {/* Purchase and Pickup Details Card */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline"><ShoppingBag className="text-primary" /> Detalhes da Compra e Retirada</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormDatePicker control={form.control} name="purchaseDate" label="Data da Compra" error={form.formState.errors.purchaseDate} />
-                <FormDatePicker control={form.control} name="pickupDate" label="Data Prevista da Retirada" error={form.formState.errors.pickupDate} />
+                <FormDatePicker control={form.control} name="purchaseDate" label="Data da Compra *" error={form.formState.errors.purchaseDate} />
+                <FormDatePicker control={form.control} name="pickupDate" label="Data Prevista da Retirada *" error={form.formState.errors.pickupDate} />
 
-                <FormInput control={form.control} name="purchaseValue" label="Valor da Compra (R$)" placeholder="Ex: 199,90" type="text" inputMode='decimal' error={form.formState.errors.purchaseValue} formatter={formatCurrency}/>
+                <FormInput control={form.control} name="purchaseValue" label="Valor da Compra (R$) *" placeholder="Ex: 199,90" type="text" inputMode='decimal' error={form.formState.errors.purchaseValue} formatter={formatCurrency}/>
                 <FormInput 
                     control={form.control} 
                     name="orderNumber" 
-                    label="Número do Pedido" 
+                    label="Número do Pedido *" 
                     placeholder="Ex: V12345678RIHP-01" 
                     error={form.formState.errors.orderNumber}
                     tooltip="O formato é uma letra V, seguida por 8 números, e finaliza com 'RIHP-01'." 
                 />
 
                 <FormFieldItem className="md:col-span-2">
-                    <Label htmlFor="pickupStore">Loja para Retirada</Label>
+                    <Label htmlFor="pickupStore">Loja para Retirada *</Label>
                     <Controller
                         control={form.control}
                         name="pickupStore"
@@ -437,7 +431,7 @@ export function AuthorizationForm() {
               </CardContent>
             </Card>
 
-             <div className="mt-6 p-4 border border-gray-300 rounded-md bg-gray-50 text-sm text-gray-700">
+             <div className="mt-6 p-4 border border-gray-300 rounded-md bg-gray-50 dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300">
                 <p className="font-semibold mb-2">Tratamento de Dados:</p>
                 <p>Os dados informados aqui serão utilizados exclusivamente para autorizar a retirada do pedido. Nenhuma informação será armazenada ou compartilhada com terceiros para outras finalidades.</p>
                 <p className="mt-1">Ao enviar este formulário, você concorda com esse uso.</p>
@@ -468,7 +462,6 @@ export function AuthorizationForm() {
         </CardContent>
       </Card>
 
-      {/* PDF Template - Hidden */}
       <div ref={pdfTemplateRef} className="hidden">
         <style>
           {`
@@ -915,9 +908,7 @@ const FormItemRadio: React.FC<{ value: string; label: string; field: any }> = ({
 );
 
 const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
-  message ? <p className="text-sm text-destructive">{message}</p> : null
+  message ? <p className="text-sm font-medium text-destructive">{message}</p> : null
 );
 
 export default AuthorizationForm;
-
-    
