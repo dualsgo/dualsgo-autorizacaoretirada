@@ -70,42 +70,29 @@ const formatRG = (value: string) => {
 const InstructionGuide = () => (
     <Card className="mb-8 bg-primary/5">
         <CardHeader>
-            <CardTitle className="font-headline text-lg">Como Preencher a Autorização</CardTitle>
+            <CardTitle className="font-headline text-lg">📝 Instruções de Preenchimento</CardTitle>
         </CardHeader>
         <CardContent>
-            <ol className="space-y-3 text-sm text-foreground/90">
+            <ol className="space-y-4 text-sm text-foreground/90">
                 <li className="flex items-start gap-3">
-                    <span className="font-bold text-primary text-lg">1️⃣</span>
+                    <span className="font-bold text-primary text-xl">1️⃣</span>
                     <div>
-                        <strong>Dados do Comprador:</strong> Preencha suas informações exatamente como constam na nota fiscal da compra.
+                        <strong>Dados da Compra e do Comprador:</strong>
+                        <p className="mt-1">Preencha as informações exatamente como aparecem no e-mail de confirmação do pedido (aquele enviado após a aprovação do pagamento). Use o mesmo nome, CPF e e-mail informados na hora da compra, além do número do pedido, valor total e data da compra. Isso garante que a loja consiga localizar e validar seu pedido sem dificuldades.</p>
                     </div>
                 </li>
                 <li className="flex items-start gap-3">
-                    <span className="font-bold text-primary text-lg">2️⃣</span>
+                    <span className="font-bold text-primary text-xl">2️⃣</span>
                     <div>
-                        <strong>Dados da Pessoa Autorizada:</strong> Informe os dados de quem irá retirar o pedido. Essa pessoa deve ser maior de idade.
+                        <strong>Dados da Pessoa Autorizada:</strong>
+                        <p className="mt-1">Informe os dados de quem irá retirar o pedido. Essa pessoa deve ser maior de idade e apresentar um documento oficial com foto no momento da retirada.</p>
                     </div>
                 </li>
-                 <li className="flex items-start gap-3">
-                    <span className="font-bold text-primary text-lg">3️⃣</span>
+                <li className="flex items-start gap-3">
+                    <span className="font-bold text-primary text-xl">3️⃣</span>
                      <div>
-                        <strong>Detalhes da Compra:</strong> Use as informações do e-mail de aprovação do pagamento para preencher os detalhes do pedido.
-                         <TooltipProvider>
-                             <Tooltip>
-                                 <TooltipTrigger asChild>
-                                     <HelpCircle className="inline-block ml-1.5 h-4 w-4 text-muted-foreground cursor-help" />
-                                 </TooltipTrigger>
-                                 <TooltipContent>
-                                     <p>O número do pedido, data e valor estão no e-mail que você recebeu.</p>
-                                 </TooltipContent>
-                             </Tooltip>
-                         </TooltipProvider>
-                    </div>
-                </li>
-                <li className="flex items-start gap-3">
-                    <span className="font-bold text-primary text-lg">4️⃣</span>
-                    <div>
-                        <strong>Gerar PDF:</strong> Após preencher tudo, clique em "Gerar PDF" e envie o arquivo para o WhatsApp ou e-mail da loja.
+                        <strong>Gerar PDF:</strong>
+                        <p className="mt-1">Depois de preencher todos os campos corretamente, clique em “Gerar PDF”. O arquivo será criado com os dados inseridos. Em seguida, envie esse PDF para o WhatsApp ou e-mail da loja responsável pela retirada.</p>
                     </div>
                 </li>
             </ol>

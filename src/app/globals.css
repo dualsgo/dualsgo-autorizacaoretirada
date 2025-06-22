@@ -12,16 +12,16 @@ h1, h2, h3, h4, h5, h6 {
 
 @layer base {
   :root {
-    --background: 0 0% 100%; /* White */
+    --background: 208 100% 97%; /* Very light, desaturated blue */
     --foreground: 240 10% 3.9%; /* Dark Gray */
 
-    --card: 208 100% 100%;
+    --card: 0 0% 100%;
     --card-foreground: 240 10% 3.9%;
 
-    --popover: 208 100% 100%;
+    --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
 
-    --primary: 200 70% 83%; /* #A0D2EB - Light and airy blue */
+    --primary: 200 85% 60%; /* #A0D2EB - Light and airy blue */
     --primary-foreground: 200 50% 25%; /* Darker blue for text on primary */
 
     --secondary: 208 60% 92%;
@@ -58,32 +58,32 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .dark {
-    --background: 240 10% 3.9%; 
-    --foreground: 0 0% 98%; /* Light Gray for dark mode text */
+    --background: 240 6% 10%; 
+    --foreground: 0 0% 98%;
 
-    --card: 240 10% 3.9%;
+    --card: 240 5% 14%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 240 10% 3.9%;
+    --popover: 240 5% 14%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 200 70% 83%; 
-    --primary-foreground: 200 50% 25%;
+    --primary: 200 70% 75%;
+    --primary-foreground: 200 50% 15%;
 
-    --secondary: 240 5% 14.9%;
+    --secondary: 240 5% 16%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 240 5% 14.9%;
+    --muted: 240 5% 16%;
     --muted-foreground: 0 0% 63.9%;
 
-    --accent: 20 100% 77%; 
-    --accent-foreground: 20 60% 30%;
+    --accent: 20 100% 80%;
+    --accent-foreground: 20 60% 20%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 5% 14.9%;
-    --input: 240 5% 14.9%;
+    --border: 240 4% 20%;
+    --input: 240 4% 22%;
     --ring: 200 70% 75%;
     
     --chart-1: 220 70% 50%;
