@@ -151,6 +151,10 @@ export const authorizationSchema = z.object({
 
   pickupDate: z.date({ required_error: "Data da retirada é obrigatória." }),
 
+  agreedToTerms: z.literal(true, {
+    required_error: "Você deve concordar com os termos para gerar o PDF.",
+  }),
+
 }).superRefine((data, ctx) => {
   // Buyer validation
   if (data.buyerType === "individual") {
@@ -235,5 +239,3 @@ export const storeOptionsList = [
   "1239 - SHOPPING RECREIO", "1300 - ECO VILLA", "1301 - IPANEMA", "1304 - PARK JACAREPAGUÁ",
   "9014 - RIO DESIGN"
 ].map(store => ({ value: store, label: store }));
-
-    

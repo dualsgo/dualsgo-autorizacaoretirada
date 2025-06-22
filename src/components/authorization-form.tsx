@@ -16,12 +16,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, HelpCircle, MessageSquareWarning } from 'lucide-react';
+import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, HelpCircle, MessageSquareWarning, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Alert, AlertDescription as ShadAlertDescription, AlertTitle as ShadAlertTitle } from "@/components/ui/alert";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Checkbox } from '@/components/ui/checkbox';
 
 
 // --- Formatting Utilities ---
@@ -124,11 +125,13 @@ export function AuthorizationForm() {
       purchaseValue: '',
       orderNumber: '',
       pickupStore: undefined,
+      agreedToTerms: false,
     },
      mode: "onChange",
   });
 
   const buyerType = form.watch('buyerType');
+  const agreedToTerms = form.watch('agreedToTerms');
   const buyerDocType = useWatch({ control: form.control, name: 'buyerDocumentType' });
   const repDocType = useWatch({ control: form.control, name: 'representativeDocumentType' });
 
@@ -246,18 +249,18 @@ export function AuthorizationForm() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
-      <InstructionGuide />
-
-      <Alert variant="default" className="mb-8 bg-amber-500/10 border-amber-500/30 text-amber-700 dark:text-amber-400">
+      
+       <Alert variant="default" className="mb-8 bg-amber-100 border-amber-500/80 text-amber-900 dark:bg-amber-950 dark:border-amber-600 dark:text-amber-300">
         <MessageSquareWarning className="h-5 w-5 text-amber-600 dark:text-amber-500" />
-        <ShadAlertTitle className="font-headline text-lg text-amber-700 dark:text-amber-500">Atenção aos Documentos!</ShadAlertTitle>
-        <ShadAlertDescription className="text-amber-600 dark:text-amber-400 space-y-1">
+        <ShadAlertTitle className="font-headline text-lg text-amber-800 dark:text-amber-400">Atenção aos Documentos!</ShadAlertTitle>
+        <ShadAlertDescription className="text-amber-800 dark:text-amber-400 space-y-2">
           <p>Para sua segurança, <strong>não solicitamos anexos de documentos</strong> através deste formulário.</p>
-          <p>Será necessário enviar uma cópia digital (foto ou PDF) do documento do comprador diretamente para o <strong>WhatsApp ou e-mail corporativo da loja</strong> no momento da retirada. Os colaboradores da loja fornecerão o contato correto.</p>
+          <p>Será necessário enviar uma cópia digital (foto ou PDF) do <strong>documento com foto do comprador</strong> junto com este termo de autorização para o <strong>WhatsApp ou e-mail corporativo da loja</strong> no momento da retirada. Os colaboradores da loja fornecerão o contato correto.</p>
           <p>Certifique-se de que as cópias digitais estejam legíveis.</p>
         </ShadAlertDescription>
       </Alert>
 
+      <InstructionGuide />
 
       <Card className="shadow-xl overflow-hidden">
         <CardHeader className="bg-primary/10 p-6">
@@ -418,11 +421,39 @@ export function AuthorizationForm() {
               </CardContent>
             </Card>
 
-             <div className="mt-6 p-4 border border-gray-300 rounded-md bg-gray-50 dark:bg-gray-800 text-sm text-gray-700 dark:text-gray-300">
-                <p className="font-semibold mb-2">Tratamento de Dados:</p>
-                <p>Os dados informados aqui serão utilizados exclusivamente para autorizar a retirada do pedido. Nenhuma informação será armazenada ou compartilhada com terceiros para outras finalidades.</p>
-                <p className="mt-1">Ao enviar este formulário, você concorda com esse uso.</p>
+            <div className="mt-6 p-4 border rounded-md bg-background text-sm text-foreground space-y-3">
+              <p className="font-semibold text-base">🔐 Tratamento de Dados Pessoais</p>
+              <p>Os dados informados neste formulário serão utilizados exclusivamente para autorizar a retirada do pedido.</p>
+              <p>Nenhuma informação será armazenada em servidores, nem compartilhada com terceiros para outras finalidades. Todo o conteúdo é usado apenas para gerar o documento em PDF no seu próprio dispositivo.</p>
+              <p>Ao prosseguir, você declara estar ciente e concorda com o uso dos dados conforme descrito, em respeito à Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018).</p>
             </div>
+
+            <FormFieldItem>
+                <div className="flex items-start space-x-3">
+                     <Controller
+                        name="agreedToTerms"
+                        control={form.control}
+                        render={({ field }) => (
+                            <Checkbox
+                                id="agreedToTerms"
+                                checked={field.value}
+                                onCheckedChange={field.onChange}
+                                className="mt-0.5"
+                            />
+                        )}
+                    />
+                    <div className="grid gap-1.5 leading-none">
+                        <Label htmlFor="agreedToTerms" className="cursor-pointer">
+                          Li e concordo com o tratamento dos meus dados pessoais conforme descrito acima.
+                        </Label>
+                         <p className="text-xs text-muted-foreground">
+                            (Obrigatório para gerar o PDF)
+                         </p>
+                    </div>
+                </div>
+                {form.formState.errors.agreedToTerms && <FormErrorMessage message={form.formState.errors.agreedToTerms.message} />}
+            </FormFieldItem>
+
 
             {showGlobalError && Object.keys(form.formState.errors).length > 0 && (
                 <Alert variant="destructive" className="fixed bottom-4 right-4 w-auto max-w-md z-50">
@@ -434,7 +465,7 @@ export function AuthorizationForm() {
                 </Alert>
             )}
 
-            <Button type="submit" size="lg" className="w-full font-headline bg-accent hover:bg-accent/90 text-accent-foreground text-lg" disabled={isSubmitting}>
+            <Button type="submit" size="lg" className="w-full font-headline bg-accent hover:bg-accent/90 text-accent-foreground text-lg" disabled={isSubmitting || !agreedToTerms}>
               {isSubmitting ? (
                 <>
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
