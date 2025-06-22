@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -262,13 +263,6 @@ export function AuthorizationForm() {
       <InstructionGuide />
 
       <Card className="shadow-xl overflow-hidden">
-        <CardHeader className="bg-primary/10 p-6">
-          <CardDescription className="text-center text-primary-foreground/90 space-y-3 text-sm md:text-base">
-            <p>Para garantir a segurança da sua compra, preencha o Termo de Autorização caso outra pessoa vá retirar seu pedido.</p>
-            <p>Essa etapa é importante para proteger sua compra e garantir que tudo ocorra da forma mais segura possível 😉</p>
-            <p className="font-semibold">Atenção: você tem até 15 dias para retirar o pedido na loja escolhida. Após esse prazo, o pedido será cancelado e o pagamento estornado automaticamente.</p>
-          </CardDescription>
-        </CardHeader>
         <CardContent className="p-6 space-y-8">
           <form onSubmit={form.handleSubmit(onSubmit, () => setShowGlobalError(true))} className="space-y-8">
 
@@ -450,6 +444,7 @@ export function AuthorizationForm() {
                          </p>
                     </div>
                 </div>
+                 {form.formState.errors.agreedToTerms && <FormErrorMessage message={form.formState.errors.agreedToTerms.message} />}
             </FormFieldItem>
 
 

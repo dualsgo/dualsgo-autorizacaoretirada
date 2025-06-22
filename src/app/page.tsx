@@ -10,7 +10,7 @@ export default function HomePage() {
         <ThemeToggle />
       </div>
       
-      <header className="mb-6 text-center">
+      <header className="mb-8 text-center max-w-3xl">
         <Image 
           src="https://rihappynovo.vtexassets.com/arquivos/solzinhoFooterNew.png" 
           alt="Logo da Empresa" 
@@ -22,9 +22,11 @@ export default function HomePage() {
         <h1 className="text-3xl md:text-4xl font-headline font-bold text-foreground text-center mb-4">
           A DIVERSÃO CONTINUA COM VOCÊ!
         </h1>
-        <p className="text-xl md:text-2xl font-headline text-foreground mb-2">
-          Pedido prontinho para retirada!
-        </p>
+        <div className="text-base md:text-lg text-foreground/90 space-y-3">
+          <p>Para garantir a segurança da sua compra, preencha o Termo de Autorização caso outra pessoa vá retirar seu pedido.</p>
+          <p>Essa etapa é importante para proteger sua compra e garantir que tudo ocorra da forma mais segura possível 😉</p>
+          <p className="font-semibold text-amber-800 dark:text-amber-400">Atenção: você tem até 15 dias para retirar o pedido na loja escolhida. Após esse prazo, o pedido será cancelado e o pagamento estornado automaticamente.</p>
+        </div>
       </header>
 
       <AuthorizationForm />
