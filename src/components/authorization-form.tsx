@@ -21,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Alert, AlertDescription as ShadAlertDescription, AlertTitle as ShadAlertTitle } from "@/components/ui/alert";
-import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -107,6 +107,7 @@ export function AuthorizationForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showGlobalError, setShowGlobalError] = useState(false);
+  const [showDateWarningModal, setShowDateWarningModal] = useState(false);
   const pdfTemplateRef = useRef<HTMLDivElement>(null);
 
 
@@ -216,8 +217,7 @@ export function AuthorizationForm() {
     }
   };
 
-
-  const onSubmit: SubmitHandler<AuthorizationFormData> = async () => {
+  const handleGeneratePdf = async () => {
     setIsSubmitting(true);
     setShowGlobalError(false);
 
@@ -233,6 +233,21 @@ export function AuthorizationForm() {
       toast({ title: "Erro na submissão", description: "Falha ao processar os dados para PDF.", variant: "destructive" });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+
+  const onSubmit: SubmitHandler<AuthorizationFormData> = (data) => {
+    const purchaseDate = data.purchaseDate;
+    const pickupDate = data.pickupDate;
+
+    const diffTime = pickupDate.getTime() - purchaseDate.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays > 15) {
+      setShowDateWarningModal(true);
+    } else {
+      handleGeneratePdf();
     }
   };
 
@@ -463,6 +478,30 @@ export function AuthorizationForm() {
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+            
+            <AlertDialog open={showDateWarningModal} onOpenChange={setShowDateWarningModal}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-amber-500" />
+                    Prazo de Retirada Excedido
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    A data de retirada selecionada é superior a 15 dias após a data da compra. É possível que o pedido já tenha sido cancelado. Verifique a situação do seu pedido antes de prosseguir. Deseja gerar o documento mesmo assim?
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel onClick={() => setShowDateWarningModal(false)}>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => {
+                    setShowDateWarningModal(false);
+                    handleGeneratePdf();
+                  }}>
+                    Gerar PDF Mesmo Assim
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
 
             <Button type="submit" size="lg" className="w-full font-headline bg-accent hover:bg-accent/90 text-accent-foreground text-lg" disabled={isSubmitting || !agreedToTerms}>
               {isSubmitting ? (
