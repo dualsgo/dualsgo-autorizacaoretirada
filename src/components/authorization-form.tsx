@@ -260,7 +260,7 @@ export function AuthorizationForm() {
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
       
-       <Alert variant="warning" className="mb-8">
+       <Alert variant="warning" className="mb-8 text-foreground [&>svg]:text-foreground">
         <MessageSquareWarning className="h-5 w-5" />
         <ShadAlertTitle className="font-headline text-lg">Atenção aos Documentos!</ShadAlertTitle>
         <ShadAlertDescription className="space-y-2">
