@@ -136,6 +136,9 @@ export function AuthorizationForm() {
   const agreedToTerms = form.watch('agreedToTerms');
   const buyerDocType = useWatch({ control: form.control, name: 'buyerDocumentType' });
   const repDocType = useWatch({ control: form.control, name: 'representativeDocumentType' });
+  const purchaseDate = form.watch('purchaseDate');
+  const pickupDate = form.watch('pickupDate');
+
 
   useEffect(() => {
     if (buyerType === 'individual') {
@@ -147,6 +150,16 @@ export function AuthorizationForm() {
     }
     form.clearErrors();
   }, [buyerType, form]);
+
+  useEffect(() => {
+    if (purchaseDate && pickupDate) {
+        const diffTime = new Date(pickupDate).getTime() - new Date(purchaseDate).getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        if (diffDays > 15) {
+            setShowDateWarningModal(true);
+        }
+    }
+  }, [purchaseDate, pickupDate]);
 
   const generatePdf = async () => {
     const pdfContentElement = pdfTemplateRef.current;
@@ -237,18 +250,10 @@ export function AuthorizationForm() {
   };
 
 
-  const onSubmit: SubmitHandler<AuthorizationFormData> = (data) => {
-    const purchaseDate = data.purchaseDate;
-    const pickupDate = data.pickupDate;
-
-    const diffTime = pickupDate.getTime() - purchaseDate.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays > 15) {
-      setShowDateWarningModal(true);
-    } else {
-      handleGeneratePdf();
-    }
+  const onSubmit: SubmitHandler<AuthorizationFormData> = (_data) => {
+    // The date difference warning is now handled by the useEffect hook.
+    // We can proceed directly to PDF generation.
+    handleGeneratePdf();
   };
 
 
@@ -484,19 +489,15 @@ export function AuthorizationForm() {
                 <AlertDialogHeader>
                   <AlertDialogTitle className="flex items-center gap-2">
                     <AlertTriangle className="h-5 w-5 text-amber-500" />
-                    Prazo de Retirada Excedido
+                    Aviso de Prazo de Retirada
                   </AlertDialogTitle>
                   <AlertDialogDescription>
-                    A data de retirada selecionada é superior a 15 dias após a data da compra. É possível que o pedido já tenha sido cancelado. Verifique a situação do seu pedido antes de prosseguir. Deseja gerar o documento mesmo assim?
+                     Atenção: A data de retirada informada está mais de 15 dias após a data da compra. Se o pedido tiver sido cancelado por inatividade, será necessário realizar uma nova compra. Recomendamos que você verifique o status do seu pedido antes de continuar o preenchimento deste documento.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel onClick={() => setShowDateWarningModal(false)}>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => {
-                    setShowDateWarningModal(false);
-                    handleGeneratePdf();
-                  }}>
-                    Gerar PDF Mesmo Assim
+                  <AlertDialogAction onClick={() => setShowDateWarningModal(false)}>
+                    Fechar
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
