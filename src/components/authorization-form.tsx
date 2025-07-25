@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, HelpCircle, MessageSquareWarning, Check } from 'lucide-react';
+import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, HelpCircle, MessageSquareWarning, Mail, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -126,7 +126,7 @@ export function AuthorizationForm() {
       representativeDocumentNumber: '',
       purchaseValue: '',
       orderNumber: '',
-      pickupStore: undefined,
+      pickupStore: '1187 - CARIOCA SHOPPING',
       agreedToTerms: false,
     },
      mode: "onChange",
@@ -165,6 +165,33 @@ export function AuthorizationForm() {
     const orderNumberValue = form.getValues('orderNumber');
     return `V${orderNumberValue}RIHP-01`;
   };
+
+  const getPdfTitle = () => {
+    const orderNumber = getFullOrderNumber();
+    return `autorizacao_retirada_${orderNumber}.pdf`;
+  };
+
+  const getWhatsAppMessage = () => {
+    const buyerName = form.getValues('buyerName');
+    const representativeName = form.getValues('representativeName');
+    const orderId = getFullOrderNumber();
+    const message = `Olá, segue o comprovante de autorização de retirada por terceiros do pedido ${orderId} em meu nome (${buyerName}) autorizando (${representativeName})`;
+    return encodeURIComponent(message);
+  };
+  
+  const getEmailBody = () => {
+    const buyerName = form.getValues('buyerName');
+    const representativeName = form.getValues('representativeName');
+    const orderId = getFullOrderNumber();
+    const body = `Olá, segue o comprovante de autorização de retirada por terceiros do pedido ${orderId} em meu nome (${buyerName}) autorizando (${representativeName}).\n\nEm anexo, a autorização em PDF.`;
+    return encodeURIComponent(body);
+  };
+  
+  const getEmailSubject = () => {
+    const orderId = getFullOrderNumber();
+    return encodeURIComponent(`Autorização de Retirada - Pedido ${orderId}`);
+  };
+
 
   const generatePdf = async () => {
     const pdfContentElement = pdfTemplateRef.current;
@@ -221,7 +248,7 @@ export function AuthorizationForm() {
       const yOffset = (pdfHeight - imgRenderHeight) / 2;
 
       pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgRenderWidth, imgRenderHeight, undefined, 'FAST');
-      pdf.save('autorizacao_retirada.pdf');
+      pdf.save(getPdfTitle());
       toast({ variant: "success", title: "Sucesso!", description: "PDF gerado e download iniciado." });
 
     } catch (error) {
@@ -453,7 +480,7 @@ export function AuthorizationForm() {
                         control={form.control}
                         name="pickupStore"
                         render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value || undefined}>
+                        <Select onValueChange={field.onChange} value={field.value || undefined} disabled>
                             <SelectTrigger id="pickupStore" className={form.formState.errors.pickupStore ? 'border-destructive' : ''}>
                                 <SelectValue placeholder="Selecione uma loja" />
                             </SelectTrigger>
@@ -647,42 +674,53 @@ export function AuthorizationForm() {
         grid-column: span 2;
       }
 
-      .pdf-notes {
-        background: #FEFCE8; /* Light yellow */
-        border-left: 2px solid #FACC15; /* Yellow accent */
-        padding: 2.5mm;
-        border-radius: 0 2px 2px 0;
-        margin: 2.5mm 0;
-        font-size: 8.5pt;
-      }
-      .pdf-note-item {
-        display: block;
-        margin-bottom: 1.5mm;
-      }
-      .pdf-note-item:last-child {
-        margin-bottom: 0;
-      }
-      .pdf-note-item span {
-        margin-right: 1.5mm;
-      }
-      .pdf-note-item strong {
-        font-weight: 600;
-      }
-
-      .pdf-order-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 2.5mm 0;
-        font-size: 9pt;
-      }
-      .pdf-order-table th, .pdf-order-table td {
+      .pdf-contact-section {
+        background: #F8F9FA;
         border: 1px solid #E5E7EB;
-        padding: 1.5mm;
-        text-align: left;
+        padding: 4mm;
+        border-radius: 3px;
+        margin-top: 5mm;
+        text-align: center;
       }
-      .pdf-order-table th {
+      .pdf-contact-title {
+        font-size: 11pt;
+        font-weight: 600;
+        margin-bottom: 2mm;
+      }
+      .pdf-contact-description {
+        font-size: 9pt;
+        color: #555;
+        margin-bottom: 3mm;
+      }
+      .pdf-contact-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 4mm;
+      }
+      .pdf-contact-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 2mm;
+        padding: 2mm 4mm;
+        border-radius: 3px;
+        text-decoration: none;
         font-weight: 500;
-        background-color: #F9FAFB;
+        font-size: 9pt;
+        border: 1px solid transparent;
+      }
+      .email-button {
+        background-color: #DEE9FC;
+        color: #4378D3;
+        border-color: #B4C9E8;
+      }
+      .whatsapp-button {
+        background-color: #DFFFEA;
+        color: #1FAF38;
+        border-color: #ACE4B9;
+      }
+      .pdf-contact-button svg {
+        width: 14px;
+        height: 14px;
       }
 
       .pdf-pickup-date {
@@ -726,7 +764,7 @@ export function AuthorizationForm() {
         <div className="pdf-page-container">
           <div className="pdf-header">
             <img src="https://rihappynovo.vtexassets.com/arquivos/solzinhoFooterNew.png" alt="Logo Ri Happy" className="pdf-logo" data-ai-hint="company logo" />
-            <div className="pdf-main-title">📝 Autorização para Retirada por Terceiros</div>
+            <div className="pdf-main-title">📝 Autorização para Retirada - Pedido {getFullOrderNumber()}</div>
           </div>
 
           <div className="pdf-section">
@@ -780,56 +818,22 @@ export function AuthorizationForm() {
             </div>
           </div>
 
-           <div className="pdf-notes">
-            <div className="pdf-note-item">
-              <span>🔔</span>
-              <strong>Envie este documento PDF</strong> para o WhatsApp ou e-mail da loja (fornecido no local) e aguarde a confirmação.
-            </div>
-            <div className="pdf-note-item">
-                <span>📄</span>
-                <strong>Documentos na Retirada:</strong> A pessoa autorizada deve apresentar seu documento original com foto e uma cópia (digital ou física) do documento com foto do comprador.
-            </div>
-            <div className="pdf-note-item">
-              <span>⚠️</span>
-              <strong>Atenção:</strong> A retirada deve ser feita dentro do horário de funcionamento da loja em até 15 dias. Após esse prazo, o pedido será cancelado e o pagamento estornado.
-            </div>
-            {form.getValues('buyerType') === 'corporate' && (
-              <div className="pdf-note-item">
-                <span>🏢</span>
-                <strong>Para PJ:</strong> Adicionalmente, apresentar cópia do Contrato Social/Estatuto Social.
-              </div>
-            )}
-          </div>
-
-          <div className="pdf-section">
-            <div className="pdf-section-title">🛒 Detalhes do Pedido</div>
-            <table className="pdf-order-table">
-              <thead>
-                <tr>
-                  <th>Data da Compra</th>
-                  <th>Valor (R$)</th>
-                  <th>Nº do Pedido</th>
-                  <th>Loja de Retirada</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>{form.getValues('purchaseDate') && form.getValues('purchaseDate') instanceof Date && !isNaN((form.getValues('purchaseDate') as Date).getTime()) ? format(form.getValues('purchaseDate') as Date, 'dd/MM/yyyy', { locale: ptBR }) : ' '}</td>
-                  <td>{form.getValues('purchaseValue') ? parseFloat(form.getValues('purchaseValue').replace(',', '.')).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00'}</td>
-                  <td>{getFullOrderNumber()}</td>
-                  <td>{storeOptionsList.find(s => s.value === form.getValues('pickupStore'))?.label || form.getValues('pickupStore') || ' '}</td>
-                </tr>
-              </tbody>
-            </table>
-
-            <div className="pdf-pickup-date">
-              📅 <strong>Data prevista para retirada:</strong> {form.getValues('pickupDate') && form.getValues('pickupDate') instanceof Date && !isNaN((form.getValues('pickupDate') as Date).getTime()) ? format(form.getValues('pickupDate') as Date, 'dd/MM/yyyy', { locale: ptBR }) : '_____ / _____ / _____'}
-            </div>
-          </div>
-          
-          <div className="pdf-document-verification-note">
-            <strong>Importante:</strong> Os documentos originais (do comprador e da pessoa autorizada) serão conferidos no ato da retirada. Prepare cópias digitais (fotos legíveis ou PDFs) para enviar à loja via WhatsApp/email, conforme orientação no local.
-          </div>
+           <div className="pdf-contact-section">
+                <div className="pdf-contact-title">Próximo Passo: Envie os Documentos para a Loja</div>
+                <div className="pdf-contact-description">
+                Envie <strong>este PDF</strong> e uma <strong>cópia do documento com foto do comprador</strong> para o contato da loja. Use os botões abaixo para iniciar a conversa com uma mensagem pronta.
+                </div>
+                <div className="pdf-contact-buttons">
+                    <a href={`mailto:loja187@rihappy.com.br?subject=${getEmailSubject()}&body=${getEmailBody()}`} target="_blank" rel="noopener noreferrer" className="pdf-contact-button email-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z"/></svg>
+                    <span>Enviar por E-mail</span>
+                    </a>
+                    <a href={`https://api.whatsapp.com/send/?phone=5511992011112&text=${getWhatsAppMessage()}&type=phone_number&app_absent=0`} target="_blank" rel="noopener noreferrer" className="pdf-contact-button whatsapp-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.3-1.38c1.45.79 3.08 1.21 4.7 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zM12.05 20.2c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.81.83-3.04-.2-.31c-.82-1.31-1.26-2.83-1.26-4.41 0-4.54 3.7-8.23 8.24-8.23 2.22 0 4.28.86 5.82 2.41 1.55 1.54 2.41 3.6 2.41 5.82-.01 4.54-3.7 8.24-8.23 8.24zm4.52-6.13c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.15.17-.29.19-.54.06-.25-.12-1.06-.39-2.02-1.24-.75-.66-1.25-1.48-1.4-1.73-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.42-.14 0-.3 0-.46 0-.16 0-.41.06-.62.31-.22.25-.83.81-.83 1.98 0 1.16.85 2.3 1.05 2.5.14.17 1.67 2.56 4.05 3.55.57.23 1.02.37 1.37.47.59.17 1.13.15 1.56.09.48-.06 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.12-.22-.19-.47-.31z"/></svg>
+                    <span>Enviar por WhatsApp</span>
+                    </a>
+                </div>
+           </div>
 
           <div className="pdf-footer">
           * Os dados informados neste formulário são para uso exclusivo da autorização de retirada e não serão compartilhados.
@@ -1010,3 +1014,4 @@ export default AuthorizationForm;
     
 
     
+

@@ -141,12 +141,7 @@ export const authorizationSchema = z.object({
     .max(8, "O número do pedido deve conter 8 dígitos.")
     .regex(/^\d{8}$/, "O número do pedido deve conter apenas 8 dígitos numéricos."),
   pickupStore: z.enum([
-      "1030 - NOVA AMÉRICA", "1033 - NORTESHOPPING", "1052 - BANGU", "1057 - IGUATEMI RJ",
-      "1058 - VIA PARQUE", "1072 - GRANDE RIO", "1074 - NITERÓI PLAZA SHOP.", "1078 - ILHA PLAZA",
-      "1101 - PARTEGE SÃO GONÇALO", "1106 - SHOPPING METROPOLITANO BARRA", "1141 - AMÉRICA SHOPPING",
-      "1169 - NOVA IGUAÇU", "1187 - CARIOCA SHOPPING", "1224 - TOP SHOPPING", "1232 - BARRA SHOPPING",
-      "1239 - SHOPPING RECREIO", "1300 - ECO VILLA", "1301 - IPANEMA", "1304 - PARK JACAREPAGUÁ",
-      "9014 - RIO DESIGN"
+      "1187 - CARIOCA SHOPPING"
     ] as const, { required_error: "Loja para retirada é obrigatória."}),
 
   pickupDate: z.date({ required_error: "Data da retirada é obrigatória." }),
@@ -232,10 +227,5 @@ export const authorizationSchema = z.object({
 export type AuthorizationFormData = z.infer<typeof authorizationSchema>;
 
 export const storeOptionsList = [
-  "1030 - NOVA AMÉRICA", "1033 - NORTESHOPPING", "1052 - BANGU", "1057 - IGUATEMI RJ",
-  "1058 - VIA PARQUE", "1072 - GRANDE RIO", "1074 - NITERÓI PLAZA SHOP.", "1078 - ILHA PLAZA",
-  "1101 - PARTEGE SÃO GONÇALO", "1106 - SHOPPING METROPOLITANO BARRA", "1141 - AMÉRICA SHOPPING",
-  "1169 - NOVA IGUAÇU", "1187 - CARIOCA SHOPPING", "1224 - TOP SHOPPING", "1232 - BARRA SHOPPING",
-  "1239 - SHOPPING RECREIO", "1300 - ECO VILLA", "1301 - IPANEMA", "1304 - PARK JACAREPAGUÁ",
-  "9014 - RIO DESIGN"
-].map(store => ({ value: store, label: store }));
+  { value: "1187 - CARIOCA SHOPPING", label: "1187 - CARIOCA SHOPPING" }
+];
