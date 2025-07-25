@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, HelpCircle, MessageSquareWarning, Mail, MessageSquare } from 'lucide-react';
+import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, HelpCircle, MessageSquareWarning, Mail, MessageSquare, Download, Share2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -108,6 +108,7 @@ export function AuthorizationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showGlobalError, setShowGlobalError] = useState(false);
   const [showDateWarningModal, setShowDateWarningModal] = useState(false);
+  const [pdfGenerated, setPdfGenerated] = useState(false);
   const pdfTemplateRef = useRef<HTMLDivElement>(null);
 
 
@@ -250,10 +251,12 @@ export function AuthorizationForm() {
       pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgRenderWidth, imgRenderHeight, undefined, 'FAST');
       pdf.save(getPdfTitle());
       toast({ variant: "success", title: "Sucesso!", description: "PDF gerado e download iniciado." });
+      setPdfGenerated(true);
 
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
       toast({ title: "Erro ao gerar PDF", description: "Ocorreu um problema ao tentar gerar o documento.", variant: "destructive" });
+      setPdfGenerated(false);
     } finally {
        if (pdfContentElement) {
         pdfContentElement.style.display = 'none';
@@ -496,39 +499,44 @@ export function AuthorizationForm() {
                 </FormFieldItem>
               </CardContent>
             </Card>
-
-            <div className="mt-6 p-4 border rounded-md bg-background text-sm text-foreground space-y-3">
-              <p className="font-semibold text-base">🔐 Tratamento de Dados Pessoais</p>
-              <p>Os dados informados neste formulário serão utilizados exclusivamente para autorizar a retirada do pedido.</p>
-              <p>Nenhuma informação será armazenada em servidores, nem compartilhada com terceiros para outras finalidades. Todo o conteúdo é usado apenas para gerar o documento em PDF no seu próprio dispositivo.</p>
-              <p>Ao prosseguir, você declara estar ciente e concorda com o uso dos dados conforme descrito, em respeito à Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018).</p>
-            </div>
-
-            <FormFieldItem>
-                <div className="flex items-start space-x-3">
-                     <Controller
-                        name="agreedToTerms"
-                        control={form.control}
-                        render={({ field }) => (
-                            <Checkbox
-                                id="agreedToTerms"
-                                checked={field.value}
-                                onCheckedChange={field.onChange}
-                                className="mt-0.5"
-                            />
-                        )}
-                    />
-                    <div className="grid gap-1.5 leading-none">
-                        <Label htmlFor="agreedToTerms" className="cursor-pointer">
-                          Li e concordo com o tratamento dos meus dados pessoais conforme descrito acima.
-                        </Label>
-                         <p className="text-xs text-muted-foreground">
-                            (Obrigatório para gerar o PDF)
-                         </p>
-                    </div>
+            
+            {!pdfGenerated ? (
+              <>
+                <div className="mt-6 p-4 border rounded-md bg-background text-sm text-foreground space-y-3">
+                  <p className="font-semibold text-base">🔐 Tratamento de Dados Pessoais</p>
+                  <p>Os dados informados neste formulário serão utilizados exclusivamente para autorizar a retirada do pedido.</p>
+                  <p>Nenhuma informação será armazenada em servidores, nem compartilhada com terceiros para outras finalidades. Todo o conteúdo é usado apenas para gerar o documento em PDF no seu próprio dispositivo.</p>
+                  <p>Ao prosseguir, você declara estar ciente e concorda com o uso dos dados conforme descrito, em respeito à Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018).</p>
                 </div>
-                 {form.formState.errors.agreedToTerms && !agreedToTerms && <FormErrorMessage message={form.formState.errors.agreedToTerms.message} />}
-            </FormFieldItem>
+
+                <FormFieldItem>
+                    <div className="flex items-start space-x-3">
+                        <Controller
+                            name="agreedToTerms"
+                            control={form.control}
+                            render={({ field }) => (
+                                <Checkbox
+                                    id="agreedToTerms"
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                    className="mt-0.5"
+                                />
+                            )}
+                        />
+                        <div className="grid gap-1.5 leading-none">
+                            <Label htmlFor="agreedToTerms" className="cursor-pointer">
+                              Li e concordo com o tratamento dos meus dados pessoais conforme descrito acima.
+                            </Label>
+                            <p className="text-xs text-muted-foreground">
+                                (Obrigatório para gerar o PDF)
+                            </p>
+                        </div>
+                    </div>
+                    {form.formState.errors.agreedToTerms && !agreedToTerms && <FormErrorMessage message={form.formState.errors.agreedToTerms.message} />}
+                </FormFieldItem>
+              </>
+            ) : null}
+
 
             <AlertDialog open={showGlobalError} onOpenChange={setShowGlobalError}>
               <AlertDialogContent className="bg-destructive text-destructive-foreground border-destructive-foreground/50">
@@ -566,19 +574,54 @@ export function AuthorizationForm() {
               </AlertDialogContent>
             </AlertDialog>
 
-
-            <Button type="submit" size="lg" className="w-full font-headline bg-accent hover:bg-accent/90 text-accent-foreground text-lg" disabled={isSubmitting || !agreedToTerms}>
-              {isSubmitting ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Gerando PDF...
-                </>
-              ) : 'Gerar PDF e Baixar'}
-            </Button>
+            {!pdfGenerated ? (
+              <Button type="submit" size="lg" className="w-full font-headline bg-accent hover:bg-accent/90 text-accent-foreground text-lg" disabled={isSubmitting || !agreedToTerms}>
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Gerando PDF...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-5 w-5" />
+                    Gerar e Baixar PDF
+                  </>
+                )}
+              </Button>
+            ) : null}
           </form>
+          
+          {pdfGenerated && (
+            <Card className="mt-8 border-primary bg-primary/5 text-center">
+              <CardHeader>
+                <CardTitle className="font-headline text-lg flex items-center justify-center gap-2">
+                  <Share2 />
+                  PDF Gerado! Próximo Passo:
+                </CardTitle>
+                <CardDescription className="text-foreground/90 pt-2">
+                  Envie <strong>este PDF</strong> e uma <strong>cópia do documento com foto do comprador</strong> para o contato da loja. Use os botões abaixo para iniciar a conversa com uma mensagem pronta.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col sm:flex-row justify-center items-center gap-4">
+                 <Button asChild variant="outline" className="w-full sm:w-auto">
+                    <a href={`mailto:loja187@rihappy.com.br?subject=${getEmailSubject()}&body=${getEmailBody()}`} target="_blank" rel="noopener noreferrer">
+                      <Mail />
+                      Enviar por E-mail
+                    </a>
+                 </Button>
+                 <Button asChild variant="outline" className="w-full sm:w-auto">
+                    <a href={`https://api.whatsapp.com/send/?phone=5511992011112&text=${getWhatsAppMessage()}&type=phone_number&app_absent=0`} target="_blank" rel="noopener noreferrer">
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 mr-2"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.3-1.38c1.45.79 3.08 1.21 4.7 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zM12.05 20.2c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.81.83-3.04-.2-.31c-.82-1.31-1.26-2.83-1.26-4.41 0-4.54 3.7-8.23 8.24-8.23 2.22 0 4.28.86 5.82 2.41 1.55 1.54 2.41 3.6 2.41 5.82-.01 4.54-3.7 8.24-8.23 8.24zm4.52-6.13c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.15.17-.29.19-.54.06-.25-.12-1.06-.39-2.02-1.24-.75-.66-1.25-1.48-1.4-1.73-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.42-.14 0-.3 0-.46 0-.16 0-.41.06-.62.31-.22.25-.83.81-.83 1.98 0 1.16.85 2.3 1.05 2.5.14.17 1.67 2.56 4.05 3.55.57.23 1.02.37 1.37.47.59.17 1.13.15 1.56.09.48-.06 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.12-.22-.19-.47-.31z"/></svg>
+                      Enviar por WhatsApp
+                    </a>
+                 </Button>
+              </CardContent>
+            </Card>
+          )}
+
         </CardContent>
       </Card>
 
@@ -673,69 +716,6 @@ export function AuthorizationForm() {
       .pdf-data-item.full-width {
         grid-column: span 2;
       }
-
-      .pdf-contact-section {
-        background: #F8F9FA;
-        border: 1px solid #E5E7EB;
-        padding: 4mm;
-        border-radius: 3px;
-        margin-top: 5mm;
-        text-align: center;
-      }
-      .pdf-contact-title {
-        font-size: 11pt;
-        font-weight: 600;
-        margin-bottom: 2mm;
-      }
-      .pdf-contact-description {
-        font-size: 9pt;
-        color: #555;
-        margin-bottom: 3mm;
-      }
-      .pdf-contact-buttons {
-        display: flex;
-        justify-content: center;
-        gap: 4mm;
-      }
-      .pdf-contact-button {
-        display: inline-flex;
-        align-items: center;
-        gap: 2mm;
-        padding: 2mm 4mm;
-        border-radius: 3px;
-        text-decoration: none;
-        font-weight: 500;
-        font-size: 9pt;
-        border: 1px solid transparent;
-      }
-      .email-button {
-        background-color: #DEE9FC;
-        color: #4378D3;
-        border-color: #B4C9E8;
-      }
-      .whatsapp-button {
-        background-color: #DFFFEA;
-        color: #1FAF38;
-        border-color: #ACE4B9;
-      }
-      .pdf-contact-button svg {
-        width: 14px;
-        height: 14px;
-      }
-
-      .pdf-pickup-date {
-        text-align: center;
-        font-size: 10pt;
-        padding: 2mm;
-        background: #EFF6FF; /* Light blue */
-        border: 1px solid #DBEAFE; /* Blue border */
-        border-radius: 2px;
-        margin: 2.5mm 0;
-      }
-      .pdf-pickup-date strong {
-        font-weight: 600;
-        color: #1D4ED8; /* Darker blue text */
-      }
       
       .pdf-document-verification-note {
         margin-top: 5mm;
@@ -817,23 +797,32 @@ export function AuthorizationForm() {
               </div>
             </div>
           </div>
-
-           <div className="pdf-contact-section">
-                <div className="pdf-contact-title">Próximo Passo: Envie os Documentos para a Loja</div>
-                <div className="pdf-contact-description">
-                Envie <strong>este PDF</strong> e uma <strong>cópia do documento com foto do comprador</strong> para o contato da loja. Use os botões abaixo para iniciar a conversa com uma mensagem pronta.
-                </div>
-                <div className="pdf-contact-buttons">
-                    <a href={`mailto:loja187@rihappy.com.br?subject=${getEmailSubject()}&body=${getEmailBody()}`} target="_blank" rel="noopener noreferrer" className="pdf-contact-button email-button">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6zm-2 0l-8 5-8-5h16zm0 12H4V8l8 5 8-5v10z"/></svg>
-                    <span>Enviar por E-mail</span>
-                    </a>
-                    <a href={`https://api.whatsapp.com/send/?phone=5511992011112&text=${getWhatsAppMessage()}&type=phone_number&app_absent=0`} target="_blank" rel="noopener noreferrer" className="pdf-contact-button whatsapp-button">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.3-1.38c1.45.79 3.08 1.21 4.7 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zM12.05 20.2c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.81.83-3.04-.2-.31c-.82-1.31-1.26-2.83-1.26-4.41 0-4.54 3.7-8.23 8.24-8.23 2.22 0 4.28.86 5.82 2.41 1.55 1.54 2.41 3.6 2.41 5.82-.01 4.54-3.7 8.24-8.23 8.24zm4.52-6.13c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.15.17-.29.19-.54.06-.25-.12-1.06-.39-2.02-1.24-.75-.66-1.25-1.48-1.4-1.73-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.42-.14 0-.3 0-.46 0-.16 0-.41.06-.62.31-.22.25-.83.81-.83 1.98 0 1.16.85 2.3 1.05 2.5.14.17 1.67 2.56 4.05 3.55.57.23 1.02.37 1.37.47.59.17 1.13.15 1.56.09.48-.06 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.12-.22-.19-.47-.31z"/></svg>
-                    <span>Enviar por WhatsApp</span>
-                    </a>
+          
+           <div className="pdf-section">
+                <div className="pdf-section-title">🛒 Detalhes da Compra e Retirada</div>
+                 <div className="pdf-data-grid">
+                    <div className="pdf-data-item">
+                        <span className="pdf-field-label">Data da Compra</span>
+                        <div className="pdf-field-value">{form.getValues('purchaseDate') ? format(form.getValues('purchaseDate')!, 'dd/MM/yyyy') : ' '}</div>
+                    </div>
+                    <div className="pdf-data-item">
+                        <span className="pdf-field-label">Valor Total</span>
+                        <div className="pdf-field-value">R$ {form.getValues('purchaseValue') || ' '}</div>
+                    </div>
+                    <div className="pdf-data-item">
+                        <span className="pdf-field-label">Data da Retirada</span>
+                        <div className="pdf-field-value">{form.getValues('pickupDate') ? format(form.getValues('pickupDate')!, 'dd/MM/yyyy') : ' '}</div>
+                    </div>
+                    <div className="pdf-data-item">
+                        <span className="pdf-field-label">Loja de Retirada</span>
+                        <div className="pdf-field-value">{form.getValues('pickupStore') || ' '}</div>
+                    </div>
                 </div>
            </div>
+
+          <div className="pdf-document-verification-note">
+            <strong>Atenção:</strong> É obrigatório apresentar este documento de autorização impresso ou digital, juntamente com uma <strong>cópia (física ou digital) de um documento de identificação com foto do comprador</strong> e o <strong>documento de identificação original com foto da pessoa autorizada</strong> a retirar o pedido.
+          </div>
 
           <div className="pdf-footer">
           * Os dados informados neste formulário são para uso exclusivo da autorização de retirada e não serão compartilhados.
@@ -1010,8 +999,4 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 
 export default AuthorizationForm;
 
-
     
-
-    
-
