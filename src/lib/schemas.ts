@@ -137,9 +137,9 @@ export const authorizationSchema = z.object({
     }),
   orderNumber: z.string()
     .trim()
-    .min(1, "Número do pedido é obrigatório.")
-    .regex(/^V\d{8}RIHP-01$/, "Número do pedido inválido. Formato: V12345678RIHP-01.")
-    .transform(val => val.toUpperCase()),
+    .min(8, "O número do pedido deve conter 8 dígitos.")
+    .max(8, "O número do pedido deve conter 8 dígitos.")
+    .regex(/^\d{8}$/, "O número do pedido deve conter apenas 8 dígitos numéricos."),
   pickupStore: z.enum([
       "1030 - NOVA AMÉRICA", "1033 - NORTESHOPPING", "1052 - BANGU", "1057 - IGUATEMI RJ",
       "1058 - VIA PARQUE", "1072 - GRANDE RIO", "1074 - NITERÓI PLAZA SHOP.", "1078 - ILHA PLAZA",

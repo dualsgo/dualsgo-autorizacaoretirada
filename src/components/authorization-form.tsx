@@ -161,6 +161,11 @@ export function AuthorizationForm() {
     }
   }, [purchaseDate, pickupDate]);
 
+  const getFullOrderNumber = () => {
+    const orderNumberValue = form.getValues('orderNumber');
+    return `V${orderNumberValue}RIHP-01`;
+  };
+
   const generatePdf = async () => {
     const pdfContentElement = pdfTemplateRef.current;
     if (!pdfContentElement) {
@@ -402,14 +407,45 @@ export function AuthorizationForm() {
                 <FormDatePicker control={form.control} name="pickupDate" label="Data Prevista da Retirada *" error={form.formState.errors.pickupDate} />
 
                 <FormInput control={form.control} name="purchaseValue" label="Valor da Compra (R$) *" placeholder="Ex: 199,90" type="text" inputMode='decimal' error={form.formState.errors.purchaseValue} formatter={formatCurrency}/>
-                <FormInput 
-                    control={form.control} 
-                    name="orderNumber" 
-                    label="Número do Pedido *" 
-                    placeholder="Ex: V12345678RIHP-01" 
-                    error={form.formState.errors.orderNumber}
-                    tooltip="O formato é uma letra V, seguida por 8 números, e finaliza com 'RIHP-01'." 
-                />
+                
+                <FormFieldItem>
+                  <Label htmlFor="orderNumber">Número do Pedido *</Label>
+                   <div className="flex items-center">
+                      <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
+                          V
+                      </span>
+                      <Controller
+                          control={form.control}
+                          name="orderNumber"
+                          render={({ field }) => (
+                              <Input
+                                  {...field}
+                                  id="orderNumber"
+                                  type="text"
+                                  inputMode="numeric"
+                                  placeholder="12345678"
+                                  maxLength={8}
+                                  className={cn(
+                                      "rounded-none focus:ring-0 focus:z-10",
+                                      form.formState.errors.orderNumber ? 'border-destructive' : ''
+                                  )}
+                                  onChange={(e) => {
+                                      const { value } = e.target;
+                                      // Allow only numbers
+                                      if (/^\d*$/.test(value)) {
+                                          field.onChange(value);
+                                      }
+                                  }}
+                              />
+                          )}
+                      />
+                      <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
+                          RIHP-01
+                      </span>
+                   </div>
+                  {form.formState.errors.orderNumber && <FormErrorMessage message={form.formState.errors.orderNumber.message} />}
+                </FormFieldItem>
+
 
                 <FormFieldItem className="md:col-span-2">
                     <Label htmlFor="pickupStore">Loja para Retirada *</Label>
@@ -780,7 +816,7 @@ export function AuthorizationForm() {
                 <tr>
                   <td>{form.getValues('purchaseDate') && form.getValues('purchaseDate') instanceof Date && !isNaN((form.getValues('purchaseDate') as Date).getTime()) ? format(form.getValues('purchaseDate') as Date, 'dd/MM/yyyy', { locale: ptBR }) : ' '}</td>
                   <td>{form.getValues('purchaseValue') ? parseFloat(form.getValues('purchaseValue').replace(',', '.')).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '0,00'}</td>
-                  <td>{form.getValues('orderNumber') || ' '}</td>
+                  <td>{getFullOrderNumber()}</td>
                   <td>{storeOptionsList.find(s => s.value === form.getValues('pickupStore'))?.label || form.getValues('pickupStore') || ' '}</td>
                 </tr>
               </tbody>
@@ -969,3 +1005,4 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 );
 
 export default AuthorizationForm;
+
