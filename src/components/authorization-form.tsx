@@ -188,16 +188,13 @@ export function AuthorizationForm() {
     const representativeDocument = `${repDocType}: ${repDocNumber}`;
 
     const message = `
-*Assunto: Autorização de Retirada - Pedido ${orderId}*
+*Autorização de Retirada - Pedido ${orderId}*
 
-Prezados,
+Por meio desta mensagem, eu, *${buyerName}* ${buyerDocument}, autorizo *${representativeName}* ${representativeDocument} a retirar o pedido *${orderId}* em meu nome.
 
-Por meio desta mensagem, eu, *${buyerName}* (${buyerDocument}), autorizo a pessoa *${representativeName}* (${representativeDocument}) a retirar o pedido *${orderId}* em meu nome.
+A pessoa autorizada está ciente de que deverá apresentar um documento de identificação original com foto para validação no momento da retirada.
 
-A pessoa autorizada apresentará um documento original com foto para conferência no momento da retirada.
-
-*Para validação, segue em anexo uma foto do meu documento de identificação com foto.*
-
+*Em anexo, seguem a autorização em formato PDF e uma cópia do meu documento de identificação com foto para vossa conferência.*
 Agradeço a atenção.
 Atenciosamente,
 ${buyerName}
