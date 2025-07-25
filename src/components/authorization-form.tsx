@@ -174,18 +174,78 @@ export function AuthorizationForm() {
 
   const getWhatsAppMessage = () => {
     const buyerName = form.getValues('buyerName');
+    const buyerDocType = form.getValues('buyerDocumentType');
+    const buyerDocNumber = form.getValues('buyerDocumentNumber');
     const representativeName = form.getValues('representativeName');
+    const repDocType = form.getValues('representativeDocumentType');
+    const repDocNumber = form.getValues('representativeDocumentNumber');
     const orderId = getFullOrderNumber();
-    const message = `Olá, segue o comprovante de autorização de retirada por terceiros do pedido ${orderId} em meu nome (${buyerName}) autorizando (${representativeName})`;
-    return encodeURIComponent(message);
+
+    const buyerDocument = buyerType === 'individual' 
+      ? `${buyerDocType}: ${buyerDocNumber}`
+      : `CNPJ: ${form.getValues('buyerCNPJ')}`;
+
+    const representativeDocument = `${repDocType}: ${repDocNumber}`;
+
+    const message = `
+*Assunto: Autorização de Retirada - Pedido ${orderId}*
+
+Prezados,
+
+Por meio desta mensagem, eu, *${buyerName}* (${buyerDocument}), autorizo a pessoa *${representativeName}* (${representativeDocument}) a retirar o pedido *${orderId}* em meu nome.
+
+A pessoa autorizada apresentará um documento original com foto para conferência no momento da retirada.
+
+*Para validação, segue em anexo uma foto do meu documento de identificação com foto.*
+
+Agradeço a atenção.
+Atenciosamente,
+${buyerName}
+    `;
+    return encodeURIComponent(message.trim());
   };
   
   const getEmailBody = () => {
     const buyerName = form.getValues('buyerName');
+    const buyerDocType = form.getValues('buyerDocumentType');
+    const buyerDocNumber = form.getValues('buyerDocumentNumber');
     const representativeName = form.getValues('representativeName');
+    const repDocType = form.getValues('representativeDocumentType');
+    const repDocNumber = form.getValues('representativeDocumentNumber');
     const orderId = getFullOrderNumber();
-    const body = `Olá, segue o comprovante de autorização de retirada por terceiros do pedido ${orderId} em meu nome (${buyerName}) autorizando (${representativeName}).\n\nEm anexo, a autorização em PDF.`;
-    return encodeURIComponent(body);
+
+    const buyerDocument = buyerType === 'individual'
+        ? `${buyerDocType}: ${buyerDocNumber}`
+        : `CNPJ: ${form.getValues('buyerCNPJ')}`;
+    
+    const representativeDocument = `${repDocType}: ${repDocNumber}`;
+
+    const body = `
+Prezada equipe,
+
+Escrevo para autorizar formalmente a retirada do meu pedido, conforme os detalhes abaixo:
+
+- *Número do Pedido:* ${orderId}
+- *Nome do Comprador(a) (Titular):* ${buyerName}
+- *Documento do Comprador(a):* ${buyerDocument}
+
+A retirada será realizada por:
+
+- *Nome da Pessoa Autorizada:* ${representativeName}
+- *Documento da Pessoa Autorizada:* ${representativeDocument}
+
+A pessoa autorizada está ciente de que deverá apresentar um documento de identificação original com foto para validação no momento da retirada.
+
+*Em anexo, seguem a autorização em formato PDF e uma cópia do meu documento de identificação com foto para vossa conferência.*
+
+Agradeço pela colaboração.
+
+Atenciosamente,
+
+${buyerName}
+    `;
+
+    return encodeURIComponent(body.trim());
   };
   
   const getEmailSubject = () => {
