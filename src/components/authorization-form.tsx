@@ -410,8 +410,8 @@ export function AuthorizationForm() {
                 
                 <FormFieldItem>
                   <Label htmlFor="orderNumber">Número do Pedido *</Label>
-                   <div className="flex items-center">
-                      <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
+                   <div className="flex items-center w-full">
+                      <span className="inline-flex items-center px-3 h-10 text-sm text-foreground bg-muted border border-r-0 border-input rounded-l-md">
                           V
                       </span>
                       <Controller
@@ -426,7 +426,7 @@ export function AuthorizationForm() {
                                   placeholder="12345678"
                                   maxLength={8}
                                   className={cn(
-                                      "rounded-none focus:ring-0 focus:z-10",
+                                      "rounded-none w-full min-w-0 flex-1 focus:ring-0 focus:z-10",
                                       form.formState.errors.orderNumber ? 'border-destructive' : ''
                                   )}
                                   onChange={(e) => {
@@ -439,7 +439,7 @@ export function AuthorizationForm() {
                               />
                           )}
                       />
-                      <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-l-0 border-gray-300 rounded-r-md dark:bg-gray-600 dark:text-gray-400 dark:border-gray-600">
+                      <span className="inline-flex items-center px-3 h-10 text-sm text-foreground bg-muted border border-l-0 border-input rounded-r-md whitespace-nowrap">
                           RIHP-01
                       </span>
                    </div>
@@ -1006,3 +1006,5 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 
 export default AuthorizationForm;
 
+
+    
