@@ -188,13 +188,16 @@ export function AuthorizationForm() {
     const representativeDocument = `${repDocType}: ${repDocNumber}`;
 
     const message = `
-*Autorização de Retirada - Pedido ${orderId}*
+*Assunto: Autorização de Retirada - Pedido ${orderId}*
 
-Por meio desta mensagem, eu, *${buyerName}* ${buyerDocument}, autorizo *${representativeName}* ${representativeDocument} a retirar o pedido *${orderId}* em meu nome.
+Prezados,
 
-A pessoa autorizada está ciente de que deverá apresentar um documento de identificação original com foto para validação no momento da retirada.
+Por meio desta mensagem, eu, *${buyerName}* (${buyerDocument}), autorizo a pessoa *${representativeName}* (${representativeDocument}) a retirar o pedido *${orderId}* em meu nome.
 
-*Em anexo, seguem a autorização em formato PDF e uma cópia do meu documento de identificação com foto para vossa conferência.*
+A pessoa autorizada apresentará um documento original com foto para conferência no momento da retirada.
+
+*Para validação, segue em anexo uma foto do meu documento de identificação com foto.*
+
 Agradeço a atenção.
 Atenciosamente,
 ${buyerName}
@@ -1055,5 +1058,7 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 );
 
 export default AuthorizationForm;
+
+    
 
     
