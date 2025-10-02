@@ -93,8 +93,9 @@ const InstructionGuide = () => (
                 <li className="flex items-start gap-3">
                     <span className="font-bold text-primary text-xl">3️⃣</span>
                      <div>
-                        <strong>Gerar PDF:</strong>
-                        <p className="mt-1">Depois de preencher todos os campos corretamente, clique em “Gerar PDF”. O arquivo será criado com os dados inseridos. Em seguida, envie esse PDF para o WhatsApp ou e-mail da loja responsável pela retirada.</p>
+                        <strong>Gerar e Enviar o PDF:</strong>
+                        <p className="mt-1">Depois de preencher todos os campos corretamente, clique em “Gerar e Baixar PDF”. O **arquivo PDF** será baixado no seu dispositivo. Em seguida, envie **este arquivo** para o WhatsApp ou e-mail da loja, junto com a foto do seu documento de identificação.</p>
+                        <p className="mt-2 font-semibold text-destructive">Importante: não envie um print (captura de tela), envie o arquivo PDF.</p>
                     </div>
                 </li>
             </ol>
@@ -662,7 +663,7 @@ ${buyerName}
                   PDF Gerado! Próximo Passo:
                 </CardTitle>
                 <CardDescription className="text-foreground/90 pt-2">
-                  Envie <strong>este PDF</strong> e uma <strong>cópia do documento com foto do comprador</strong> para o contato da loja. Use os botões abaixo para iniciar a conversa com uma mensagem pronta.
+                  Envie o <strong>arquivo PDF que você acabou de baixar</strong> e uma <strong>cópia do documento com foto do comprador</strong> para o contato da loja. Use os botões abaixo para iniciar a conversa com uma mensagem pronta.
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col sm:flex-row justify-center items-center gap-4">
@@ -1058,6 +1059,8 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 );
 
 export default AuthorizationForm;
+
+    
 
     
 
