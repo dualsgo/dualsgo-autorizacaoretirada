@@ -15,13 +15,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, HelpCircle, Mail, Download, Lock, FileClock, ShieldCheck, FileWarning, ClipboardCheck } from 'lucide-react';
+import { CalendarIcon, User, ShoppingBag, AlertTriangle, HelpCircle, Mail, Download, Lock, FileClock, ShieldCheck, FileWarning, ClipboardCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Alert, AlertDescription as ShadAlertDescription, AlertTitle as ShadAlertTitle } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Tooltip, TooltipTrigger, TooltipProvider, TooltipContent } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 
 
@@ -1056,5 +1056,3 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 );
 
 export default AuthorizationForm;
-
-    
