@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, HelpCircle, Mail, Download, Share2, Lock, FileClock, ShieldCheck, FileWarning, Gift, ClipboardCheck, Send } from 'lucide-react';
+import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, HelpCircle, Mail, Download, Lock, FileClock, ShieldCheck, FileWarning, ClipboardCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -94,38 +94,6 @@ const InitialInstructions = () => (
             </ShadAlertDescription>
         </Alert>
     </div>
-);
-
-const InstructionGuide = () => (
-    <Card className="mb-8 bg-card">
-        <CardHeader>
-            <CardTitle className="font-headline text-xl">Guia de Preenchimento</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-            <div className="flex items-start gap-4 p-4 rounded-lg bg-primary/5">
-                <div className="flex-shrink-0 bg-primary/20 text-primary rounded-full h-10 w-10 flex items-center justify-center font-bold text-xl">1</div>
-                <div>
-                    <h3 className="font-headline font-semibold text-lg">Dados da Compra e do Comprador</h3>
-                    <p className="mt-1 text-muted-foreground">Preencha <strong>exatamente</strong> como aparecem no e-mail de confirmação. Nome, CPF, e-mail, valor total e número do pedido.</p>
-                </div>
-            </div>
-            <div className="flex items-start gap-4 p-4 rounded-lg bg-primary/5">
-                <div className="flex-shrink-0 bg-primary/20 text-primary rounded-full h-10 w-10 flex items-center justify-center font-bold text-xl">2</div>
-                <div>
-                    <h3 className="font-headline font-semibold text-lg">Dados da Pessoa Autorizada</h3>
-                    <p className="mt-1 text-muted-foreground">Informe os dados da pessoa que fará a retirada. Ela deve ser <strong>maior de idade</strong> e apresentar <strong>documento original com foto</strong> na loja.</p>
-                </div>
-            </div>
-            <div className="flex items-start gap-4 p-4 rounded-lg bg-primary/5">
-                <div className="flex-shrink-0 bg-primary/20 text-primary rounded-full h-10 w-10 flex items-center justify-center font-bold text-xl">3</div>
-                <div>
-                    <h3 className="font-headline font-semibold text-lg">Gerar e Enviar o PDF</h3>
-                    <p className="mt-1 text-muted-foreground">Após preencher tudo, clique em <strong>Gerar PDF</strong>. Em seguida, <strong>envie o PDF gerado + foto do seu documento de identificação</strong> para o WhatsApp ou e-mail da loja.</p>
-                    <p className="mt-2 font-bold text-accent">Importante: Não envie prints. Envie o arquivo PDF completo.</p>
-                </div>
-            </div>
-        </CardContent>
-    </Card>
 );
 
 export function AuthorizationForm() {
@@ -372,7 +340,6 @@ Equipe Ri Happy
     <div className="container mx-auto p-0 max-w-4xl">
       
        <InitialInstructions />
-       <InstructionGuide />
 
       <Card className="shadow-xl overflow-hidden mt-8">
         <CardHeader>
@@ -393,7 +360,13 @@ Equipe Ri Happy
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 font-headline"><User className="text-primary" /> Dados do Comprador</CardTitle>
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 bg-primary/20 text-primary rounded-full h-10 w-10 flex items-center justify-center font-bold text-xl">1</div>
+                  <div>
+                      <h3 className="font-headline font-semibold text-lg">Dados da Compra e do Comprador</h3>
+                      <p className="mt-1 text-muted-foreground">Preencha <strong>exatamente</strong> como aparecem no e-mail de confirmação. Nome, CPF, e-mail, valor total e número do pedido.</p>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormFieldItem className="md:col-span-2">
@@ -459,8 +432,13 @@ Equipe Ri Happy
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 font-headline"><Users className="text-primary" /> Dados da pessoa autorizada a retirar</CardTitle>
-                <CardDescription>Essa pessoa precisa apresentar um documento original com foto na loja.</CardDescription>
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 bg-primary/20 text-primary rounded-full h-10 w-10 flex items-center justify-center font-bold text-xl">2</div>
+                  <div>
+                      <h3 className="font-headline font-semibold text-lg">Dados da Pessoa Autorizada</h3>
+                      <p className="mt-1 text-muted-foreground">Informe os dados da pessoa que fará a retirada. Ela deve ser <strong>maior de idade</strong> e apresentar <strong>documento original com foto</strong> na loja.</p>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2">
@@ -500,7 +478,14 @@ Equipe Ri Happy
 
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 font-headline"><ShoppingBag className="text-primary" /> Detalhes da Compra e Retirada</CardTitle>
+                <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 bg-primary/20 text-primary rounded-full h-10 w-10 flex items-center justify-center font-bold text-xl">3</div>
+                    <div>
+                        <h3 className="font-headline font-semibold text-lg">Detalhes da Compra, Retirada e Geração do PDF</h3>
+                        <p className="mt-1 text-muted-foreground">Após preencher tudo, clique em <strong>Gerar PDF</strong>. Em seguida, <strong>envie o PDF gerado + foto do seu documento de identificação</strong> para o WhatsApp ou e-mail da loja.</p>
+                        <p className="mt-2 font-bold text-accent">Importante: Não envie prints. Envie o arquivo PDF completo.</p>
+                    </div>
+                </div>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormDatePicker control={form.control} name="purchaseDate" label="Data da Compra *" error={form.formState.errors.purchaseDate} />
@@ -1071,3 +1056,5 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 );
 
 export default AuthorizationForm;
+
+    
