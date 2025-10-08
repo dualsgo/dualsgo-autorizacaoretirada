@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, HelpCircle, MessageSquareWarning, Mail, MessageSquare, Download, Share2 } from 'lucide-react';
+import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, HelpCircle, MessageSquareWarning, Mail, Download, Share2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
