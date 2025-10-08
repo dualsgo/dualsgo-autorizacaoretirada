@@ -22,7 +22,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { Alert, AlertDescription as ShadAlertDescription, AlertTitle as ShadAlertTitle } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 
 
@@ -182,7 +182,7 @@ export function AuthorizationForm() {
     const repDocNumber = form.getValues('representativeDocumentNumber');
     const orderId = getFullOrderNumber();
 
-    const buyerDocument = buyerType === 'individual' 
+    const buyerDocument = buyerType === 'individual'
       ? `${buyerDocType}: ${buyerDocNumber}`
       : `CNPJ: ${form.getValues('buyerCNPJ')}`;
 
@@ -205,7 +205,7 @@ ${buyerName}
     `;
     return encodeURIComponent(message.trim());
   };
-  
+
   const getEmailBody = () => {
     const buyerName = form.getValues('buyerName');
     const buyerDocType = form.getValues('buyerDocumentType');
@@ -563,12 +563,14 @@ ${buyerName}
             
             {!pdfGenerated ? (
               <>
-                <div className="mt-6 p-4 border rounded-md bg-background text-sm text-foreground space-y-3">
-                  <p className="font-semibold text-base">🔐 Tratamento de Dados Pessoais</p>
-                  <p>Os dados informados neste formulário serão utilizados exclusivamente para autorizar a retirada do pedido.</p>
-                  <p>Nenhuma informação será armazenada em servidores, nem compartilhada com terceiros para outras finalidades. Todo o conteúdo é usado apenas para gerar o documento em PDF no seu próprio dispositivo.</p>
-                  <p>Ao prosseguir, você declara estar ciente e concorda com o uso dos dados conforme descrito, em respeito à Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018).</p>
-                </div>
+                <Alert variant="default" className="mt-6 p-4 border rounded-md text-sm text-foreground">
+                    <ShadAlertTitle className="font-semibold text-base">🔐 Tratamento de Dados Pessoais</ShadAlertTitle>
+                    <ShadAlertDescription>
+                      <p className="mt-2">Os dados informados neste formulário serão utilizados exclusivamente para autorizar a retirada do pedido.</p>
+                      <p>Nenhuma informação será armazenada em servidores, nem compartilhada com terceiros para outras finalidades. Todo o conteúdo é usado apenas para gerar o documento em PDF no seu próprio dispositivo.</p>
+                      <p>Ao prosseguir, você declara estar ciente e concorda com o uso dos dados conforme descrito, em respeito à Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018).</p>
+                    </ShadAlertDescription>
+                </Alert>
 
                 <FormFieldItem>
                     <div className="flex items-start space-x-3">
@@ -1059,9 +1061,5 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 );
 
 export default AuthorizationForm;
-
-    
-
-    
 
     
