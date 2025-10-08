@@ -165,20 +165,8 @@ export function AuthorizationForm() {
     return `autorizacao_retirada_${orderNumber}.pdf`;
   };
   
-    const getWhatsAppMessage = () => {
-    const buyerName = form.getValues('buyerName');
-    const orderId = getFullOrderNumber();
-    const buyerDocument = buyerType === 'individual'
-      ? `${form.getValues('buyerDocumentType')}: ${form.getValues('buyerDocumentNumber')}`
-      : `CNPJ: ${form.getValues('buyerCNPJ')}`;
-    const representativeName = form.getValues('representativeName');
-    const representativeDocument = `${form.getValues('representativeDocumentType')}: ${form.getValues('representativeDocumentNumber')}`;
-
+  const getWhatsAppMessage = () => {
     const message = `
-*Assunto: Autorização de Retirada - Pedido ${orderId}*
-
-Olá!
-
 Antes de enviar, confira estas orientações 👇
 
 ✅ Gere o Termo de Autorização em PDF e salve o arquivo.
@@ -187,49 +175,23 @@ Antes de enviar, confira estas orientações 👇
 
 ⚠️ A loja *só aceitará o envio se ambos os arquivos estiverem anexados*.
 Prints de tela ou imagens do formulário *não são válidos*.
-
----
-
-Por meio desta mensagem, eu, *${buyerName}* (${buyerDocument}), autorizo *${representativeName}* (${representativeDocument}) a retirar o pedido *${orderId}* em meu nome.
-
-A pessoa autorizada apresentará um documento original com foto para conferência no momento da retirada.
-
-Atenciosamente,
-${buyerName}
     `;
     return encodeURIComponent(message.trim());
   };
 
   const getEmailBody = () => {
-    const buyerName = form.getValues('buyerName');
-    const orderId = getFullOrderNumber();
-     const buyerDocument = buyerType === 'individual'
-      ? `${form.getValues('buyerDocumentType')}: ${form.getValues('buyerDocumentNumber')}`
-      : `CNPJ: ${form.getValues('buyerCNPJ')}`;
-    const representativeName = form.getValues('representativeName');
-    const representativeDocument = `${form.getValues('representativeDocumentType')}: ${form.getValues('representativeDocumentNumber')}`;
+     const message = `
+Antes de enviar, confira estas orientações 👇
 
-    const body = `
-Olá!
+✅ Gere o Termo de Autorização em PDF e salve o arquivo.
+✅ Tire uma foto legível do documento de identificação do comprador (RG ou CNH).
+✅ Envie *os dois arquivos juntos nesta mensagem*: o PDF + a foto do documento.
 
-Antes de enviar, verifique se você seguiu todos os passos abaixo 👇
-
-✅ 1. Preencha corretamente o Termo de Autorização no site, com os mesmos dados usados na compra.
-✅ 2. Gere o arquivo PDF e salve no seu celular ou computador.
-✅ 3. Tire uma foto legível do documento de identificação do comprador (RG ou CNH).
-✅ 4. Envie *nesta mesma mensagem* o *arquivo PDF gerado* + *a foto do documento do comprador*.
-
-⚠️ **Importante:**
-A loja só poderá liberar a retirada do pedido se **os dois arquivos estiverem anexados** (o PDF e a imagem do documento com foto).
-Prints de tela ou imagens do formulário **não são aceitos**.
-
-Assim que recebermos o PDF e o documento, faremos a validação e liberaremos a retirada para a pessoa autorizada.
-
-Atenciosamente,
-Equipe Ri Happy
+⚠️ A loja *só aceitará o envio se ambos os arquivos estiverem anexados*.
+Prints de tela ou imagens do formulário *não são válidos*.
     `;
 
-    return encodeURIComponent(body.trim());
+    return encodeURIComponent(message.trim());
   };
   
   const getEmailSubject = () => {
