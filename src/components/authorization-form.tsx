@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -16,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, HelpCircle, MessageSquareWarning, Mail, Download, Share2 } from 'lucide-react';
+import { CalendarIcon, User, Users, ShoppingBag, AlertTriangle, HelpCircle, Mail, Download, Share2, Lock, FileClock, ShieldCheck, FileWarning, Gift, ClipboardCheck, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -69,40 +68,65 @@ const formatRG = (value: string) => {
 }
 
 
+const InitialInstructions = () => (
+    <div className="space-y-6 mb-8">
+        <Alert variant="default" className="bg-primary/10 border-primary/20 text-foreground">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <ShadAlertTitle className="font-headline text-lg text-primary">Por que isso é importante?</ShadAlertTitle>
+            <ShadAlertDescription>
+            Para garantir a segurança da sua compra, precisamos confirmar a autorização quando outra pessoa for retirar o pedido.
+            </ShadAlertDescription>
+        </Alert>
+        <Alert variant="default" className="bg-primary/10 border-primary/20 text-foreground">
+            <FileClock className="h-5 w-5 text-primary" />
+            <ShadAlertTitle className="font-headline text-lg text-primary">Prazo de retirada</ShadAlertTitle>
+            <ShadAlertDescription>
+            Você tem até <strong>15 dias</strong> para retirar o pedido. Após esse prazo, ele será <strong>cancelado automaticamente</strong> e o pagamento <strong>estornado</strong>.
+            </ShadAlertDescription>
+        </Alert>
+        <Alert variant="warning" className="text-foreground [&>svg]:text-foreground">
+            <FileWarning className="h-5 w-5" />
+            <ShadAlertTitle className="font-headline text-lg">Atenção aos Documentos!</ShadAlertTitle>
+            <ShadAlertDescription className="space-y-2">
+                <p>Não solicitamos anexos de documentos neste formulário.</p>
+                <p>A cópia digital (foto ou PDF) do documento do comprador deverá ser enviada <strong>junto com o PDF do termo</strong>, para o <strong>WhatsApp ou e-mail da loja</strong> no momento da retirada.</p>
+                <p>As cópias devem estar <strong>legíveis</strong>.</p>
+            </ShadAlertDescription>
+        </Alert>
+    </div>
+);
+
 const InstructionGuide = () => (
-    <Card className="mb-8 bg-primary/5">
+    <Card className="mb-8 bg-card">
         <CardHeader>
-            <CardTitle className="font-headline text-lg">📝 Instruções de Preenchimento</CardTitle>
+            <CardTitle className="font-headline text-xl">Guia de Preenchimento</CardTitle>
         </CardHeader>
-        <CardContent>
-            <ol className="space-y-4 text-sm text-foreground/90">
-                <li className="flex items-start gap-3">
-                    <span className="font-bold text-primary text-xl">1️⃣</span>
-                    <div>
-                        <strong>Dados da Compra e do Comprador:</strong>
-                        <p className="mt-1">Preencha as informações exatamente como aparecem no e-mail de confirmação do pedido (aquele enviado após a aprovação do pagamento). Use o mesmo nome, CPF e e-mail informados na hora da compra, além do número do pedido, valor total e data da compra. Isso garante que a loja consiga localizar e validar seu pedido sem dificuldades.</p>
-                    </div>
-                </li>
-                <li className="flex items-start gap-3">
-                    <span className="font-bold text-primary text-xl">2️⃣</span>
-                    <div>
-                        <strong>Dados da Pessoa Autorizada:</strong>
-                        <p className="mt-1">Informe os dados de quem irá retirar o pedido. Essa pessoa deve ser maior de idade e apresentar um documento oficial com foto no momento da retirada.</p>
-                    </div>
-                </li>
-                <li className="flex items-start gap-3">
-                    <span className="font-bold text-primary text-xl">3️⃣</span>
-                     <div>
-                        <strong>Gerar e Enviar o PDF:</strong>
-                        <p className="mt-1">Depois de preencher todos os campos corretamente, clique em “Gerar e Baixar PDF”. O **arquivo PDF** será baixado no seu dispositivo. Em seguida, envie **este arquivo** para o WhatsApp ou e-mail da loja, junto com a foto do seu documento de identificação.</p>
-                        <p className="mt-2 font-semibold text-destructive">Importante: não envie um print (captura de tela), envie o arquivo PDF.</p>
-                    </div>
-                </li>
-            </ol>
+        <CardContent className="space-y-6">
+            <div className="flex items-start gap-4 p-4 rounded-lg bg-primary/5">
+                <div className="flex-shrink-0 bg-primary/20 text-primary rounded-full h-10 w-10 flex items-center justify-center font-bold text-xl">1</div>
+                <div>
+                    <h3 className="font-headline font-semibold text-lg">Dados da Compra e do Comprador</h3>
+                    <p className="mt-1 text-muted-foreground">Preencha <strong>exatamente</strong> como aparecem no e-mail de confirmação. Nome, CPF, e-mail, valor total e número do pedido.</p>
+                </div>
+            </div>
+            <div className="flex items-start gap-4 p-4 rounded-lg bg-primary/5">
+                <div className="flex-shrink-0 bg-primary/20 text-primary rounded-full h-10 w-10 flex items-center justify-center font-bold text-xl">2</div>
+                <div>
+                    <h3 className="font-headline font-semibold text-lg">Dados da Pessoa Autorizada</h3>
+                    <p className="mt-1 text-muted-foreground">Informe os dados da pessoa que fará a retirada. Ela deve ser <strong>maior de idade</strong> e apresentar <strong>documento original com foto</strong> na loja.</p>
+                </div>
+            </div>
+            <div className="flex items-start gap-4 p-4 rounded-lg bg-primary/5">
+                <div className="flex-shrink-0 bg-primary/20 text-primary rounded-full h-10 w-10 flex items-center justify-center font-bold text-xl">3</div>
+                <div>
+                    <h3 className="font-headline font-semibold text-lg">Gerar e Enviar o PDF</h3>
+                    <p className="mt-1 text-muted-foreground">Após preencher tudo, clique em <strong>Gerar PDF</strong>. Em seguida, <strong>envie o PDF gerado + foto do seu documento de identificação</strong> para o WhatsApp ou e-mail da loja.</p>
+                    <p className="mt-2 font-bold text-accent">Importante: Não envie prints. Envie o arquivo PDF completo.</p>
+                </div>
+            </div>
         </CardContent>
     </Card>
 );
-
 
 export function AuthorizationForm() {
   const { toast } = useToast();
@@ -172,34 +196,36 @@ export function AuthorizationForm() {
     const orderNumber = getFullOrderNumber();
     return `autorizacao_retirada_${orderNumber}.pdf`;
   };
-
-  const getWhatsAppMessage = () => {
+  
+    const getWhatsAppMessage = () => {
     const buyerName = form.getValues('buyerName');
-    const buyerDocType = form.getValues('buyerDocumentType');
-    const buyerDocNumber = form.getValues('buyerDocumentNumber');
-    const representativeName = form.getValues('representativeName');
-    const repDocType = form.getValues('representativeDocumentType');
-    const repDocNumber = form.getValues('representativeDocumentNumber');
     const orderId = getFullOrderNumber();
-
     const buyerDocument = buyerType === 'individual'
-      ? `${buyerDocType}: ${buyerDocNumber}`
+      ? `${form.getValues('buyerDocumentType')}: ${form.getValues('buyerDocumentNumber')}`
       : `CNPJ: ${form.getValues('buyerCNPJ')}`;
-
-    const representativeDocument = `${repDocType}: ${repDocNumber}`;
+    const representativeName = form.getValues('representativeName');
+    const representativeDocument = `${form.getValues('representativeDocumentType')}: ${form.getValues('representativeDocumentNumber')}`;
 
     const message = `
 *Assunto: Autorização de Retirada - Pedido ${orderId}*
 
-Prezados,
+Olá!
 
-Por meio desta mensagem, eu, *${buyerName}* (${buyerDocument}), autorizo a pessoa *${representativeName}* (${representativeDocument}) a retirar o pedido *${orderId}* em meu nome.
+Antes de enviar, confira estas orientações 👇
+
+✅ Gere o Termo de Autorização em PDF e salve o arquivo.
+✅ Tire uma foto legível do documento de identificação do comprador (RG ou CNH).
+✅ Envie *os dois arquivos juntos nesta mensagem*: o PDF + a foto do documento.
+
+⚠️ A loja *só aceitará o envio se ambos os arquivos estiverem anexados*.
+Prints de tela ou imagens do formulário *não são válidos*.
+
+---
+
+Por meio desta mensagem, eu, *${buyerName}* (${buyerDocument}), autorizo *${representativeName}* (${representativeDocument}) a retirar o pedido *${orderId}* em meu nome.
 
 A pessoa autorizada apresentará um documento original com foto para conferência no momento da retirada.
 
-*Para validação, segue em anexo uma foto do meu documento de identificação com foto.*
-
-Agradeço a atenção.
 Atenciosamente,
 ${buyerName}
     `;
@@ -208,42 +234,31 @@ ${buyerName}
 
   const getEmailBody = () => {
     const buyerName = form.getValues('buyerName');
-    const buyerDocType = form.getValues('buyerDocumentType');
-    const buyerDocNumber = form.getValues('buyerDocumentNumber');
-    const representativeName = form.getValues('representativeName');
-    const repDocType = form.getValues('representativeDocumentType');
-    const repDocNumber = form.getValues('representativeDocumentNumber');
     const orderId = getFullOrderNumber();
-
-    const buyerDocument = buyerType === 'individual'
-        ? `${buyerDocType}: ${buyerDocNumber}`
-        : `CNPJ: ${form.getValues('buyerCNPJ')}`;
-    
-    const representativeDocument = `${repDocType}: ${repDocNumber}`;
+     const buyerDocument = buyerType === 'individual'
+      ? `${form.getValues('buyerDocumentType')}: ${form.getValues('buyerDocumentNumber')}`
+      : `CNPJ: ${form.getValues('buyerCNPJ')}`;
+    const representativeName = form.getValues('representativeName');
+    const representativeDocument = `${form.getValues('representativeDocumentType')}: ${form.getValues('representativeDocumentNumber')}`;
 
     const body = `
-Prezada equipe,
+Olá!
 
-Escrevo para autorizar formalmente a retirada do meu pedido, conforme os detalhes abaixo:
+Antes de enviar, verifique se você seguiu todos os passos abaixo 👇
 
-- *Número do Pedido:* ${orderId}
-- *Nome do Comprador(a) (Titular):* ${buyerName}
-- *Documento do Comprador(a):* ${buyerDocument}
+✅ 1. Preencha corretamente o Termo de Autorização no site, com os mesmos dados usados na compra.
+✅ 2. Gere o arquivo PDF e salve no seu celular ou computador.
+✅ 3. Tire uma foto legível do documento de identificação do comprador (RG ou CNH).
+✅ 4. Envie *nesta mesma mensagem* o *arquivo PDF gerado* + *a foto do documento do comprador*.
 
-A retirada será realizada por:
+⚠️ **Importante:**
+A loja só poderá liberar a retirada do pedido se **os dois arquivos estiverem anexados** (o PDF e a imagem do documento com foto).
+Prints de tela ou imagens do formulário **não são aceitos**.
 
-- *Nome da Pessoa Autorizada:* ${representativeName}
-- *Documento da Pessoa Autorizada:* ${representativeDocument}
-
-A pessoa autorizada está ciente de que deverá apresentar um documento de identificação original com foto para validação no momento da retirada.
-
-*Em anexo, seguem a autorização em formato PDF e uma cópia do meu documento de identificação com foto para vossa conferência.*
-
-Agradeço pela colaboração.
+Assim que recebermos o PDF e o documento, faremos a validação e liberaremos a retirada para a pessoa autorizada.
 
 Atenciosamente,
-
-${buyerName}
+Equipe Ri Happy
     `;
 
     return encodeURIComponent(body.trim());
@@ -251,7 +266,7 @@ ${buyerName}
   
   const getEmailSubject = () => {
     const orderId = getFullOrderNumber();
-    return encodeURIComponent(`Autorização de Retirada - Pedido ${orderId}`);
+    return encodeURIComponent(`Envio do Termo de Autorização de Retirada - Pedido ${orderId}`);
   };
 
 
@@ -354,21 +369,15 @@ ${buyerName}
 
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
+    <div className="container mx-auto p-0 max-w-4xl">
       
-       <Alert variant="warning" className="mb-8 text-foreground [&>svg]:text-foreground">
-        <MessageSquareWarning className="h-5 w-5" />
-        <ShadAlertTitle className="font-headline text-lg">Atenção aos Documentos!</ShadAlertTitle>
-        <ShadAlertDescription className="space-y-2">
-          <p>Para sua segurança, <strong>não solicitamos anexos de documentos</strong> através deste formulário.</p>
-          <p>Será necessário enviar uma cópia digital (foto ou PDF) do <strong>documento com foto do comprador</strong> junto com este termo de autorização para o <strong>WhatsApp ou e-mail corporativo da loja</strong> no momento da retirada. Os colaboradores da loja fornecerão o contato correto.</p>
-          <p>Certifique-se de que as cópias digitais estejam legíveis.</p>
-        </ShadAlertDescription>
-      </Alert>
+       <InitialInstructions />
+       <InstructionGuide />
 
-      <InstructionGuide />
-
-      <Card className="shadow-xl overflow-hidden">
+      <Card className="shadow-xl overflow-hidden mt-8">
+        <CardHeader>
+            <CardTitle className="font-headline text-2xl text-center">Formulário de Autorização</CardTitle>
+        </CardHeader>
         <CardContent className="p-6 space-y-8">
           <form 
             onSubmit={form.handleSubmit(onSubmit, (errors) => {
@@ -563,8 +572,9 @@ ${buyerName}
             
             {!pdfGenerated ? (
               <>
-                <Alert variant="default" className="mt-6 p-4 border rounded-md text-sm text-foreground">
-                    <ShadAlertTitle className="font-semibold text-base">🔐 Tratamento de Dados Pessoais</ShadAlertTitle>
+                <Alert variant="default" className="mt-6 p-4 border rounded-md text-sm text-foreground bg-primary/5">
+                    <Lock className="h-5 w-5 text-primary"/>
+                    <ShadAlertTitle className="font-semibold text-base text-primary">Tratamento de Dados Pessoais</ShadAlertTitle>
                     <ShadAlertDescription>
                       <p className="mt-2">Os dados informados neste formulário serão utilizados exclusivamente para autorizar a retirada do pedido.</p>
                       <p>Nenhuma informação será armazenada em servidores, nem compartilhada com terceiros para outras finalidades. Todo o conteúdo é usado apenas para gerar o documento em PDF no seu próprio dispositivo.</p>
@@ -638,10 +648,10 @@ ${buyerName}
             </AlertDialog>
 
             {!pdfGenerated ? (
-              <Button type="submit" size="lg" className="w-full font-headline bg-accent hover:bg-accent/90 text-accent-foreground text-lg" disabled={isSubmitting || !agreedToTerms}>
+              <Button type="submit" size="lg" className="w-full font-headline bg-primary hover:bg-primary/90 text-primary-foreground text-lg" disabled={isSubmitting || !agreedToTerms}>
                 {isSubmitting ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -658,10 +668,10 @@ ${buyerName}
           </form>
           
           {pdfGenerated && (
-            <Card className="mt-8 border-primary bg-primary/5 text-center">
+            <Card className="mt-8 border-primary bg-primary/10 text-center">
               <CardHeader>
-                <CardTitle className="font-headline text-lg flex items-center justify-center gap-2">
-                  <Share2 />
+                <CardTitle className="font-headline text-xl flex items-center justify-center gap-2">
+                  <ClipboardCheck className="h-8 w-8 text-primary" />
                   PDF Gerado! Próximo Passo:
                 </CardTitle>
                 <CardDescription className="text-foreground/90 pt-2">
@@ -669,13 +679,13 @@ ${buyerName}
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col sm:flex-row justify-center items-center gap-4">
-                 <Button asChild variant="outline" className="w-full sm:w-auto">
+                 <Button asChild variant="outline" className="w-full sm:w-auto border-primary text-primary hover:bg-primary/10 hover:text-primary">
                     <a href={`mailto:loja187@rihappy.com.br?subject=${getEmailSubject()}&body=${getEmailBody()}`} target="_blank" rel="noopener noreferrer">
                       <Mail />
                       Enviar por E-mail
                     </a>
                  </Button>
-                 <Button asChild variant="outline" className="w-full sm:w-auto">
+                 <Button asChild variant="outline" className="w-full sm:w-auto border-primary text-primary hover:bg-primary/10 hover:text-primary">
                     <a href={`https://api.whatsapp.com/send/?phone=5511992011112&text=${getWhatsAppMessage()}&type=phone_number&app_absent=0`} target="_blank" rel="noopener noreferrer">
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 mr-2"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.3-1.38c1.45.79 3.08 1.21 4.7 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zM12.05 20.2c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.81.83-3.04-.2-.31c-.82-1.31-1.26-2.83-1.26-4.41 0-4.54 3.7-8.23 8.24-8.23 2.22 0 4.28.86 5.82 2.41 1.55 1.54 2.41 3.6 2.41 5.82-.01 4.54-3.7 8.24-8.23 8.24zm4.52-6.13c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.15.17-.29.19-.54.06-.25-.12-1.06-.39-2.02-1.24-.75-.66-1.25-1.48-1.4-1.73-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.42-.14 0-.3 0-.46 0-.16 0-.41.06-.62.31-.22.25-.83.81-.83 1.98 0 1.16.85 2.3 1.05 2.5.14.17 1.67 2.56 4.05 3.55.57.23 1.02.37 1.37.47.59.17 1.13.15 1.56.09.48-.06 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.12-.22-.19-.47-.31z"/></svg>
                       Enviar por WhatsApp
@@ -783,8 +793,8 @@ ${buyerName}
       .pdf-document-verification-note {
         margin-top: 5mm;
         padding: 3mm;
-        background-color: #f0f8ff; /* Light blue background */
-        border: 1px solid #a0d2eb; /* Primary blue border */
+        background-color: #fff9c4;
+        border: 1px solid #fbc02d;
         border-radius: 3px;
         font-size: 9pt;
         text-align: center;
@@ -870,7 +880,7 @@ ${buyerName}
                     </div>
                     <div className="pdf-data-item">
                         <span className="pdf-field-label">Valor Total</span>
-                        <div className="pdf-field-value">R$ {form.getValues('purchaseValue') || ' '}</div>
+                        <div className="pdf-field-value">R$ {form.getValues('purchaseValue') ? form.getValues('purchaseValue').replace('.', ',') : ' '}</div>
                     </div>
                     <div className="pdf-data-item">
                         <span className="pdf-field-label">Data da Retirada</span>
@@ -884,7 +894,7 @@ ${buyerName}
            </div>
 
           <div className="pdf-document-verification-note">
-            <strong>Atenção:</strong> É obrigatório apresentar este documento de autorização impresso ou digital, juntamente com uma <strong>cópia (física ou digital) de um documento de identificação com foto do comprador</strong> e o <strong>documento de identificação original com foto da pessoa autorizada</strong> a retirar o pedido.
+            <strong>⚠️ Atenção:</strong> Este arquivo precisa ser enviado junto com a <strong>foto do documento do comprador</strong> para a validação da retirada.
           </div>
 
           <div className="pdf-footer">
@@ -1061,5 +1071,3 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 );
 
 export default AuthorizationForm;
-
-    

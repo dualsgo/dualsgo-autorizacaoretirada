@@ -1,4 +1,3 @@
-
 import { z } from "zod";
 
 const capitalizeWords = (str: string | undefined) => {
