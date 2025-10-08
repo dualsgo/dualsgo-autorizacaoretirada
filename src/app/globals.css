@@ -33,14 +33,14 @@ h1, h2, h3, h4, h5, h6 {
     --accent: 355 100% 45%; /* #E60012 */
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 356 100% 90%; /* #FFCDD2 */
-    --destructive-foreground: 0 67% 47%; /* #C62828 */
+    --destructive: 0 84% 60%; /* A more vibrant red */
+    --destructive-foreground: 0 0% 98%;
 
     --success: 122 40% 85%; /* #C8E6C9 */
     --success-foreground: 127 48% 34%; /* #2E7D32 */
     
-    --warning: 56 100% 88%; /* #FFF9C4 */
-    --warning-foreground: 20 22% 38%; /* #795548 */
+    --warning: 38 92% 50%; /* A more vibrant yellow */
+    --warning-foreground: 38 92% 10%;
 
     --border: 0 0% 80%; /* #CCCCCC */
     --input: 0 0% 88%; /* #E0E0E0 */

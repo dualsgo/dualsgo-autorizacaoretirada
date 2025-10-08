@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -84,7 +85,7 @@ const InitialInstructions = () => (
             Você tem até <strong>15 dias</strong> para retirar o pedido. Após esse prazo, ele será <strong>cancelado automaticamente</strong> e o pagamento <strong>estornado</strong>.
             </ShadAlertDescription>
         </Alert>
-        <Alert variant="warning" className="text-foreground [&>svg]:text-foreground bg-yellow-100 border-yellow-400">
+        <Alert variant="warning" className="text-warning-foreground [&>svg]:text-warning-foreground bg-warning/20 border-warning">
             <FileWarning className="h-5 w-5" />
             <ShadAlertTitle className="font-headline text-lg">Atenção aos Documentos!</ShadAlertTitle>
             <ShadAlertDescription className="space-y-2">
@@ -292,8 +293,6 @@ Prints de tela ou imagens do formulário *não são válidos*.
 
 
   const onSubmit: SubmitHandler<AuthorizationFormData> = (_data) => {
-    // The date difference warning is now handled by the useEffect hook.
-    // We can proceed directly to PDF generation.
     handleGeneratePdf();
   };
 
@@ -623,7 +622,7 @@ Prints de tela ou imagens do formulário *não são válidos*.
       </AlertDialog>
       
       <AlertDialog open={showDateWarningModal} onOpenChange={setShowDateWarningModal}>
-        <AlertDialogContent className="bg-warning text-warning-foreground border-warning-foreground/50">
+        <AlertDialogContent className="bg-warning text-warning-foreground border-warning/50">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5" />
@@ -924,7 +923,7 @@ interface FormSelectProps {
 
 const FormSelect: React.FC<FormSelectProps> = ({ control, trigger, name, label, placeholder, options, error, className }) => (
     <FormFieldItem className={className}>
-        <Label htmlFor={name}>{label}</Label>
+        <Label htmlFor={name as string}>{label}</Label>
         <Controller
             control={control}
             name={name}
@@ -938,7 +937,7 @@ const FormSelect: React.FC<FormSelectProps> = ({ control, trigger, name, label, 
                 }}
                 value={field.value || undefined}
                 >
-                    <SelectTrigger id={name} className={error ? 'border-destructive' : ''}>
+                    <SelectTrigger id={name as string} className={error ? 'border-destructive' : ''}>
                         <SelectValue placeholder={placeholder} />
                     </SelectTrigger>
                     <SelectContent>
@@ -1014,3 +1013,5 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 );
 
 export default AuthorizationForm;
+
+    
