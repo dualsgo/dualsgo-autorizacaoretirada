@@ -84,7 +84,7 @@ const InitialInstructions = () => (
             Você tem até <strong>15 dias</strong> para retirar o pedido. Após esse prazo, ele será <strong>cancelado automaticamente</strong> e o pagamento <strong>estornado</strong>.
             </ShadAlertDescription>
         </Alert>
-        <Alert variant="warning" className="text-foreground [&>svg]:text-foreground">
+        <Alert variant="warning" className="text-foreground [&>svg]:text-foreground bg-yellow-100 border-yellow-400">
             <FileWarning className="h-5 w-5" />
             <ShadAlertTitle className="font-headline text-lg">Atenção aos Documentos!</ShadAlertTitle>
             <ShadAlertDescription className="space-y-2">
@@ -517,7 +517,7 @@ Prints de tela ou imagens do formulário *não são válidos*.
               </CardContent>
             </Card>
             
-            {!pdfGenerated ? (
+            {!pdfGenerated && (
               <>
                 <Alert variant="default" className="mt-6 p-4 border rounded-md text-sm text-foreground bg-primary/5">
                     <Lock className="h-5 w-5 text-primary"/>
@@ -554,96 +554,92 @@ Prints de tela ou imagens do formulário *não são válidos*.
                     </div>
                     {form.formState.errors.agreedToTerms && !agreedToTerms && <FormErrorMessage message={form.formState.errors.agreedToTerms.message} />}
                 </FormFieldItem>
+              
+                <Button type="submit" size="lg" className="w-full font-headline bg-primary hover:bg-primary/90 text-primary-foreground text-lg" disabled={isSubmitting || !agreedToTerms}>
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Gerando PDF...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="mr-2 h-5 w-5" />
+                      Gerar e Baixar PDF
+                    </>
+                  )}
+                </Button>
               </>
-            ) : null}
-
-
-            <AlertDialog open={showGlobalError} onOpenChange={setShowGlobalError}>
-              <AlertDialogContent className="bg-destructive text-destructive-foreground border-destructive-foreground/50">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5" />
-                    Erro de Validação
-                  </AlertDialogTitle>
-                  <AlertDialogDescription className="text-destructive-foreground/90">
-                    ❗ Verifique os campos obrigatórios acima e preencha todos corretamente para continuar.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogAction className="bg-destructive-foreground text-destructive hover:bg-destructive-foreground/90">Fechar</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-            
-            <AlertDialog open={showDateWarningModal} onOpenChange={setShowDateWarningModal}>
-              <AlertDialogContent className="bg-warning text-warning-foreground border-warning-foreground/50">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5" />
-                    Aviso de Prazo de Retirada
-                  </AlertDialogTitle>
-                  <AlertDialogDescription className="text-warning-foreground/90">
-                     Atenção: A data de retirada informada está mais de 15 dias após a data da compra. Se o pedido tiver sido cancelado por inatividade, será necessário realizar uma nova compra. Recomendamos que você verifique o status do seu pedido antes de continuar o preenchimento deste documento.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogAction className="bg-warning-foreground text-warning hover:bg-warning-foreground/90" onClick={() => setShowDateWarningModal(false)}>
-                    Fechar
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-
-            {!pdfGenerated ? (
-              <Button type="submit" size="lg" className="w-full font-headline bg-primary hover:bg-primary/90 text-primary-foreground text-lg" disabled={isSubmitting || !agreedToTerms}>
-                {isSubmitting ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Gerando PDF...
-                  </>
-                ) : (
-                  <>
-                    <Download className="mr-2 h-5 w-5" />
-                    Gerar e Baixar PDF
-                  </>
-                )}
-              </Button>
-            ) : null}
+            )}
           </form>
           
-          {pdfGenerated && (
-            <Card className="mt-8 border-primary bg-primary/10 text-center">
-              <CardHeader>
-                <CardTitle className="font-headline text-xl flex items-center justify-center gap-2">
+          <AlertDialog open={pdfGenerated} onOpenChange={setPdfGenerated}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center justify-center gap-2 font-headline text-xl text-center">
                   <ClipboardCheck className="h-8 w-8 text-primary" />
                   PDF Gerado! Próximo Passo:
-                </CardTitle>
-                <CardDescription className="text-foreground/90 pt-2">
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-foreground/90 pt-2 text-center">
                   Envie o <strong>arquivo PDF que você acabou de baixar</strong> e uma <strong>cópia do documento com foto do comprador</strong> para o contato da loja. Use os botões abaixo para iniciar a conversa com uma mensagem pronta.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col sm:flex-row justify-center items-center gap-4">
-                 <Button asChild variant="outline" className="w-full sm:w-auto border-primary text-primary hover:bg-primary/10 hover:text-primary">
-                    <a href={`mailto:loja187@rihappy.com.br?subject=${getEmailSubject()}&body=${getEmailBody()}`} target="_blank" rel="noopener noreferrer">
-                      <Mail />
-                      Enviar por E-mail
-                    </a>
-                 </Button>
-                 <Button asChild variant="outline" className="w-full sm:w-auto border-primary text-primary hover:bg-primary/10 hover:text-primary">
-                    <a href={`https://api.whatsapp.com/send/?phone=5511992011112&text=${getWhatsAppMessage()}&type=phone_number&app_absent=0`} target="_blank" rel="noopener noreferrer">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 mr-2"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.3-1.38c1.45.79 3.08 1.21 4.7 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zM12.05 20.2c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.81.83-3.04-.2-.31c-.82-1.31-1.26-2.83-1.26-4.41 0-4.54 3.7-8.23 8.24-8.23 2.22 0 4.28.86 5.82 2.41 1.55 1.54 2.41 3.6 2.41 5.82-.01 4.54-3.7 8.24-8.23 8.24zm4.52-6.13c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.15.17-.29.19-.54.06-.25-.12-1.06-.39-2.02-1.24-.75-.66-1.25-1.48-1.4-1.73-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.42-.14 0-.3 0-.46 0-.16 0-.41.06-.62.31-.22.25-.83.81-.83 1.98 0 1.16.85 2.3 1.05 2.5.14.17 1.67 2.56 4.05 3.55.57.23 1.02.37 1.37.47.59.17 1.13.15 1.56.09.48-.06 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.12-.22-.19-.47-.31z"/></svg>
-                      Enviar por WhatsApp
-                    </a>
-                 </Button>
-              </CardContent>
-            </Card>
-          )}
-
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter className="flex-col sm:flex-col sm:space-x-0 gap-2">
+                <Button asChild className="w-full bg-green-600 hover:bg-green-700 text-white">
+                  <a href={`https://api.whatsapp.com/send/?phone=5511992011112&text=${getWhatsAppMessage()}&type=phone_number&app_absent=0`} target="_blank" rel="noopener noreferrer">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5 mr-2"><path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.3-1.38c1.45.79 3.08 1.21 4.7 1.21 5.46 0 9.91-4.45 9.91-9.91S17.5 2 12.04 2zM12.05 20.2c-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.81.83-3.04-.2-.31c-.82-1.31-1.26-2.83-1.26-4.41 0-4.54 3.7-8.23 8.24-8.23 2.22 0 4.28.86 5.82 2.41 1.55 1.54 2.41 3.6 2.41 5.82-.01 4.54-3.7 8.24-8.23 8.24zm4.52-6.13c-.25-.12-1.47-.72-1.7-.81-.23-.08-.39-.12-.56.12-.17.25-.64.81-.79.97-.15.17-.29.19-.54.06-.25-.12-1.06-.39-2.02-1.24-.75-.66-1.25-1.48-1.4-1.73-.14-.25-.02-.38.11-.51.11-.11.25-.29.37-.43.13-.14.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.42-.14 0-.3 0-.46 0-.16 0-.41.06-.62.31-.22.25-.83.81-.83 1.98 0 1.16.85 2.3 1.05 2.5.14.17 1.67 2.56 4.05 3.55.57.23 1.02.37 1.37.47.59.17 1.13.15 1.56.09.48-.06 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.12-.22-.19-.47-.31z"/></svg>
+                    Enviar PDF e Foto do Documento por WhatsApp
+                  </a>
+                </Button>
+                <Button asChild variant="outline" className="w-full">
+                  <a href={`mailto:loja187@rihappy.com.br?subject=${getEmailSubject()}&body=${getEmailBody()}`} target="_blank" rel="noopener noreferrer">
+                    <Mail className="h-5 w-5 mr-2" />
+                    Enviar PDF e Foto do Documento por E-mail
+                  </a>
+                </Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </CardContent>
       </Card>
+
+      <AlertDialog open={showGlobalError} onOpenChange={setShowGlobalError}>
+        <AlertDialogContent className="bg-destructive text-destructive-foreground border-destructive-foreground/50">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Erro de Validação
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-destructive-foreground/90">
+              ❗ Verifique os campos obrigatórios acima e preencha todos corretamente para continuar.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction className="bg-destructive-foreground text-destructive hover:bg-destructive-foreground/90">Fechar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      <AlertDialog open={showDateWarningModal} onOpenChange={setShowDateWarningModal}>
+        <AlertDialogContent className="bg-warning text-warning-foreground border-warning-foreground/50">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Aviso de Prazo de Retirada
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-warning-foreground/90">
+               Atenção: A data de retirada informada está mais de 15 dias após a data da compra. Se o pedido tiver sido cancelado por inatividade, será necessário realizar uma nova compra. Recomendamos que você verifique o status do seu pedido antes de continuar o preenchimento deste documento.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction className="bg-warning-foreground text-warning hover:bg-warning-foreground/90" onClick={() => setShowDateWarningModal(false)}>
+              Fechar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div ref={pdfTemplateRef} className="hidden">
         <style>
