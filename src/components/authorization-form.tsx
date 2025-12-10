@@ -102,7 +102,7 @@ export function AuthorizationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showGlobalError, setShowGlobalError] = useState(false);
   const [showDateWarningModal, setShowDateWarningModal] = useState(false);
-  const [pdfGenerated, setPdfGenerated] = useState(false);
+  const [showPostPdfModal, setShowPostPdfModal] = useState(false);
   const pdfTemplateRef = useRef<HTMLDivElement>(null);
 
 
@@ -167,32 +167,15 @@ export function AuthorizationForm() {
   };
   
   const getWhatsAppMessage = () => {
-    const message = `
-Antes de enviar, confira estas orientações 👇
-
-✅ Gere o Termo de Autorização em PDF e salve o arquivo.
-✅ Tire uma foto legível do documento de identificação do comprador (RG ou CNH).
-✅ Envie *os dois arquivos juntos nesta mensagem*: o PDF + a foto do documento.
-
-⚠️ A loja *só aceitará o envio se ambos os arquivos estiverem anexados*.
-Prints de tela ou imagens do formulário *não são válidos*.
-    `;
-    return encodeURIComponent(message.trim());
+    const orderNumber = getFullOrderNumber();
+    const message = `Olá, estou enviando o termo de autorização e meu documento com foto para a retirada do pedido ${orderNumber}.`;
+    return encodeURIComponent(message);
   };
 
   const getEmailBody = () => {
-     const message = `
-Antes de enviar, confira estas orientações 👇
-
-✅ Gere o Termo de Autorização em PDF e salve o arquivo.
-✅ Tire uma foto legível do documento de identificação do comprador (RG ou CNH).
-✅ Envie *os dois arquivos juntos nesta mensagem*: o PDF + a foto do documento.
-
-⚠️ A loja *só aceitará o envio se ambos os arquivos estiverem anexados*.
-Prints de tela ou imagens do formulário *não são válidos*.
-    `;
-
-    return encodeURIComponent(message.trim());
+     const orderNumber = getFullOrderNumber();
+     const message = `Olá, estou enviando o termo de autorização e meu documento com foto para a retirada do pedido ${orderNumber}.`;
+     return encodeURIComponent(message);
   };
   
   const getEmailSubject = () => {
@@ -220,16 +203,15 @@ Prints de tela ou imagens do formulário *não são válidos*.
     pdfContentElement.style.margin = '0';
     pdfContentElement.style.overflow = 'hidden';
 
-    // Force reflow/repaint before capturing
     // eslint-disable-next-line @typescript-eslint/no-unused-expressions
     pdfContentElement.offsetHeight;
 
 
     try {
       const canvas = await html2canvas(pdfContentElement, {
-        scale: 2, // Increase scale for better quality
+        scale: 2,
         useCORS: true,
-        logging: false, // Set to true for debugging if needed
+        logging: false,
         width: pdfContentElement.scrollWidth,
         height: pdfContentElement.scrollHeight,
         windowWidth: pdfContentElement.scrollWidth,
@@ -240,30 +222,47 @@ Prints de tela ou imagens do formulário *não são válidos*.
       const pdf = new jsPDF('p', 'mm', 'a4', true);
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-
       const imgProps = pdf.getImageProperties(imgData);
       const aspectRatio = imgProps.width / imgProps.height;
-
       let imgRenderWidth = pdfWidth;
       let imgRenderHeight = pdfWidth / aspectRatio;
-
       if (imgRenderHeight > pdfHeight) {
         imgRenderHeight = pdfHeight;
         imgRenderWidth = pdfHeight * aspectRatio;
       }
-      
       const xOffset = (pdfWidth - imgRenderWidth) / 2;
       const yOffset = (pdfHeight - imgRenderHeight) / 2;
-
       pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgRenderWidth, imgRenderHeight, undefined, 'FAST');
-      pdf.save(getPdfTitle());
-      toast({ variant: "success", title: "Sucesso!", description: "PDF gerado e download iniciado." });
-      setPdfGenerated(true);
+      
+      const pdfBlob = pdf.output('blob');
+      const pdfFile = new File([pdfBlob], getPdfTitle(), { type: 'application/pdf' });
+      
+      if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+        await navigator.share({
+          files: [pdfFile],
+          title: `Autorização Pedido ${getFullOrderNumber()}`,
+          text: `Segue o termo de autorização para o pedido ${getFullOrderNumber()}.`,
+        });
+        toast({ variant: "success", title: "Pronto para Enviar!", description: "Selecione o WhatsApp ou E-mail para compartilhar o PDF." });
+      } else {
+        pdf.save(getPdfTitle());
+        setShowPostPdfModal(true);
+      }
 
     } catch (error) {
-      console.error("Erro ao gerar PDF:", error);
-      toast({ title: "Erro ao gerar PDF", description: "Ocorreu um problema ao tentar gerar o documento.", variant: "destructive" });
-      setPdfGenerated(false);
+      console.error("Erro ao gerar ou compartilhar PDF:", error);
+      // Fallback to download if sharing fails
+      try {
+        const pdf = new jsPDF('p', 'mm', 'a4', true); // Re-create to be safe
+        // ... (re-add image logic here if needed, or just save blank for error)
+        pdf.text("Ocorreu um erro ao gerar o PDF.", 10, 10);
+        pdf.save(getPdfTitle());
+        toast({ title: "Erro ao compartilhar", description: "O PDF foi baixado. Envie-o manualmente.", variant: "destructive" });
+        setShowPostPdfModal(true);
+      } catch (saveError) {
+        console.error("Erro ao salvar PDF como fallback:", saveError);
+        toast({ title: "Erro crítico", description: "Não foi possível gerar ou baixar o PDF.", variant: "destructive" });
+      }
     } finally {
        if (pdfContentElement) {
         pdfContentElement.style.display = 'none';
@@ -477,7 +476,6 @@ Prints de tela ou imagens do formulário *não são válidos*.
                                   )}
                                   onChange={(e) => {
                                       const { value } = e.target;
-                                      // Allow only numbers
                                       if (/^\d*$/.test(value)) {
                                           field.onChange(value);
                                       }
@@ -516,73 +514,73 @@ Prints de tela ou imagens do formulário *não são válidos*.
               </CardContent>
             </Card>
             
-            {!pdfGenerated && (
-              <>
-                <Alert variant="default" className="mt-6 p-4 border rounded-md text-sm text-foreground bg-primary/5">
-                    <Lock className="h-5 w-5 text-primary"/>
-                    <ShadAlertTitle className="font-semibold text-base text-primary">Tratamento de Dados Pessoais</ShadAlertTitle>
-                    <ShadAlertDescription>
-                      <p className="mt-2">Os dados informados neste formulário serão utilizados exclusivamente para autorizar a retirada do pedido.</p>
-                      <p>Nenhuma informação será armazenada em servidores, nem compartilhada com terceiros para outras finalidades. Todo o conteúdo é usado apenas para gerar o documento em PDF no seu próprio dispositivo.</p>
-                      <p>Ao prosseguir, você declara estar ciente e concorda com o uso dos dados conforme descrito, em respeito à Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018).</p>
-                    </ShadAlertDescription>
-                </Alert>
+            <>
+              <Alert variant="default" className="mt-6 p-4 border rounded-md text-sm text-foreground bg-primary/5">
+                  <Lock className="h-5 w-5 text-primary"/>
+                  <ShadAlertTitle className="font-semibold text-base text-primary">Tratamento de Dados Pessoais</ShadAlertTitle>
+                  <ShadAlertDescription>
+                    <p className="mt-2">Os dados informados neste formulário serão utilizados exclusivamente para autorizar a retirada do pedido.</p>
+                    <p>Nenhuma informação será armazenada em servidores, nem compartilhada com terceiros para outras finalidades. Todo o conteúdo é usado apenas para gerar o documento em PDF no seu próprio dispositivo.</p>
+                    <p>Ao prosseguir, você declara estar ciente e concorda com o uso dos dados conforme descrito, em respeito à Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018).</p>
+                  </ShadAlertDescription>
+              </Alert>
 
-                <FormFieldItem>
-                    <div className="flex items-start space-x-3">
-                        <Controller
-                            name="agreedToTerms"
-                            control={form.control}
-                            render={({ field }) => (
-                                <Checkbox
-                                    id="agreedToTerms"
-                                    checked={field.value}
-                                    onCheckedChange={field.onChange}
-                                    className="mt-0.5"
-                                />
-                            )}
-                        />
-                        <div className="grid gap-1.5 leading-none">
-                            <Label htmlFor="agreedToTerms" className="cursor-pointer">
-                              Li e concordo com o tratamento dos meus dados pessoais conforme descrito acima.
-                            </Label>
-                            <p className="text-xs text-muted-foreground">
-                                (Obrigatório para gerar o PDF)
-                            </p>
-                        </div>
-                    </div>
-                    {form.formState.errors.agreedToTerms && !agreedToTerms && <FormErrorMessage message={form.formState.errors.agreedToTerms.message} />}
-                </FormFieldItem>
-              
-                <Button type="submit" size="lg" className="w-full font-headline bg-primary hover:bg-primary/90 text-primary-foreground text-lg" disabled={isSubmitting || !agreedToTerms}>
-                  {isSubmitting ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Gerando PDF...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="mr-2 h-5 w-5" />
-                      Gerar e Baixar PDF
-                    </>
-                  )}
-                </Button>
-              </>
-            )}
+              <FormFieldItem>
+                  <div className="flex items-start space-x-3">
+                      <Controller
+                          name="agreedToTerms"
+                          control={form.control}
+                          render={({ field }) => (
+                              <Checkbox
+                                  id="agreedToTerms"
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  className="mt-0.5"
+                              />
+                          )}
+                      />
+                      <div className="grid gap-1.5 leading-none">
+                          <Label htmlFor="agreedToTerms" className="cursor-pointer">
+                            Li e concordo com o tratamento dos meus dados pessoais conforme descrito acima.
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                              (Obrigatório para gerar o PDF)
+                          </p>
+                      </div>
+                  </div>
+                  {form.formState.errors.agreedToTerms && !agreedToTerms && <FormErrorMessage message={form.formState.errors.agreedToTerms.message} />}
+              </FormFieldItem>
+            
+              <Button type="submit" size="lg" className="w-full font-headline bg-primary hover:bg-primary/90 text-primary-foreground text-lg" disabled={isSubmitting || !agreedToTerms}>
+                {isSubmitting ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Gerando PDF...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-5 w-5" />
+                    Gerar e Baixar PDF
+                  </>
+                )}
+              </Button>
+            </>
           </form>
           
-          <AlertDialog open={pdfGenerated} onOpenChange={setPdfGenerated}>
+          <AlertDialog open={showPostPdfModal} onOpenChange={setShowPostPdfModal}>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle className="flex items-center justify-center gap-2 font-headline text-xl text-center">
                   <ClipboardCheck className="h-8 w-8 text-primary" />
                   PDF Gerado! Próximo Passo:
                 </AlertDialogTitle>
-                <AlertDialogDescription className="text-foreground/90 pt-2 text-center">
-                  Envie o <strong>arquivo PDF que você acabou de baixar</strong> e uma <strong>cópia do documento com foto do comprador</strong> para o contato da loja. Use os botões abaixo para iniciar a conversa com uma mensagem pronta.
+                <AlertDialogDescription className="text-foreground/90 pt-2 text-center space-y-3">
+                  <p>O seu PDF foi baixado! Agora você precisa enviá-lo para a loja.</p>
+                  <p>Acesse a área de downloads do seu navegador (geralmente clicando no ícone de <strong>seta para baixo ↓</strong> ou no menu de <strong>3 pontinhos ⋮</strong>) e abra o arquivo.</p>
+                  <p>Dentro do visualizador de PDF, procure pela opção <strong>"Compartilhar"</strong> e envie o arquivo para a loja junto com uma foto do seu documento.</p>
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter className="flex-col sm:flex-col sm:space-x-0 gap-2">
@@ -598,6 +596,7 @@ Prints de tela ou imagens do formulário *não são válidos*.
                     Enviar PDF e Foto do Documento por E-mail
                   </a>
                 </Button>
+                <AlertDialogCancel>Fechar</AlertDialogCancel>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -1013,5 +1012,7 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 );
 
 export default AuthorizationForm;
+
+    
 
     
