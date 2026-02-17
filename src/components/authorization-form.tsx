@@ -175,8 +175,13 @@ export function AuthorizationPdfTemplate({
     const cnpj = String(form.getValues("buyerCNPJ") || "");
     return cnpj ? `CNPJ nº ${cnpj}` : "";
   };
-  const LOGO_BASE64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADQAAAA0CAYAAADFeBvrAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAfASURBVGhD7Zp/aBxlHMd/v7t3S/e2u1svy272i4VYaS+iB4+WQzHsebHQVJGnB4+CFWwPoggpYj3YwV5E8aAHh55KEaUeYg9WiiChHqLg7kX2h5Jd3W62u7v97j4+X+yCyS67yWbzdLuffPgx+z6Pz/Pj+fn9vN83g7gW7/z8/J+KxeJnDAbDF5X1cLtRFAV4nhcemIBiQv5kANu2cTqd2O/3sW1zDMPA83wYhgFxHLdv+zQNkYhEIjAM46/BGLvdDpfLRZIkGIYBYRjGMIx3RBAE+L5PcRzYto2yLPi+r2kKBgIBu91ODMMgCEKE45AkeyS/043O6nqYpv8mB4Fju15fVVRt31XjmmLgP3D4LsjzPPM8D23b4vf7EIZhJBIJg8HAvG+KogQAdLdZBAKg2+3GZrNh2zaKogDAMAx4nofjOByOR3AIUURRFEEQYFkWRVEAQKPRQBAE8H0fRVGA53no+35eY4JhuI18o7dJ0uvsjn7fN8X7z9b/V+h2d4Uq/b5PkiR0Oh0kScLpdAJ4/sVgFEtLSTAYDIg0rM/nQxAEyLIsiqJgWRZFUUAS8G63w/P87zmM8fDwsL1L8Kbb7Q4sywLAuB/pdrqjH33fN5/f/kfgC5lMhp7nwXEcrMsSj8fD9/0XvF0wGNbX1/vL8vLygCRJ2Gw2uN1uPM9DPp+HZVkwDAY4jmMIAlyv12q1msFgkCRJ2LZNsizYto3z+YzL5QLA3V4XfJ/jONjf38f3/d/jMcbPz8+xT71eD8/zyEajYUNDQ1VVqqpSVZXjOIIgQBAEBEHAcRzHcYiihCAIIYSQpmnj4+OdnZ35/3sYhjiOQ5ZlgiDAcrmEYRgkSeI4DgzDYFkWy7IghBDLsoiihG2bKIpiGAZCkCgKtm3DMAgikiiKMAyiKMgygiAgywTBMAiCgCiKIAgyDBVFwTAMmqIgCAJVVWEYouu6xWKRz+dBCEEQEAQBSRLbtlEUhaZpNE2TbdtpmhRFoWkay7JMkiRpmjgcjnAchyAIpJTFYhEAVFVFUZSIiCRJlFKapmEYRtM0hBDLsiRJIggCQohpmigKguM4PM8jSZIkSWiaRhAEuVyu+x+GDRaLRW1t7Y3t+lXWdbIs6/N8e3t7e3t7vV4/ODh4fHzctv7+/r6+vrS0NEqpNE3DMAzXdVmWiaJQFIVhGAzD+OfxeDwejwghVVUJIWEYIsuyIAgQBJFlWRRFiKIICCHLspBIJCiKQhAEBEGwbRseT4IkYVkWj8cDiKLEdV0kSURRxDAMWZZhWRZFUVJVFaIoOI5DlEUURUEQRAghoigKwzA4jgMAMAzDtWvXZmdnv9PZ3t4eyWQSy7JYLBbcbrfZbJaWlpbV1dVtbW3r6uq+/7u7u+OTJ0/29fX5vo/neUJIvV5veHi4vr7eZrNBKBTCcRwURVGURMdxKIpSFIXjOMuyCCG6riOEEGkaQRAIh8MwxkCWZVVVRVEUJEkyGAyIooQkSVmWzWbzWwKBANM0UkoURYlGo0aj0WKxyGQyURRlWRYURcHzehAEQRAEgiCEIAhBEAiC4DgOQRQIAkEQBEIIwzAIgiAIgiAIQhCEIAhCCCmFMAyCIAAIEkSIFEVQFARBMAzDNE0URcFxHCklgiAIgqKoj+MQRUGSJDiOg6IoCIIQQqIoiqIoRVGEIAgiCALDMAzDIIqiKEoQBKIoPM+Dbdsoit59913TNHmeh6IoKIrCMAxZltU0zXEc27YoioIgiCTJbDYjCAJFUcjn8zAMQ5blOA7f9+l0OgiCgCAIsFgsEARhWRZFUTSZTBiGgSAIAIAgCBzHAZAmkwiDwSAUCuF5XhiG4TgO27YJguA4DoogIAsCWRQEsigIUgSBKAhkUSAIgiCIIASCIBAEQRCEIIgghCAMw785jHG3242Ojo5+ve+98fHxfr+/rKysP+d5Hs/ztFotg8EAy7KGYWCxWMiyLEuy+Pj4n+3YsSNJknEcNzw8PDk52WQyCQDk5uYWFRVZVlbGdR0A8H2fIAiCIABAGIYkSWIYBlmW0WgUQRQQBN+yLCilv85+vx9FUQBguVxkWRZBEBghwTAMWZYRhiGEIAhBECAIcBwHWZYRhiEME0URQRSIooAoiqIoCAJBEATDMAQiCMLzPAQRIkQUoiiIIkiKIAiEIAhiGIIgiCAIQgiHwx8cHByfn18ul3d2dvZ/Gxsbtra2/u7n+z49z0sURYQQhmEkSRJBEGAYhizLEEJFUcQwjCRJoigKgiBkWWYIgmEYpJRpmkAggGEYuVxOFIVoNIpSqqqqMAwIIYRhCKIoeJ4HADCZTDiOA0kS0zRhGAZBEKqqgiAInueSJOF4PEYS4TgOsSwDwDAMw+A4jgBwHMdyueB5Poqi/P97nqcpimEYRBH+8wBwHIckSXzfxzAMhmEIRREkSRRFUVRVBUEQUgrf97dtQRAEVVXhOI5SqizLMoxBEAS2bfN9H8dxkiRhWRZFUREEQSAIwzAMgyAIbNuiKAoiCALDMCRJwnVdFEVJktTpdHieh+M4pFIhhCAIAqZpDMMghBCGIZIkgiCwbYuiaENDQ6Ojo/8+aGlpiaIoPM9RFIVt22VZURRFSZIQBKEoCkEQWJZlGAbDMBAEwXVdhmGQJEmWZSEIArquI4oiCAJVVVmWCCFIkjCNRgiCgDAMhmG4rouiKIQQpmmgKAoURSEIwzAMqqqSZfF9H8dxFEWRZXlXVZ0kSbIsC4IgfD4fgiAIgoBpmgDAcDgMIUTXdVmWKYoiCAIYY0zThCAIuVxOFIVt2xAE4Xle2zb7/f4syxLCSJKEbds8zyMIAsIw8DyPYRiSJAHTNHmeRyqVgmEYgiBIktRv9uPHj/f29pIkqampCSlJkkQYhvV6vVwul5eXJUnicrlcLpfL5ZIkCQDYbrfX19f7/f5YLBbDMCRJguu6PM8TBAFVVRCGQZIkKIrCcRwEQbAsi8PhIJVKsWwbgiAIIQQhuK7LshxVVWEY8jyPMAyGYTCZTBiGgSiKyLIoigKCIBAEIYsihCghCCGEKEokSURRQRQIIURRCIKAYRgIIQgCQBQCpCggCAJBEGEYgiBgGIKqKqIoPM9DEAQYhoFSCCAISIIEkkhJJBFEUUCSRBRFEBSRRBBEQZAEIAiCIAhCgiAoCEJSFIggCALBMARBEKIoSJJEEISgKAjXdTzPgyAItm3jdDqJ48jhcCAIQhAEpGlCCFEUhWEYlFLkcoUkSUyThCiK0DQJIYQgyDAEQRCcTicmk4nL5SKVSnGcR1EEgiBIkqTT6UQiEaIoMAyDYRhCCIIggCiKIMsEIAghSRKEEBFFCCFElCQYY0RRRBKEEIQQxghJhBCGMAwjCAKKIIQkhBBCGMMQEkSSIEhCkgghCSEkSSIkCWMMYRhCCCFIQpKEhJAkCCEhJGEYhhCCIEiCIEiSIEJCgmMIAkKYpiEIIhgOg81mgyAIJBIJlmXxeDyXyyWfz5MkCUEQOI6DpmnxeBxBEPh8PmazGYfDAYIg0HXd19cXExMDqKrqOA5pmubzeSiKnMvlPM8jCALSNAEMHMdBEIRarcaxbJsiiSAIMAzDMiwwDCEIAgRBIBQKYhgG3/eRZVmShCAIVVXJ5XKIooiiaBwOBxAEgiAIh8NBEISqqgDA9/1IklSVpWkaURSGYXAcB8dxsiyLIAhYlmVZFsMwmEwmHMdBEITFYpEkCVVVPB6PJEmSJCHLsoAoiqIomqaRZVmSpGkasCyLIEAShVCCKEoYhiFEQVQVy7JQLAY8zyMIAnmeI0kSRRHSNKGUMgzDMgzIsrAsi8/ng+d5yLKMbVskSbIsC0VRMAyDICiSJGEYouu6IAiGYVCVZTAMlmWJooiiaFmW/ZtVVYIgGI1GLpcLYRgEQVAURVEUpJRpmhAESZIEwzAMIxRF+Xg8DMMwx3FEUQRBEBiGwXQ6IUsCgiBkWcZxXBiGqapKEIQgCBzHIYqCIEgURSQkIWmaYBgEQRDf94miiGma/ZuiKAiiaBqGYaIoghC0bROK4iAKw+Fw/F0Yxo0Wi8X9vb3d3T29vT1dXV1+v9+6rlMKBEEgCAJZlpIkCY7jWJb1dX3+6urq6XQ6sFisXq9XFIWh0WhdXV2XL9s3NDTEtq0QwrIsjUaj3++nKAqKoqRSKcMwdHZ2jo6OpqamWJaFEEKhkEajQRAEZFnWNI2qqkQiEavV6nQ64+NjXV1d/v7siy9ubGzctm1d16IoSkoJIYQQQgiCIEkSOp2OIAh8Ph/CMBgOBzRNQxAEgiCwbRveD5IkYVkWi8USiURBEIRlWYIg0DQNYRiEEBFF0f3796dOnfrbMDT+U8uyPDo62mg0IggCSZKAIAhFUbIsM0kSYRgEQcgyDCGESCQSgUCAYRhYlsUwjDAMy7JEEYRhCIKAoiiGYSiKQrZtoigyDDEMQygIgiAIz/NYlkWYJIJgiCAGCaIgmKJIhJAEiRBBBAkiQBAEgggQBAkgCBJAkCgEgSAIAlEUgiAIgiAIAkEIgiAQBAkEIQgCIBCEIAiCIPw+DIIQBAgCEIQD/v/C837fW1t7/f0b1a0AAAAASUVORK5CYII=";
+  const LOGO_BASE64 = "data:image/png;base64,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";
 
+  const localSignatureDate = new Date().toLocaleDateString('pt-BR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
 
   return (
     <div
@@ -197,9 +202,9 @@ export function AuthorizationPdfTemplate({
           .a4 {
             width: 210mm;
             height: 297mm;
-            padding: 20mm;
+            padding: 25mm;
             box-sizing: border-box;
-            font-family: Arial, Helvetica, sans-serif;
+            font-family: 'Times New Roman', Times, serif;
             color: #000;
             font-size: 10.5pt;
             line-height: 1.15;
@@ -223,7 +228,7 @@ export function AuthorizationPdfTemplate({
           }
           .a4 th, .a4 td {
             border: 1px solid #333;
-            padding: 3mm;
+            padding: 4mm 2mm;
             vertical-align: middle;
             word-wrap: break-word;
           }
@@ -242,9 +247,9 @@ export function AuthorizationPdfTemplate({
           .a4 td.half { width: 50%; }
           .a4 .para {
             margin: 0 0 3.5mm 0;
-            text-align: left;
+            text-align: justify;
             font-size: 9.5pt;
-            line-height: 1.2;
+            line-height: 1.3;
           }
           .a4 .order-head th {
             font-size: 9.5pt;
@@ -260,26 +265,25 @@ export function AuthorizationPdfTemplate({
             line-height: 1.15;
             overflow-wrap: anywhere;
           }
+           .a4 .order-body td.nowrap-cell {
+            white-space: nowrap;
+          }
           .a4 .pickup-date { font-size: 9.7pt; margin-top: 2mm; }
           .a4 .sign-block {
             position: absolute;
             left: 20mm;
             right: 20mm;
             bottom: 26mm;
-          }
-          .a4 .sign-label { font-size: 9.7pt; margin-bottom: 1.6mm; }
-          .a4 .signature-box {
-            width: 100%;
-            height: 20mm;
-            border: 1px solid #333;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            background: #fff;
-            padding: 2mm;
-            box-sizing: border-box;
             text-align: center;
+          }
+          .a4 .signature-date {
+            font-size: 10pt;
+            margin-bottom: 8mm;
+          }
+          .a4 .signature-line {
+            width: 80%;
+            border-top: 1px solid #000;
+            margin: 0 auto 1.6mm auto;
           }
           .a4 .signature-img {
             max-width: 100%;
@@ -432,7 +436,7 @@ export function AuthorizationPdfTemplate({
                 {form.getValues("purchaseDate") ? format(form.getValues("purchaseDate")!, "dd/MM/yyyy") : ""}
               </td>
               <td>R$ {String(form.getValues("purchaseValue") || "").replace(".", ",")}</td>
-              <td>{getFullOrderNumber()}</td>
+              <td className="nowrap-cell">{getFullOrderNumber()}</td>
               <td className='store-cell'>
                 {PICKUP_ADDRESS}
               </td>
@@ -446,24 +450,24 @@ export function AuthorizationPdfTemplate({
             ? format(form.getValues("pickupDate")!, "dd/MM/yyyy")
             : "A definir no ato da retirada"}
         </div>
-
+        
         <div className="sign-block">
-          <div className="sign-label">Assinatura do comprador:</div>
-
-          <div className="signature-box">
-            {signatureDataUrl ? (
-              <img src={signatureDataUrl} alt="Assinatura" className="signature-img" crossOrigin="anonymous" />
-            ) : (
-              <div style={{ fontSize: "9pt", lineHeight: 1.2 }}>
-                <strong>Assinatura eletrônica registrada em:</strong>{" "}
-                {generationTimestamp || ""}{" "}
-                {buildSignerIdLine() ? `| ${buildSignerIdLine()}` : ""}
-              </div>
-            )}
+          <div className="signature-date">
+            Rio de Janeiro, {localSignatureDate}
           </div>
-
+          {signatureDataUrl ? (
+             <div style={{ width: '80%', margin: '0 auto', height: '20mm', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+              <img src={signatureDataUrl} alt="Assinatura" className="signature-img" crossOrigin="anonymous" />
+            </div>
+          ) : (
+            <div className="signature-line"></div>
+          )}
           <div className="sign-caption">Assinatura do comprador</div>
+          <div className="gen-info">
+            Assinatura eletrônica registrada em: {generationTimestamp || ""} | {buildSignerIdLine()}
+          </div>
         </div>
+
 
         <div className="small-note">
           (*) Os documentos mencionados e obrigatórios para entrega do(s) produto(s), não serão retidos em loja, após a conferência, serão
@@ -1160,40 +1164,39 @@ interface FormSelectProps {
     className?: string;
 }
 
-const FormSelect: React.FC<FormSelectProps> = ({ control, trigger, setValue, name, label, placeholder, options, error, className }) => {
-    return (
-        <FormFieldItem className={className}>
-            <Label htmlFor={name as string}>{label}</Label>
-            <Controller
-                control={control}
-                name={name}
-                render={({ field }) => (
-                    <Select
-                        onValueChange={(value) => {
-                            field.onChange(value);
-                            if (name === 'buyerDocumentType' || name === 'representativeDocumentType') {
-                                const dependentField = name === 'buyerDocumentType' ? 'buyerDocumentNumber' : 'representativeDocumentNumber';
-                                setValue(dependentField, '');
-                                trigger(dependentField);
-                            }
-                        }}
-                        value={field.value || undefined}
-                    >
-                        <SelectTrigger id={name as string} className={error ? 'border-destructive' : ''}>
-                            <SelectValue placeholder={placeholder} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {options.map(option => (
-                                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                )}
-            />
-            {error && <FormErrorMessage message={error.message} />}
-        </FormFieldItem>
-    );
-};
+const FormSelect: React.FC<FormSelectProps> = ({ control, trigger, setValue, name, label, placeholder, options, error, className }) => (
+    <FormFieldItem className={className}>
+        <Label htmlFor={name as string}>{label}</Label>
+        <Controller
+            control={control}
+            name={name}
+            render={({ field }) => (
+                <Select
+                    onValueChange={(value) => {
+                        field.onChange(value);
+                        if (name === 'buyerDocumentType' || name === 'representativeDocumentType') {
+                            const dependentField = name === 'buyerDocumentType' ? 'buyerDocumentNumber' : 'representativeDocumentNumber';
+                            setValue(dependentField, '');
+                            trigger(dependentField);
+                        }
+                    }}
+                    value={field.value || undefined}
+                >
+                    <SelectTrigger id={name as string} className={error ? 'border-destructive' : ''}>
+                        <SelectValue placeholder={placeholder} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {options.map(option => (
+                            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            )}
+        />
+        {error && <FormErrorMessage message={error.message} />}
+    </FormFieldItem>
+);
+
 
 
 interface FormDatePickerProps {
@@ -1259,8 +1262,6 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 
 export default AuthorizationForm;
     
-    
-
     
 
     
