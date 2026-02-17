@@ -24,7 +24,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
-import { Alert, AlertDescription, AlertTitle } from './ui/alert';
+import { Alert, AlertTitle } from './ui/alert';
 
 // --- Formatting Utilities ---
 const formatPhone = (value: string) => {
@@ -77,13 +77,13 @@ const InitialModal = ({ open, onOpenChange, onContinue }: { open: boolean, onOpe
       <AlertDialogContent className="max-w-lg">
         <AlertDialogHeader>
           <AlertDialogTitle className="text-xl font-semibold">Autorização para Retirada por Terceiros – Formato Auxiliar</AlertDialogTitle>
-          <AlertDialogDescription className="text-sm text-foreground/80 text-left pt-2 space-y-3">
+          <div className="text-sm text-foreground/80 text-left pt-2 space-y-3">
             <p>Este formulário digital é um recurso auxiliar criado para facilitar o preenchimento da autorização de retirada por terceiros.</p>
             <p>As regras oficiais da modalidade “Retira em Loja” permanecem válidas e devem ser observadas conforme o regulamento disponível no site oficial da empresa.</p>
             <p>Caso prefira, você pode utilizar o modelo oficial de autorização disponibilizado pela empresa para impressão manual.</p>
             <p>O uso deste formulário não substitui as exigências previstas no regulamento oficial.</p>
             <p className="pt-2">Para que a retirada seja autorizada, o representante deverá ser maior de 18 anos e apresentar documento oficial com foto, este termo assinado e cópia do documento do comprador. Para pessoa jurídica, será exigido Contrato Social ou Estatuto.</p>
-          </AlertDialogDescription>
+          </div>
         </AlertDialogHeader>
         
         <div className="bg-muted/50 p-4 rounded-md mt-2 space-y-3 text-sm">
@@ -218,12 +218,12 @@ export function AuthorizationForm() {
     
     try {
       const canvas = await html2canvas(pdfContentElement, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         logging: false,
       });
 
-      const imgData = canvas.toDataURL('image/png', 1.0);
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
@@ -233,13 +233,13 @@ export function AuthorizationForm() {
       let heightLeft = imgHeight;
       let position = 0;
       
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
       heightLeft -= pdfHeight;
 
       while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
         heightLeft -= pdfHeight;
       }
 
@@ -317,9 +317,9 @@ export function AuthorizationForm() {
         <Alert variant="warning" className='bg-yellow-100/60 border-yellow-300'>
           <AlertTriangle className="h-5 w-5 text-yellow-600" />
           <AlertTitle className='font-semibold text-yellow-800'>Atenção aos documentos</AlertTitle>
-          <AlertDescription className='text-yellow-700/90'>
+          <div className='text-yellow-700/90'>
              Não solicitamos anexos de documentos neste formulário. A cópia digital (foto ou PDF) do documento do comprador deverá ser enviada junto com o PDF do termo, para o WhatsApp ou e-mail da loja no momento da retirada. As cópias devem estar legíveis.
-          </AlertDescription>
+          </div>
         </Alert>
 
           <form 
@@ -533,7 +533,7 @@ export function AuthorizationForm() {
               <Alert>
                   <ShieldAlert className="h-5 w-5 text-primary" />
                   <AlertTitle className="font-semibold">Tratamento de Dados Pessoais (LGPD)</AlertTitle>
-                  <AlertDescription>Os dados informados neste formulário serão utilizados exclusivamente para gerar o documento PDF de autorização em seu próprio dispositivo. Nenhuma informação é armazenada em servidores ou compartilhada, em conformidade com a Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018).</AlertDescription>
+                  <div className="text-sm text-muted-foreground">Os dados informados neste formulário serão utilizados exclusivamente para gerar o documento PDF de autorização em seu próprio dispositivo. Nenhuma informação é armazenada em servidores ou compartilhada, em conformidade com a Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018).</div>
               </Alert>
 
               <FormFieldItem>
@@ -934,4 +934,8 @@ const Separator = () => <div className="border-t border-border/60 my-6" />;
 
 export default AuthorizationForm;
     
+    
+
+    
+
     
