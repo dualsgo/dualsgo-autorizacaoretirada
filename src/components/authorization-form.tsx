@@ -14,7 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from '@/lib/utils';
-import { format } from 'date-fns';
+import { format, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CalendarIcon, HelpCircle, Mail, Download, Loader2, Link as LinkIcon, ExternalLink, ShieldAlert, FileText, FileCheck2, UserCheck, ShoppingBag, AlertTriangle, UserRound, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -120,13 +120,27 @@ const InitialModal = ({ open, onOpenChange, onContinue }: { open: boolean, onOpe
   )
 }
 
-type PdfTemplateProps = {
-  pdfTemplateRef: React.RefObject<HTMLDivElement>;
-  generationTimestamp: string | null;
-  getFullOrderNumber: () => string;
-  form: any; // useForm<AuthorizationFormData>
-  signatureDataUrl?: string | null; // ex: "data:image/png;base64,...."
-};
+const DateWarningModal = ({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) => (
+  <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle className="flex items-center gap-2">
+          <AlertTriangle className="h-6 w-6 text-yellow-600" />
+          Atenção sobre a Data de Retirada
+        </AlertDialogTitle>
+        <div className="pt-4 text-sm text-foreground/90">
+          <p>A data de retirada selecionada é superior a 15 dias da data da compra.</p>
+          <p className="mt-2">Conforme nossa política, pedidos não retirados em até 15 dias corridos podem ser cancelados automaticamente e o valor estornado.</p>
+          <p className="mt-2 font-medium">Por favor, verifique o status do seu pedido antes de prosseguir.</p>
+        </div>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogAction onClick={() => onOpenChange(false)}>Entendi</AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
+);
+
 
 export function AuthorizationPdfTemplate({
   pdfTemplateRef,
@@ -473,6 +487,13 @@ export function AuthorizationPdfTemplate({
   );
 }
 
+type PdfTemplateProps = {
+  pdfTemplateRef: React.RefObject<HTMLDivElement>;
+  generationTimestamp: string | null;
+  getFullOrderNumber: () => string;
+  form: any; // useForm<AuthorizationFormData>
+  signatureDataUrl?: string | null; // ex: "data:image/png;base64,...."
+};
 
 export function AuthorizationForm() {
   const { toast } = useToast();
@@ -482,6 +503,7 @@ export function AuthorizationForm() {
   const pdfTemplateRef = useRef<HTMLDivElement>(null);
   const [isInitialModalOpen, setIsInitialModalOpen] = useState(false);
   const [generationTimestamp, setGenerationTimestamp] = useState<string | null>(null);
+  const [showDateWarningModal, setShowDateWarningModal] = useState(false);
 
   useEffect(() => {
     const hasSeenModal = sessionStorage.getItem('hasSeenAuthFormModalV1');
@@ -533,6 +555,16 @@ export function AuthorizationForm() {
         form.resetField('buyerDocumentNumber');
     }
   }, [buyerType, form]);
+
+  const handlePickupDateSelect = (pickupDate?: Date) => {
+    const purchaseDate = form.getValues('purchaseDate');
+    if (purchaseDate && pickupDate) {
+      const difference = differenceInDays(pickupDate, purchaseDate);
+      if (difference > 15) {
+        setShowDateWarningModal(true);
+      }
+    }
+  };
 
   const getFullOrderNumber = () => {
     const orderNumberValue = form.getValues('orderNumber');
@@ -652,6 +684,7 @@ export function AuthorizationForm() {
   return (
     <>
     <InitialModal open={isInitialModalOpen} onOpenChange={setIsInitialModalOpen} onContinue={handleContinueFromModal} />
+    <DateWarningModal open={showDateWarningModal} onOpenChange={setShowDateWarningModal} />
     
     <Card className="w-full shadow-lg p-6 sm:p-8 md:p-10">
       <CardHeader className='p-0 text-center mb-8'>
@@ -795,7 +828,7 @@ export function AuthorizationForm() {
               <CardContent className="p-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                   <FormDatePicker control={form.control} name="purchaseDate" label="Data da Compra *" error={form.formState.errors.purchaseDate} />
-                  <FormDatePicker control={form.control} name="pickupDate" label="Data Prevista da Retirada *" error={form.formState.errors.pickupDate} />
+                  <FormDatePicker control={form.control} name="pickupDate" label="Data Prevista da Retirada *" error={form.formState.errors.pickupDate} onDateSelect={handlePickupDateSelect} />
 
                   <FormInput control={form.control} name="purchaseValue" label="Valor da Compra (R$) *" placeholder="Ex: 199,90" type="text" inputMode='decimal' error={form.formState.errors.purchaseValue} formatter={formatCurrency}/>
                   
@@ -1108,9 +1141,10 @@ interface FormDatePickerProps {
   name: "purchaseDate" | "pickupDate";
   label: string;
   error?: FieldError;
+  onDateSelect?: (date?: Date) => void;
 }
 
-const FormDatePicker: React.FC<FormDatePickerProps> = ({ control, name, label, error }) => (
+const FormDatePicker: React.FC<FormDatePickerProps> = ({ control, name, label, error, onDateSelect }) => (
   <FormFieldItem>
     <Label htmlFor={name}>{label}</Label>
     <Controller
@@ -1136,7 +1170,10 @@ const FormDatePicker: React.FC<FormDatePickerProps> = ({ control, name, label, e
             <Calendar
               mode="single"
               selected={field.value}
-              onSelect={field.onChange}
+              onSelect={(date) => {
+                field.onChange(date);
+                onDateSelect?.(date);
+              }}
               initialFocus
               locale={ptBR}
               disabled={(date) => date < new Date("1900-01-01") || date > new Date("2100-01-01")}
@@ -1164,6 +1201,8 @@ const Separator = () => <div className="border-t border-border/60 my-6" />;
 
 export default AuthorizationForm;
     
+    
+
     
 
     
