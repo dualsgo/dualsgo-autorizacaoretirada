@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -11,20 +10,19 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, User, ShoppingBag, AlertTriangle, HelpCircle, Mail, Download, Lock, FileClock, ShieldCheck, FileWarning, ClipboardCheck } from 'lucide-react';
+import { CalendarIcon, HelpCircle, Mail, Download, Loader2, Link as LinkIcon, ExternalLink, ShieldAlert, FileText, FileCheck2, UserCheck, ShoppingBag } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { Alert, AlertDescription as ShadAlertDescription, AlertTitle as ShadAlertTitle } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipTrigger, TooltipProvider, TooltipContent } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
-
+import Image from 'next/image';
 
 // --- Formatting Utilities ---
 const formatPhone = (value: string) => {
@@ -69,41 +67,73 @@ const formatRG = (value: string) => {
 }
 
 
-const InitialInstructions = () => (
-    <div className="space-y-6 mb-8">
-        <Alert variant="default" className="bg-primary/10 border-primary/20 text-foreground">
-            <ShieldCheck className="h-5 w-5 text-primary" />
-            <ShadAlertTitle className="font-headline text-lg text-primary">Por que isso é importante?</ShadAlertTitle>
-            <ShadAlertDescription>
-            Para garantir a segurança da sua compra, precisamos confirmar a autorização quando outra pessoa for retirar o pedido.
-            </ShadAlertDescription>
-        </Alert>
-        <Alert variant="default" className="bg-primary/10 border-primary/20 text-foreground">
-            <FileClock className="h-5 w-5 text-primary" />
-            <ShadAlertTitle className="font-headline text-lg text-primary">Prazo de retirada</ShadAlertTitle>
-            <ShadAlertDescription>
-            Você tem até <strong>15 dias</strong> para retirar o pedido. Após esse prazo, ele será <strong>cancelado automaticamente</strong> e o pagamento <strong>estornado</strong>.
-            </ShadAlertDescription>
-        </Alert>
-        <Alert variant="warning" className="text-warning-foreground [&>svg]:text-warning-foreground bg-warning/20 border-warning">
-            <FileWarning className="h-5 w-5" />
-            <ShadAlertTitle className="font-headline text-lg">Atenção aos Documentos!</ShadAlertTitle>
-            <ShadAlertDescription className="space-y-2">
-                <p>Não solicitamos anexos de documentos neste formulário.</p>
-                <p>A cópia digital (foto ou PDF) do documento do comprador deverá ser enviada <strong>junto com o PDF do termo</strong>, para o <strong>WhatsApp ou e-mail da loja</strong> no momento da retirada.</p>
-                <p>As cópias devem estar <strong>legíveis</strong>.</p>
-            </ShadAlertDescription>
-        </Alert>
-    </div>
-);
+const InitialModal = ({ open, onOpenChange, onContinue }: { open: boolean, onOpenChange: (open: boolean) => void, onContinue: () => void }) => {
+  const [agreed, setAgreed] = useState(false);
+
+  return (
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent className="max-w-lg">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-xl font-semibold">Autorização para Retirada por Terceiros – Formato Auxiliar</AlertDialogTitle>
+          <AlertDialogDescription className="text-sm text-foreground/80 text-left pt-2 space-y-3">
+            <p>Este formulário digital é um recurso auxiliar criado para facilitar o preenchimento da autorização de retirada por terceiros.</p>
+            <p>As regras oficiais da modalidade “Retira em Loja” permanecem válidas e devem ser observadas conforme o regulamento disponível no site oficial da empresa.</p>
+            <p>Caso prefira, você pode utilizar o modelo oficial de autorização disponibilizado pela empresa para impressão manual.</p>
+            <p>O uso deste formulário não substitui as exigências previstas no regulamento oficial.</p>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        
+        <div className="bg-muted/50 p-4 rounded-md mt-2 space-y-3 text-sm">
+          <a href="https://www.rihappy.com.br/retira-em-loja" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline">
+            <ExternalLink className="h-4 w-4" />
+            Regulamento oficial “Retira em Loja”
+          </a>
+          <a href="https://files.directtalk.com.br/1.0/api/file/public/4c70e9a0-3b7c-4097-8b2f-082157e66860/content-inline" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-primary hover:underline">
+            <ExternalLink className="h-4 w-4" />
+            Modelo oficial de autorização para impressão
+          </a>
+        </div>
+
+        <div className="mt-4 space-y-3">
+          <p className="text-sm font-medium">Ao continuar, você declara estar ciente de que este é um formato auxiliar e que o regulamento oficial permanece válido.</p>
+          <div className="flex items-center space-x-2">
+            <Checkbox id="modal-agree" checked={agreed} onCheckedChange={(checked) => setAgreed(checked as boolean)} />
+            <Label htmlFor="modal-agree" className="text-sm font-normal">Li e compreendi as informações acima.</Label>
+          </div>
+        </div>
+
+        <AlertDialogFooter className="mt-4 gap-2 sm:gap-0">
+          <Button variant="outline" asChild>
+            <a href="https://files.directtalk.com.br/1.0/api/file/public/4c70e9a0-3b7c-4097-8b2f-082157e66860/content-inline" target="_blank" rel="noopener noreferrer">Acessar modelo oficial</a>
+          </Button>
+          <Button onClick={onContinue} disabled={!agreed}>
+            Continuar para o formulário
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
 
 export function AuthorizationForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showGlobalError, setShowGlobalError] = useState(false);
-  const [showDateWarningModal, setShowDateWarningModal] = useState(false);
   const [showPostPdfModal, setShowPostPdfModal] = useState(false);
   const pdfTemplateRef = useRef<HTMLDivElement>(null);
+  const [isInitialModalOpen, setIsInitialModalOpen] = useState(false);
+
+  useEffect(() => {
+    const hasSeenModal = sessionStorage.getItem('hasSeenAuthFormModalV1');
+    if (!hasSeenModal) {
+      setIsInitialModalOpen(true);
+    }
+  }, []);
+
+  const handleContinueFromModal = () => {
+    sessionStorage.setItem('hasSeenAuthFormModalV1', 'true');
+    setIsInitialModalOpen(false);
+  };
 
 
   const form = useForm<AuthorizationFormData>({
@@ -124,16 +154,13 @@ export function AuthorizationForm() {
       pickupStore: '1187 - CARIOCA SHOPPING',
       agreedToTerms: false,
     },
-     mode: "onChange",
+     mode: "onBlur",
   });
 
   const buyerType = form.watch('buyerType');
   const agreedToTerms = form.watch('agreedToTerms');
   const buyerDocType = useWatch({ control: form.control, name: 'buyerDocumentType' });
   const repDocType = useWatch({ control: form.control, name: 'representativeDocumentType' });
-  const purchaseDate = form.watch('purchaseDate');
-  const pickupDate = form.watch('pickupDate');
-
 
   useEffect(() => {
     if (buyerType === 'individual') {
@@ -143,18 +170,7 @@ export function AuthorizationForm() {
         form.resetField('buyerDocumentType');
         form.resetField('buyerDocumentNumber');
     }
-    form.clearErrors();
   }, [buyerType, form]);
-
-  useEffect(() => {
-    if (purchaseDate && pickupDate) {
-        const diffTime = new Date(pickupDate).getTime() - new Date(purchaseDate).getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        if (diffDays > 15) {
-            setShowDateWarningModal(true);
-        }
-    }
-  }, [purchaseDate, pickupDate]);
 
   const getFullOrderNumber = () => {
     const orderNumberValue = form.getValues('orderNumber');
@@ -191,48 +207,23 @@ export function AuthorizationForm() {
       return;
     }
 
-    pdfContentElement.style.display = 'flex';
-    pdfContentElement.style.position = 'fixed';
-    pdfContentElement.style.left = '-300mm'; // Off-screen
-    pdfContentElement.style.top = '0px';
-    pdfContentElement.style.width = '210mm';
-    pdfContentElement.style.height = 'auto';
-    pdfContentElement.style.minHeight = '297mm';
-    pdfContentElement.style.backgroundColor = '#FFFFFF';
-    pdfContentElement.style.padding = '0';
-    pdfContentElement.style.margin = '0';
-    pdfContentElement.style.overflow = 'hidden';
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    pdfContentElement.offsetHeight;
-
-
+    pdfContentElement.style.display = 'block';
+    
     try {
       const canvas = await html2canvas(pdfContentElement, {
         scale: 2,
         useCORS: true,
         logging: false,
-        width: pdfContentElement.scrollWidth,
-        height: pdfContentElement.scrollHeight,
-        windowWidth: pdfContentElement.scrollWidth,
-        windowHeight: pdfContentElement.scrollHeight,
       });
 
-      const imgData = canvas.toDataURL('image/png', 0.95);
-      const pdf = new jsPDF('p', 'mm', 'a4', true);
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const imgProps = pdf.getImageProperties(imgData);
-      const aspectRatio = imgProps.width / imgProps.height;
-      let imgRenderWidth = pdfWidth;
-      let imgRenderHeight = pdfWidth / aspectRatio;
-      if (imgRenderHeight > pdfHeight) {
-        imgRenderHeight = pdfHeight;
-        imgRenderWidth = pdfHeight * aspectRatio;
-      }
-      const xOffset = (pdfWidth - imgRenderWidth) / 2;
-      const yOffset = (pdfHeight - imgRenderHeight) / 2;
-      pdf.addImage(imgData, 'PNG', xOffset, yOffset, imgRenderWidth, imgRenderHeight, undefined, 'FAST');
+      const ratio = imgProps.height / imgProps.width;
+      const imgHeight = pdfWidth * ratio;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
       
       const pdfBlob = pdf.output('blob');
       const pdfFile = new File([pdfBlob], getPdfTitle(), { type: 'application/pdf' });
@@ -251,22 +242,10 @@ export function AuthorizationForm() {
 
     } catch (error) {
       console.error("Erro ao gerar ou compartilhar PDF:", error);
-      // Fallback to download if sharing fails
-      try {
-        const pdf = new jsPDF('p', 'mm', 'a4', true); // Re-create to be safe
-        // ... (re-add image logic here if needed, or just save blank for error)
-        pdf.text("Ocorreu um erro ao gerar o PDF.", 10, 10);
-        pdf.save(getPdfTitle());
-        toast({ title: "Erro ao compartilhar", description: "O PDF foi baixado. Envie-o manualmente.", variant: "destructive" });
-        setShowPostPdfModal(true);
-      } catch (saveError) {
-        console.error("Erro ao salvar PDF como fallback:", saveError);
-        toast({ title: "Erro crítico", description: "Não foi possível gerar ou baixar o PDF.", variant: "destructive" });
-      }
+      toast({ title: "Erro ao gerar PDF", description: "Não foi possível gerar o PDF. Tente novamente.", variant: "destructive" });
     } finally {
        if (pdfContentElement) {
         pdfContentElement.style.display = 'none';
-        pdfContentElement.style.position = 'absolute';
        }
     }
   };
@@ -275,13 +254,20 @@ export function AuthorizationForm() {
     setIsSubmitting(true);
     setShowGlobalError(false);
 
+    const isValid = await form.trigger();
+    if (!isValid) {
+        setShowGlobalError(true);
+        setIsSubmitting(false);
+        const firstErrorField = Object.keys(form.formState.errors)[0] as keyof AuthorizationFormData;
+        const element = document.querySelector(`[name="${firstErrorField}"]`);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+    }
+    
     try {
-      await new Promise<void>(resolve => {
-        requestAnimationFrame(() => setTimeout(resolve, 50));
-      });
-
       await generatePdf();
-
     } catch (error) {
       console.error("Erro no processo de submissão:", error);
       toast({ title: "Erro na submissão", description: "Falha ao processar os dados para PDF.", variant: "destructive" });
@@ -290,45 +276,43 @@ export function AuthorizationForm() {
     }
   };
 
-
   const onSubmit: SubmitHandler<AuthorizationFormData> = (_data) => {
     handleGeneratePdf();
   };
 
-
   return (
-    <div className="container mx-auto p-0 max-w-4xl">
-      
-       <InitialInstructions />
+    <>
+    <InitialModal open={isInitialModalOpen} onOpenChange={setIsInitialModalOpen} onContinue={handleContinueFromModal} />
+    
+    <Card className="w-full shadow-lg p-6 sm:p-8 md:p-10">
+      <CardContent className="p-0">
+          <div className="text-center mb-8">
+            <Image 
+              src="https://rihappynovo.vtexassets.com/arquivos/solzinhoFooterNew.png" 
+              alt="Logo da Empresa" 
+              width={64} 
+              height={64} 
+              className="mx-auto mb-4"
+              data-ai-hint="company logo" />
+            <h1 className="text-2xl font-bold text-foreground">
+              Autorização para Retirada por Terceiros
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Este formulário é um recurso auxiliar para facilitar a autorização.
+            </p>
+          </div>
 
-      <Card className="shadow-xl overflow-hidden mt-8">
-        <CardHeader>
-            <CardTitle className="font-headline text-2xl text-center">Formulário de Autorização</CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 space-y-8">
           <form 
-            onSubmit={form.handleSubmit(onSubmit, (errors) => {
-              setShowGlobalError(true);
-              const firstErrorField = Object.keys(errors)[0] as keyof AuthorizationFormData;
-              const element = document.querySelector(`[name="${firstErrorField}"]`);
-              if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              }
-            })}
-            className="space-y-8"
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-10"
+            noValidate
           >
-
-            <Card>
-              <CardHeader>
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 bg-primary/20 text-primary rounded-full h-10 w-10 flex items-center justify-center font-bold text-xl">1</div>
-                  <div>
-                      <h3 className="font-headline font-semibold text-lg">Dados da Compra e do Comprador</h3>
-                      <p className="mt-1 text-muted-foreground">Preencha <strong>exatamente</strong> como aparecem no e-mail de confirmação. Nome, CPF, e-mail, valor total e número do pedido.</p>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-6">
+              <div className="text-left">
+                <h2 className="text-lg font-semibold text-foreground flex items-center gap-2"><FileText className="h-5 w-5 text-primary" />Dados do Titular da Compra</h2>
+                <p className="text-sm text-muted-foreground mt-1">Preencha exatamente como no e-mail de confirmação do pedido.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 <FormFieldItem className="md:col-span-2">
                   <Label>Tipo de Comprador *</Label>
                   <Controller
@@ -336,10 +320,7 @@ export function AuthorizationForm() {
                     name="buyerType"
                     render={({ field }) => (
                       <RadioGroup
-                        onValueChange={(value) => {
-                            field.onChange(value);
-                            form.trigger();
-                        }}
+                        onValueChange={field.onChange}
                         defaultValue={field.value}
                         className="flex space-x-4 pt-2"
                       >
@@ -357,7 +338,7 @@ export function AuthorizationForm() {
 
                 {buyerType === 'individual' && (
                   <>
-                    <FormInput control={form.control} name="buyerCPF" label="CPF do Comprador *" placeholder="000.000.000-00" error={form.formState.errors.buyerCPF} inputMode="numeric" maxLength={14} formatter={formatCPF} tooltip="Digite apenas os números. A formatação é automática."/>
+                    <FormInput control={form.control} name="buyerCPF" label="CPF do Comprador *" placeholder="000.000.000-00" error={form.formState.errors.buyerCPF} inputMode="numeric" maxLength={14} formatter={formatCPF} tooltip="Digite apenas os números."/>
                     <FormSelect
                         control={form.control}
                         trigger={form.trigger}
@@ -371,7 +352,7 @@ export function AuthorizationForm() {
                         control={form.control}
                         name="buyerDocumentNumber"
                         label={`Número do ${buyerDocType || 'Documento'} *`}
-                        placeholder={!buyerDocType ? "Selecione o tipo primeiro" : (buyerDocType === 'CNH' ? '00000000000' : '00.000.000-0')}
+                        placeholder={!buyerDocType ? "Selecione o tipo" : (buyerDocType === 'CNH' ? '00000000000' : '00.000.000-0')}
                         error={form.formState.errors.buyerDocumentNumber}
                         inputMode={buyerDocType === 'CNH' ? 'numeric' : 'text'}
                         maxLength={buyerDocType === 'CNH' ? 11 : 12}
@@ -382,25 +363,22 @@ export function AuthorizationForm() {
                 )}
                 {buyerType === 'corporate' && (
                   <>
-                    <FormInput control={form.control} name="buyerCNPJ" label="CNPJ *" placeholder="00.000.000/0000-00" error={form.formState.errors.buyerCNPJ} inputMode="numeric" className="md:col-span-2" maxLength={18} formatter={formatCNPJ} tooltip="Digite apenas os números. A formatação é automática." />
+                    <FormInput control={form.control} name="buyerCNPJ" label="CNPJ *" placeholder="00.000.000/0000-00" error={form.formState.errors.buyerCNPJ} inputMode="numeric" className="md:col-span-2" maxLength={18} formatter={formatCNPJ} tooltip="Digite apenas os números." />
                   </>
                 )}
                  <FormInput control={form.control} name="buyerEmail" label="E-mail do Comprador *" placeholder="comprador@exemplo.com" type="email" error={form.formState.errors.buyerEmail} />
-                 <FormInput control={form.control} name="buyerPhone" label="Telefone do Comprador *" placeholder="(XX) XXXXX-XXXX" type="tel" error={form.formState.errors.buyerPhone} inputMode="tel" maxLength={15} formatter={formatPhone} tooltip="Digite apenas os números. A formatação é automática." />
-              </CardContent>
-            </Card>
+                 <FormInput control={form.control} name="buyerPhone" label="Telefone do Comprador *" placeholder="(XX) XXXXX-XXXX" type="tel" error={form.formState.errors.buyerPhone} inputMode="tel" maxLength={15} formatter={formatPhone} tooltip="Com DDD." />
+              </div>
+            </div>
 
-            <Card>
-              <CardHeader>
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 bg-primary/20 text-primary rounded-full h-10 w-10 flex items-center justify-center font-bold text-xl">2</div>
-                  <div>
-                      <h3 className="font-headline font-semibold text-lg">Dados da Pessoa Autorizada</h3>
-                      <p className="mt-1 text-muted-foreground">Informe os dados da pessoa que fará a retirada. Ela deve ser <strong>maior de idade</strong> e apresentar <strong>documento original com foto</strong> na loja.</p>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Separator/>
+            
+            <div className="space-y-6">
+              <div className="text-left">
+                <h2 className="text-lg font-semibold text-foreground flex items-center gap-2"><UserCheck className="h-5 w-5 text-primary" />Dados da Pessoa Autorizada a Retirar</h2>
+                 <p className="text-sm text-muted-foreground mt-1">Essa pessoa precisa ser maior de idade e apresentar um documento original com foto na loja.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 <div className="md:col-span-2">
                  <FormInput control={form.control} name="representativeName" label="Nome Completo da Pessoa Autorizada *" placeholder="Maria Oliveira" error={form.formState.errors.representativeName} />
                 </div>
@@ -417,7 +395,7 @@ export function AuthorizationForm() {
                     control={form.control}
                     name="representativeDocumentNumber"
                     label={`Número do ${repDocType || 'Documento'} *`}
-                    placeholder={!repDocType ? 'Selecione o tipo primeiro' : 'Digite o número'}
+                    placeholder={!repDocType ? 'Selecione o tipo' : 'Digite o número'}
                     error={form.formState.errors.representativeDocumentNumber}
                     inputMode={repDocType === 'CPF' || repDocType === 'CNH' ? 'numeric' : 'text'}
                     maxLength={
@@ -431,23 +409,18 @@ export function AuthorizationForm() {
                         repDocType === 'RG' ? formatRG :
                         undefined
                     }
-                    tooltip="Digite o número do documento. Para CPF, a formatação é automática."
                 />
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            <Card>
-              <CardHeader>
-                <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 bg-primary/20 text-primary rounded-full h-10 w-10 flex items-center justify-center font-bold text-xl">3</div>
-                    <div>
-                        <h3 className="font-headline font-semibold text-lg">Detalhes da Compra, Retirada e Geração do PDF</h3>
-                        <p className="mt-1 text-muted-foreground">Após preencher tudo, clique em <strong>Gerar PDF</strong>. Em seguida, <strong>envie o PDF gerado + foto do seu documento de identificação</strong> para o WhatsApp ou e-mail da loja.</p>
-                        <p className="mt-2 font-bold text-accent">Importante: Não envie prints. Envie o arquivo PDF completo.</p>
-                    </div>
-                </div>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Separator/>
+
+            <div className="space-y-6">
+              <div className="text-left">
+                <h2 className="text-lg font-semibold text-foreground flex items-center gap-2"><ShoppingBag className="h-5 w-5 text-primary" />Detalhes do Pedido e Retirada</h2>
+                <p className="text-sm text-muted-foreground mt-1">Informe os dados referentes à compra que será retirada.</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                 <FormDatePicker control={form.control} name="purchaseDate" label="Data da Compra *" error={form.formState.errors.purchaseDate} />
                 <FormDatePicker control={form.control} name="pickupDate" label="Data Prevista da Retirada *" error={form.formState.errors.pickupDate} />
 
@@ -456,7 +429,7 @@ export function AuthorizationForm() {
                 <FormFieldItem>
                   <Label htmlFor="orderNumber">Número do Pedido *</Label>
                    <div className="flex items-center w-full">
-                      <span className="inline-flex items-center px-3 h-10 text-sm text-foreground bg-muted border border-r-0 border-input rounded-l-md">
+                      <span className="inline-flex items-center px-3 h-11 text-sm text-foreground bg-muted border border-r-0 border-input rounded-l-md">
                           V
                       </span>
                       <Controller
@@ -471,7 +444,7 @@ export function AuthorizationForm() {
                                   placeholder="12345678"
                                   maxLength={8}
                                   className={cn(
-                                      "rounded-none w-full min-w-0 flex-1 focus:ring-0 focus:z-10",
+                                      "rounded-none w-full min-w-0 flex-1 focus:z-10",
                                       form.formState.errors.orderNumber ? 'border-destructive' : ''
                                   )}
                                   onChange={(e) => {
@@ -483,7 +456,7 @@ export function AuthorizationForm() {
                               />
                           )}
                       />
-                      <span className="inline-flex items-center px-3 h-10 text-sm text-foreground bg-muted border border-l-0 border-input rounded-r-md whitespace-nowrap">
+                      <span className="inline-flex items-center px-3 h-11 text-sm text-foreground bg-muted border border-l-0 border-input rounded-r-md whitespace-nowrap">
                           RIHP-01
                       </span>
                    </div>
@@ -511,19 +484,19 @@ export function AuthorizationForm() {
                     />
                     {form.formState.errors.pickupStore && <FormErrorMessage message={form.formState.errors.pickupStore.message} />}
                 </FormFieldItem>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
+
+            <Separator/>
             
-            <>
-              <Alert variant="default" className="mt-6 p-4 border rounded-md text-sm text-foreground bg-primary/5">
-                  <Lock className="h-5 w-5 text-primary"/>
-                  <ShadAlertTitle className="font-semibold text-base text-primary">Tratamento de Dados Pessoais</ShadAlertTitle>
-                  <ShadAlertDescription>
-                    <p className="mt-2">Os dados informados neste formulário serão utilizados exclusivamente para autorizar a retirada do pedido.</p>
-                    <p>Nenhuma informação será armazenada em servidores, nem compartilhada com terceiros para outras finalidades. Todo o conteúdo é usado apenas para gerar o documento em PDF no seu próprio dispositivo.</p>
-                    <p>Ao prosseguir, você declara estar ciente e concorda com o uso dos dados conforme descrito, em respeito à Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018).</p>
-                  </ShadAlertDescription>
-              </Alert>
+            <div className="space-y-6">
+              <div className="text-left">
+                  <h2 className="text-lg font-semibold text-foreground flex items-center gap-2"><FileCheck2 className="h-5 w-5 text-primary"/>Confirmação e Geração do PDF</h2>
+              </div>
+              <div className="bg-muted/50 p-4 rounded-md text-sm text-foreground">
+                  <p className="font-semibold text-base mb-2 flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-primary" />Tratamento de Dados Pessoais (LGPD)</p>
+                  <p>Os dados informados neste formulário serão utilizados exclusivamente para gerar o documento PDF de autorização em seu próprio dispositivo. Nenhuma informação é armazenada em servidores ou compartilhada, em conformidade com a Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018).</p>
+              </div>
 
               <FormFieldItem>
                   <div className="flex items-start space-x-3">
@@ -541,40 +514,34 @@ export function AuthorizationForm() {
                       />
                       <div className="grid gap-1.5 leading-none">
                           <Label htmlFor="agreedToTerms" className="cursor-pointer">
-                            Li e concordo com o tratamento dos meus dados pessoais conforme descrito acima.
+                            Declaro que li as informações e concordo com o tratamento dos dados para a finalidade descrita.
                           </Label>
-                          <p className="text-xs text-muted-foreground">
-                              (Obrigatório para gerar o PDF)
-                          </p>
                       </div>
                   </div>
-                  {form.formState.errors.agreedToTerms && !agreedToTerms && <FormErrorMessage message={form.formState.errors.agreedToTerms.message} />}
+                  {form.formState.errors.agreedToTerms && <FormErrorMessage message={form.formState.errors.agreedToTerms.message} />}
               </FormFieldItem>
             
-              <Button type="submit" size="lg" className="w-full font-headline bg-primary hover:bg-primary/90 text-primary-foreground text-lg" disabled={isSubmitting || !agreedToTerms}>
+              <Button type="submit" size="lg" className="w-full font-semibold text-base" disabled={isSubmitting || !agreedToTerms}>
                 {isSubmitting ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                    <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5" />
                     Gerando PDF...
                   </>
                 ) : (
                   <>
                     <Download className="mr-2 h-5 w-5" />
-                    Gerar e Baixar PDF
+                    Gerar Documento PDF
                   </>
                 )}
               </Button>
-            </>
+            </div>
           </form>
           
           <AlertDialog open={showPostPdfModal} onOpenChange={setShowPostPdfModal}>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle className="flex items-center justify-center gap-2 font-headline text-xl text-center">
-                  <ClipboardCheck className="h-8 w-8 text-primary" />
+                <AlertDialogTitle className="flex flex-col items-center justify-center gap-2 font-semibold text-xl text-center">
+                  <FileCheck2 className="h-8 w-8 text-primary" />
                   PDF Gerado! Próximo Passo:
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-foreground/90 pt-2 text-center space-y-3">
@@ -600,258 +567,127 @@ export function AuthorizationForm() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-        </CardContent>
-      </Card>
+      </CardContent>
+       <footer className="mt-8 text-center text-xs text-muted-foreground w-full">
+        <p>Ri Happy é uma empresa do Grupo Ri Happy S/A | CNPJ 58.731.662/0001-11</p>
+        <p>Av. Eng. Luís Carlos Berrini, 105 – São Paulo/SP | <a href="mailto:atendimento@rihappy.com.br" className="hover:underline">atendimento@rihappy.com.br</a></p>
+      </footer>
+    </Card>
 
-      <AlertDialog open={showGlobalError} onOpenChange={setShowGlobalError}>
-        <AlertDialogContent className="bg-destructive text-destructive-foreground border-destructive-foreground/50">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              Erro de Validação
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-destructive-foreground/90">
-              ❗ Verifique os campos obrigatórios acima e preencha todos corretamente para continuar.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction className="bg-destructive-foreground text-destructive hover:bg-destructive-foreground/90">Fechar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-      
-      <AlertDialog open={showDateWarningModal} onOpenChange={setShowDateWarningModal}>
-        <AlertDialogContent className="bg-warning text-warning-foreground border-warning/50">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
-              Aviso de Prazo de Retirada
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-warning-foreground/90">
-               Atenção: A data de retirada informada está mais de 15 dias após a data da compra. Se o pedido tiver sido cancelado por inatividade, será necessário realizar uma nova compra. Recomendamos que você verifique o status do seu pedido antes de continuar o preenchimento deste documento.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction className="bg-warning-foreground text-warning hover:bg-warning-foreground/90" onClick={() => setShowDateWarningModal(false)}>
-              Fechar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+    <div ref={pdfTemplateRef} className="hidden" style={{ position: 'fixed', left: '-300mm', top: '0px', width: '210mm', height: 'auto', minHeight: '297mm', backgroundColor: '#FFFFFF', padding: '0', margin: '0', overflow: 'hidden' }}>
+      <style>
+        {`
+          .pdf-page-container {
+            width: 100%;
+            height: 100%;
+            padding: 20mm;
+            box-sizing: border-box;
+            font-family: 'Inter', Arial, sans-serif;
+            font-size: 10pt;
+            line-height: 1.5;
+            background-color: #FFFFFF;
+            color: #333333;
+            display: flex;
+            flex-direction: column;
+          }
+          .pdf-header { text-align: center; margin-bottom: 8mm; }
+          .pdf-logo { max-width: 50px; height: auto; margin: 0 auto 3mm; }
+          .pdf-main-title { font-size: 16pt; font-weight: 600; color: #000000; margin-bottom: 2mm; }
+          .pdf-sub-title { font-size: 10pt; color: #555555; margin-bottom: 8mm; }
+          .pdf-section { margin-bottom: 6mm; }
+          .pdf-section-title { font-size: 11pt; font-weight: 600; color: #111827; padding-bottom: 2mm; border-bottom: 1px solid #EAEAEA; margin-bottom: 4mm; }
+          .pdf-declaration { text-align: justify; margin-bottom: 6mm; }
+          .pdf-data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 6mm; }
+          .pdf-data-item { display: flex; flex-direction: column; }
+          .pdf-field-label { font-weight: 500; color: #555555; font-size: 8.5pt; margin-bottom: 1mm; }
+          .pdf-field-value { font-size: 10pt; word-break: break-word; }
+          .pdf-data-item.full-width { grid-column: span 2; }
+          .pdf-signature-block { margin-top: 15mm; text-align: center; }
+          .pdf-signature-line { width: 80%; border-top: 1px solid #333333; margin: 0 auto; }
+          .pdf-signature-label { font-size: 9pt; margin-top: 2mm; }
+          .pdf-footer { font-size: 8pt; color: #777777; text-align: center; margin-top: auto; padding-top: 5mm; border-top: 1px solid #EAEAEA; }
+        `}
+      </style>
 
-      <div ref={pdfTemplateRef} className="hidden">
-        <style>
-          {`
-      @page {
-        size: A4;
-        margin: 0;
-      }
-      body {
-        margin: 0;
-        color: #333333;
-        font-family: 'Inter', Arial, sans-serif;
-        background-color: #FFFFFF;
-      }
-      .pdf-page-container {
-        width: 100%;
-        min-height: 297mm;
-        height: auto;
-        padding: 10mm;
-        box-sizing: border-box;
-        font-size: 10pt;
-        line-height: 1.4;
-        background-color: #FFFFFF;
-        color: #333333;
-        display: flex;
-        flex-direction: column;
-        gap: 5mm;
-      }
+      <div className="pdf-page-container">
+        <div className="pdf-header">
+          <img src="https://rihappynovo.vtexassets.com/arquivos/solzinhoFooterNew.png" alt="Logo Ri Happy" className="pdf-logo" data-ai-hint="company logo" />
+          <div className="pdf-main-title">Termo de Autorização para Retirada por Terceiros</div>
+          <div className="pdf-sub-title">Pedido: {getFullOrderNumber()}</div>
+        </div>
 
-      .pdf-header {
-        text-align: center;
-        margin-bottom: 3mm;
-      }
-      .pdf-logo {
-        max-width: 60px;
-        height: auto;
-        margin: 0 auto 1.5mm auto;
-      }
-      .pdf-main-title {
-        font-size: 16pt;
-        font-weight: 600;
-        margin-bottom: 4mm;
-        padding-bottom: 1.5mm;
-        border-bottom: 1px solid #EEEEEE;
-        color: #000000;
-      }
+        <div className="pdf-section">
+          <p className="pdf-declaration">
+            Eu, <strong>{form.getValues('buyerName')}</strong>, titular da compra, portador(a) do documento {form.getValues('buyerType') === 'individual' ? `${form.getValues('buyerDocumentType')} nº ${form.getValues('buyerDocumentNumber')}` : `CNPJ nº ${form.getValues('buyerCNPJ')}`}, autorizo pelo presente termo a pessoa <strong>{form.getValues('representativeName')}</strong>, portador(a) do documento {form.getValues('representativeDocumentType')} nº {form.getValues('representativeDocumentNumber')}, a retirar em meu nome o pedido mencionado acima na loja Ri Happy designada.
+          </p>
+        </div>
 
-      .pdf-section {
-        margin-bottom: 0;
-      }
-      .pdf-section-title {
-        font-size: 12pt;
-        font-weight: 600;
-        color: #333333;
-        padding-bottom: 1mm;
-        border-bottom: 1px solid #EEEEEE;
-        margin-bottom: 2.5mm;
-        display: flex;
-        align-items: center;
-        gap: 2mm;
-      }
-
-      .pdf-data-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 2mm 5mm;
-      }
-      .pdf-data-item {
-        display: flex;
-        flex-direction: column;
-      }
-      .pdf-field-label {
-        font-weight: 500;
-        color: #555555;
-        font-size: 8.5pt;
-        margin-bottom: 0.5mm;
-      }
-      .pdf-field-value {
-        padding: 2mm;
-        background: #F8F9FA;
-        border-radius: 2px;
-        min-height: 5mm;
-        display: flex;
-        align-items: center;
-        justify-content: flex-start;
-        word-break: break-all;
-        font-size: 9.5pt;
-      }
-
-      .pdf-data-item.full-width {
-        grid-column: span 2;
-      }
-      
-      .pdf-document-verification-note {
-        margin-top: 5mm;
-        padding: 3mm;
-        background-color: #fff9c4;
-        border: 1px solid #fbc02d;
-        border-radius: 3px;
-        font-size: 9pt;
-        text-align: center;
-      }
-      .pdf-document-verification-note strong {
-        font-weight: 600;
-      }
-
-      .pdf-footer {
-        font-size: 7.5pt;
-        color: #6B7280;
-        text-align: center;
-        margin-top: auto;
-        padding-top: 3mm;
-        border-top: 1px solid #E5E7EB;
-      }
-    `}
-        </style>
-
-        <div className="pdf-page-container">
-          <div className="pdf-header">
-            <img src="https://rihappynovo.vtexassets.com/arquivos/solzinhoFooterNew.png" alt="Logo Ri Happy" className="pdf-logo" data-ai-hint="company logo" />
-            <div className="pdf-main-title">📝 Autorização para Retirada - Pedido {getFullOrderNumber()}</div>
-          </div>
-
-          <div className="pdf-section">
-            <div className="pdf-section-title">👤 Dados do Comprador</div>
-            <div className="pdf-data-grid">
-              <div className="pdf-data-item full-width">
-                <span className="pdf-field-label">{form.getValues('buyerType') === 'individual' ? 'Nome Completo' : 'Razão Social'}</span>
-                <div className="pdf-field-value">{form.getValues('buyerName') || ' '}</div>
-              </div>
-
-              {form.getValues('buyerType') === 'individual' ? (
-                <>
-                  <div className="pdf-data-item">
-                    <span className="pdf-field-label">CPF</span>
-                    <div className="pdf-field-value">{form.getValues('buyerCPF') || ' '}</div>
-                  </div>
-                  <div className="pdf-data-item">
-                    <span className="pdf-field-label">Documento ({form.getValues('buyerDocumentType') || 'Não informado'})</span>
-                    <div className="pdf-field-value">{form.getValues('buyerDocumentNumber') || ' '}</div>
-                  </div>
-                </>
-              ) : (
-                <div className="pdf-data-item full-width">
-                  <span className="pdf-field-label">CNPJ</span>
-                  <div className="pdf-field-value">{form.getValues('buyerCNPJ') || ' '}</div>
-                </div>
-              )}
-
-              <div className="pdf-data-item">
-                <span className="pdf-field-label">E-mail</span>
-                <div className="pdf-field-value">{form.getValues('buyerEmail') || ' '}</div>
-              </div>
-              <div className="pdf-data-item">
-                <span className="pdf-field-label">Telefone</span>
-                <div className="pdf-field-value">{form.getValues('buyerPhone') || ' '}</div>
-              </div>
+        <div className="pdf-section">
+          <div className="pdf-section-title">Dados do Titular da Compra</div>
+          <div className="pdf-data-grid">
+            <div className="pdf-data-item full-width">
+              <span className="pdf-field-label">{form.getValues('buyerType') === 'individual' ? 'Nome Completo' : 'Razão Social'}</span>
+              <div className="pdf-field-value">{form.getValues('buyerName')}</div>
             </div>
-          </div>
-
-          <div className="pdf-section">
-            <div className="pdf-section-title">👥 Dados da Pessoa Autorizada</div>
-            <div className="pdf-data-grid">
-              <div className="pdf-data-item full-width">
-                <span className="pdf-field-label">Nome Completo</span>
-                <div className="pdf-field-value">{form.getValues('representativeName') || ' '}</div>
-              </div>
-              <div className="pdf-data-item full-width">
-                <span className="pdf-field-label">Documento ({form.getValues('representativeDocumentType') || 'Não informado'})</span>
-                <div className="pdf-field-value">{form.getValues('representativeDocumentNumber') || ' '}</div>
-              </div>
-            </div>
-          </div>
-          
-           <div className="pdf-section">
-                <div className="pdf-section-title">🛒 Detalhes da Compra e Retirada</div>
-                 <div className="pdf-data-grid">
-                    <div className="pdf-data-item">
-                        <span className="pdf-field-label">Data da Compra</span>
-                        <div className="pdf-field-value">{form.getValues('purchaseDate') ? format(form.getValues('purchaseDate')!, 'dd/MM/yyyy') : ' '}</div>
-                    </div>
-                    <div className="pdf-data-item">
-                        <span className="pdf-field-label">Valor Total</span>
-                        <div className="pdf-field-value">R$ {form.getValues('purchaseValue') ? form.getValues('purchaseValue').replace('.', ',') : ' '}</div>
-                    </div>
-                    <div className="pdf-data-item">
-                        <span className="pdf-field-label">Data da Retirada</span>
-                        <div className="pdf-field-value">{form.getValues('pickupDate') ? format(form.getValues('pickupDate')!, 'dd/MM/yyyy') : ' '}</div>
-                    </div>
-                    <div className="pdf-data-item">
-                        <span className="pdf-field-label">Loja de Retirada</span>
-                        <div className="pdf-field-value">{form.getValues('pickupStore') || ' '}</div>
-                    </div>
+            {form.getValues('buyerType') === 'individual' ? (
+              <>
+                <div className="pdf-data-item">
+                  <span className="pdf-field-label">CPF</span>
+                  <div className="pdf-field-value">{form.getValues('buyerCPF')}</div>
                 </div>
-           </div>
-
-          <div className="pdf-document-verification-note">
-            <strong>⚠️ Atenção:</strong> Este arquivo precisa ser enviado junto com a <strong>foto do documento do comprador</strong> para a validação da retirada.
+                <div className="pdf-data-item">
+                  <span className="pdf-field-label">{form.getValues('buyerDocumentType')}</span>
+                  <div className="pdf-field-value">{form.getValues('buyerDocumentNumber')}</div>
+                </div>
+              </>
+            ) : (
+              <div className="pdf-data-item full-width">
+                <span className="pdf-field-label">CNPJ</span>
+                <div className="pdf-field-value">{form.getValues('buyerCNPJ')}</div>
+              </div>
+            )}
+            <div className="pdf-data-item"><span className="pdf-field-label">E-mail</span><div className="pdf-field-value">{form.getValues('buyerEmail')}</div></div>
+            <div className="pdf-data-item"><span className="pdf-field-label">Telefone</span><div className="pdf-field-value">{form.getValues('buyerPhone')}</div></div>
           </div>
-
-          <div className="pdf-footer">
-          * Os dados informados neste formulário são para uso exclusivo da autorização de retirada e não serão compartilhados.
-          A Ri Happy Brinquedos S.A reserva-se o direito de não entregar o pedido caso haja divergência nas informações ou suspeita de fraude.
+        </div>
+        
+        <div className="pdf-section">
+          <div className="pdf-section-title">Dados da Pessoa Autorizada</div>
+          <div className="pdf-data-grid">
+            <div className="pdf-data-item full-width"><span className="pdf-field-label">Nome Completo</span><div className="pdf-field-value">{form.getValues('representativeName')}</div></div>
+            <div className="pdf-data-item full-width"><span className="pdf-field-label">{form.getValues('representativeDocumentType')}</span><div className="pdf-field-value">{form.getValues('representativeDocumentNumber')}</div></div>
           </div>
+        </div>
+
+        <div className="pdf-section">
+          <div className="pdf-section-title">Dados do Pedido</div>
+          <div className="pdf-data-grid">
+            <div className="pdf-data-item"><span className="pdf-field-label">Data da Compra</span><div className="pdf-field-value">{form.getValues('purchaseDate') ? format(form.getValues('purchaseDate')!, 'dd/MM/yyyy') : ''}</div></div>
+            <div className="pdf-data-item"><span className="pdf-field-label">Data da Retirada</span><div className="pdf-field-value">{form.getValues('pickupDate') ? format(form.getValues('pickupDate')!, 'dd/MM/yyyy') : ''}</div></div>
+            <div className="pdf-data-item"><span className="pdf-field-label">Valor Total</span><div className="pdf-field-value">R$ {form.getValues('purchaseValue').replace('.', ',')}</div></div>
+            <div className="pdf-data-item"><span className="pdf-field-label">Loja de Retirada</span><div className="pdf-field-value">{form.getValues('pickupStore')}</div></div>
+          </div>
+        </div>
+
+        <div className="pdf-signature-block">
+          <div className="pdf-signature-line"></div>
+          <p className="pdf-signature-label">Assinatura do Titular da Compra</p>
+        </div>
+
+        <div className="pdf-footer">
+            Gerado em: {format(new Date(), "dd/MM/yyyy 'às' HH:mm:ss")} <br/>
+            Documento auxiliar sujeito à conferência conforme regulamento oficial. A retirada só será autorizada mediante apresentação deste termo junto com a cópia do documento do titular e documento original do autorizado.
         </div>
       </div>
     </div>
+    </>
   );
 }
 
 
 // Helper components
 const FormFieldItem: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className }) => (
-  <div className={cn("space-y-1", className)}>{children}</div>
+  <div className={cn("space-y-1.5", className)}>{children}</div>
 );
 
 interface FormInputProps {
@@ -899,7 +735,7 @@ const FormInput: React.FC<FormInputProps> = ({ control, name, label, placeholder
             const value = e.target.value;
             field.onChange(formatter ? formatter(value) : value);
         }}
-        value={field.value || ''} 
+        value={field.value as string || ''}
         maxLength={maxLength} 
         className={error ? 'border-destructive' : ''} 
         disabled={disabled}
@@ -931,6 +767,7 @@ const FormSelect: React.FC<FormSelectProps> = ({ control, trigger, name, label, 
                     field.onChange(value);
                     if (name === 'buyerDocumentType' || name === 'representativeDocumentType') {
                         const dependentField = (name === 'buyerDocumentType' ? 'buyerDocumentNumber' : 'representativeDocumentNumber') as keyof AuthorizationFormData;
+                        form.setValue(dependentField, '');
                         trigger(dependentField);
                     }
                 }}
@@ -978,16 +815,14 @@ const FormDatePicker: React.FC<FormDatePickerProps> = ({ control, name, label, e
               )}
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
-              {field.value && field.value instanceof Date && !isNaN(field.value.getTime()) ? format(field.value, "PPP", { locale: ptBR }) :
-               field.value && typeof field.value === 'string' && !isNaN(new Date(field.value).getTime())? format(new Date(field.value), "PPP", { locale: ptBR }) :
-               <span>Selecione uma data</span>}
+              {field.value ? format(field.value, "PPP", { locale: ptBR }) : <span>Selecione uma data</span>}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0">
             <Calendar
               mode="single"
-              selected={field.value ? (field.value instanceof Date ? field.value : new Date(field.value as string)) : undefined}
-              onSelect={(date) => field.onChange(date)}
+              selected={field.value}
+              onSelect={field.onChange}
               initialFocus
               locale={ptBR}
               disabled={(date) => date < new Date("1900-01-01") || date > new Date("2100-01-01")}
@@ -1008,11 +843,9 @@ const FormItemRadio: React.FC<{ value: string; label: string; field: any }> = ({
 );
 
 const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
-  message ? <p className="text-sm font-medium text-destructive">{message}</p> : null
+  message ? <p className="text-sm text-destructive">{message}</p> : null
 );
 
+const Separator = () => <div className="border-t border-border/60 my-6" />;
+
 export default AuthorizationForm;
-
-    
-
-    
