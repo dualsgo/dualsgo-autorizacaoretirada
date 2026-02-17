@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, HelpCircle, Mail, Download, Loader2, Link as LinkIcon, ExternalLink, ShieldAlert, FileText, FileCheck2, UserCheck, ShoppingBag, AlertTriangle, FileQuestion, UserRound, Info } from 'lucide-react';
+import { CalendarIcon, HelpCircle, Mail, Download, Loader2, Link as LinkIcon, ExternalLink, ShieldAlert, FileText, FileCheck2, UserCheck, ShoppingBag, AlertTriangle, UserRound, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -25,6 +25,8 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/comp
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
 import { Alert, AlertTitle } from './ui/alert';
+
+const PICKUP_ADDRESS = "Avenida Vicente de Carvalho, 909 - Vicente de Carvalho - Rio de Janeiro - RJ - 21211-007 - pickup";
 
 // --- Formatting Utilities ---
 const formatPhone = (value: string) => {
@@ -133,40 +135,19 @@ export function AuthorizationPdfTemplate({
   form,
   signatureDataUrl = null,
 }: PdfTemplateProps) {
-  const buyerType = form.getValues("buyerType");
-
-  const purchaseDate = form.getValues("purchaseDate")
-    ? format(form.getValues("purchaseDate")!, "dd/MM/yyyy")
-    : "";
-
-  const pickupDate = form.getValues("pickupDate")
-    ? format(form.getValues("pickupDate")!, "dd/MM/yyyy")
-    : "A definir no ato da retirada";
-
-  const purchaseValue = form.getValues("purchaseValue")
-    ? `R$ ${String(form.getValues("purchaseValue")).replace(".", ",")}`
-    : "";
-
-  const pickupStore = form.getValues("pickupStore") || "";
-  const orderNumberFull = getFullOrderNumber();
-
-  const buyerName = form.getValues("buyerName") || "";
-  const buyerCPF = form.getValues("buyerCPF") || "";
-  const buyerCNPJ = form.getValues("buyerCNPJ") || "";
-  const buyerDocType = form.getValues("buyerDocumentType") || "";
-  const buyerDocNumber = form.getValues("buyerDocumentNumber") || "";
-
-  const repName = form.getValues("representativeName") || "";
-  const repDocType = form.getValues("representativeDocumentType") || "";
-  const repDocNumber = form.getValues("representativeDocumentNumber") || "";
-
-  // Preenche RG/CPF no padrão do termo oficial (se houver RG ou CPF informados)
-  const buyerRGCell =
-    buyerType === "individual" && String(buyerDocType).toUpperCase() === "RG" ? buyerDocNumber : "";
-  const buyerCPFCell = buyerType === "individual" ? buyerCPF : "";
-
-  const repRGCell = String(repDocType).toUpperCase() === "RG" ? repDocNumber : "";
-  const repCPFCell = String(repDocType).toUpperCase() === "CPF" ? repDocNumber : "";
+  const buildSignerIdLine = () => {
+    const buyerType = form.getValues("buyerType");
+    if (buyerType === "individual") {
+      const dt = String(form.getValues("buyerDocumentType") || "").toUpperCase();
+      const dn = String(form.getValues("buyerDocumentNumber") || "");
+      if (dt && dn) return `${dt} nº ${dn}`;
+      // fallback: CPF se doc não estiver presente
+      const cpf = String(form.getValues("buyerCPF") || "");
+      return cpf ? `CPF nº ${cpf}` : "";
+    }
+    const cnpj = String(form.getValues("buyerCNPJ") || "");
+    return cnpj ? `CNPJ nº ${cnpj}` : "";
+  };
 
   return (
     <div
@@ -177,217 +158,202 @@ export function AuthorizationPdfTemplate({
         left: "-400mm",
         top: 0,
         width: "210mm",
-        height: "297mm", // FIXO: impede crescer e virar 2 páginas
+        height: "297mm",
         backgroundColor: "#fff",
         overflow: "hidden",
       }}
     >
       <style>
         {`
-          /* Página A4 fixa */
-          .a4 {
-            width: 210mm;
-            height: 297mm;
-            padding: 20mm;
-            box-sizing: border-box;
-            font-family: Arial, Helvetica, sans-serif;
-            color: #000;
-            font-size: 10.5pt;
-            line-height: 1.15;
-            position: relative;
-          }
+      .a4 {
+        width: 210mm;
+        height: 297mm;
+        padding: 20mm;
+        box-sizing: border-box;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #000;
+        font-size: 10.5pt;
+        line-height: 1.15;
+        position: relative;
+      }
 
-          /* Cabeçalho superior (compacto) */
-          .hdr-top {
-            font-size: 9.5pt;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 5mm;
-          }
+      .logo-wrap { text-align: center; margin: 0 0 3mm 0; }
+      .logo { width: 52px; height: auto; display: inline-block; }
 
-          /* Logo + título */
-          .logo-wrap { text-align: center; margin: 0 0 3mm 0; }
-          .logo { width: 52px; height: auto; display: inline-block; }
+      .title {
+        text-align: center;
+        font-weight: 700;
+        text-transform: uppercase;
+        font-size: 12pt;
+        margin: 0 0 5mm 0;
+        letter-spacing: 0.2px;
+      }
 
-          .title {
-            text-align: center;
-            font-weight: 700;
-            text-transform: uppercase;
-            font-size: 12pt;
-            margin: 0 0 5mm 0;
-            letter-spacing: 0.2px;
-          }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+        margin-bottom: 5mm;
+      }
 
-          table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-            margin-bottom: 5mm;
-          }
-          th, td {
-            border: 1px solid #000;
-            padding: 2.1mm 2.4mm;
-            vertical-align: middle;
-            word-wrap: break-word;
-          }
-          th.section {
-            font-weight: 700;
-            text-align: center;
-            background: #fff;
-          }
+      th, td {
+        border: 1px solid #000;
+        padding: 2.1mm 2.4mm;
+        vertical-align: middle;          /* ALINHAMENTO VERTICAL */
+        word-wrap: break-word;
+      }
 
-          .lbl { width: 26%; font-size: 9.5pt; }
-          .val { width: 74%; }
-          .half { width: 50%; }
+      /* Cabeçalhos das seções (COMPRADOR/REPRESENTANTE) */
+      th.section {
+        font-weight: 700;
+        text-align: center;
+        background: #fff;
+      }
 
-          .para {
-            margin: 0 0 3.5mm 0;
-            text-align: justify;
-            font-size: 9.7pt;
-            line-height: 1.2;
-          }
+      /* Células de rótulo e de valor */
+      td.lbl {
+        width: 26%;
+        font-size: 9.5pt;
+        text-align: left;
+      }
 
-          /* Bloco assinatura fixado no rodapé para não empurrar conteúdo */
-          .sign-block {
-            position: absolute;
-            left: 20mm;
-            right: 20mm;
-            bottom: 26mm;
-          }
-          .sign-label {
-            font-size: 9.7pt;
-            margin-bottom: 1.6mm;
-          }
-          .signature-box {
-            width: 85%;
-            height: 20mm;        /* controla altura (1 página) */
-            border: 1px solid #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            background: #fff;
-          }
-          .signature-img {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain;
-          }
-          .sign-caption {
-            font-size: 9pt;
-            margin-top: 1.6mm;
-          }
-          .gen-info {
-            font-size: 8.5pt;
-            margin-top: 1.8mm;
-          }
+      td.val {
+        width: 74%;
+        text-align: left;
+      }
 
-          /* Nota final (*) no rodapé */
-          .small-note {
-            position: absolute;
-            left: 20mm;
-            right: 20mm;
-            bottom: 12mm;
-            font-size: 8.5pt;
-            line-height: 1.15;
-          }
+      td.half { width: 50%; }
 
-          .nowrap { white-space: nowrap; }
-        `}
+      /* Padroniza altura mínima para “parecer quadro” e alinhar tudo */
+      tr.row { height: 10mm; }          /* ajuste fino (8–11mm conforme necessidade) */
+
+      .para {
+        margin: 0 0 3.5mm 0;
+        text-align: justify;
+        font-size: 9.7pt;
+        line-height: 1.2;
+      }
+
+      /* Quadro do pedido */
+      .order-head th{
+        font-size: 9.5pt;
+        text-align: center;             /* ALINHAMENTO HORIZONTAL */
+        vertical-align: middle;
+      }
+      .order-body td{
+        text-align: center;             /* ALINHAMENTO HORIZONTAL */
+        vertical-align: middle;
+      }
+
+      /* Data da retirada (sem linha manual) */
+      .pickup-date {
+        font-size: 9.7pt;
+        margin-top: 2mm;
+      }
+
+      /* Assinatura fixada no rodapé para nunca empurrar conteúdo */
+      .sign-block {
+        position: absolute;
+        left: 20mm;
+        right: 20mm;
+        bottom: 26mm;
+      }
+
+      .sign-label {
+        font-size: 9.7pt;
+        margin-bottom: 1.6mm;
+      }
+
+      .signature-box {
+        width: 100%;
+        height: 20mm;
+        border: 1px solid #000;
+        display: flex;
+        align-items: center;            /* VERTICAL CENTRO */
+        justify-content: center;        /* HORIZONTAL CENTRO */
+        overflow: hidden;
+        background: #fff;
+        padding: 2mm;
+        box-sizing: border-box;
+        text-align: center;
+      }
+
+      .signature-img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+
+      .sign-caption {
+        font-size: 9pt;
+        margin-top: 1.6mm;
+      }
+
+      .gen-info {
+        font-size: 8.5pt;
+        margin-top: 1.8mm;
+        text-align: center;
+      }
+
+      /* Nota final (*) no rodapé */
+      .small-note {
+        position: absolute;
+        left: 20mm;
+        right: 20mm;
+        bottom: 12mm;
+        font-size: 8.5pt;
+        line-height: 1.15;
+      }
+    `}
       </style>
 
       <div className="a4">
-        <div className="hdr-top">
-          <div className="nowrap">{purchaseDate || ""}</div>
-          <div className="nowrap">Retirada – Ri Happy Brinquedos</div>
-        </div>
-
         <div className="logo-wrap">
           <img
             src="https://rihappynovo.vtexassets.com/arquivos/solzinhoFooterNew.png"
             alt="Logo Ri Happy"
             className="logo"
             crossOrigin="anonymous"
-            data-ai-hint="company logo"
           />
         </div>
 
         <div className="title">TERMO DE AUTORIZAÇÃO PARA RETIRADA POR TERCEIRO</div>
 
-        {/* COMPRADOR (tabela equivalente ao oficial) */}
         <table>
           <thead>
             <tr>
-              <th className="section" colSpan={4}>
-                COMPRADOR
-              </th>
+              <th className="section" colSpan={4}>COMPRADOR</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
+            <tr className="row">
               <td className="lbl">Nome/Razão Social:</td>
-              <td className="val" colSpan={3}>
-                {buyerName}
-              </td>
+              <td className="val" colSpan={3}>{form.getValues("buyerName") || ""}</td>
             </tr>
 
-            {buyerType === "individual" ? (
-              <tr>
+            {form.getValues("buyerType") === "individual" ? (
+              <tr className="row">
                 <td className="lbl">RG</td>
-                <td className="half">{buyerRGCell}</td>
+                <td className="half">
+                  {String(form.getValues("buyerDocumentType") || "").toUpperCase() === "RG"
+                    ? (form.getValues("buyerDocumentNumber") || "")
+                    : ""}
+                </td>
                 <td className="lbl">CPF</td>
-                <td className="half">{buyerCPFCell}</td>
+                <td className="half">{form.getValues("buyerCPF") || ""}</td>
               </tr>
             ) : (
-              <tr>
+              <tr className="row">
                 <td className="lbl">CNPJ</td>
-                <td className="val" colSpan={3}>
-                  {buyerCNPJ}
-                </td>
+                <td className="val" colSpan={3}>{form.getValues("buyerCNPJ") || ""}</td>
               </tr>
             )}
 
-            <tr>
-              <td className="lbl">Endereço</td>
-              <td className="val" colSpan={3}>{/* não coletado no seu form */}</td>
-            </tr>
-            <tr>
-              <td className="lbl">Município</td>
-              <td className="half"></td>
-              <td className="lbl">UF</td>
-              <td className="half"></td>
-            </tr>
-          </tbody>
-        </table>
-
-        {/* REPRESENTANTE (tabela equivalente ao oficial) */}
-        <table>
-          <thead>
-            <tr>
-              <th className="section" colSpan={4}>
-                REPRESENTANTE
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td className="lbl">Nome/Razão Social:</td>
-              <td className="val" colSpan={3}>
-                {repName}
-              </td>
-            </tr>
-            <tr>
-              <td className="lbl">RG</td>
-              <td className="half">{repRGCell}</td>
-              <td className="lbl">CPF</td>
-              <td className="half">{repCPFCell}</td>
-            </tr>
-            <tr>
+            <tr className="row">
               <td className="lbl">Endereço</td>
               <td className="val" colSpan={3}></td>
             </tr>
-            <tr>
+            <tr className="row">
               <td className="lbl">Município</td>
               <td className="half"></td>
               <td className="lbl">UF</td>
@@ -396,7 +362,46 @@ export function AuthorizationPdfTemplate({
           </tbody>
         </table>
 
-        {/* Texto oficial + adaptações mínimas para digital */}
+        <table>
+          <thead>
+            <tr>
+              <th className="section" colSpan={4}>REPRESENTANTE</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="row">
+              <td className="lbl">Nome/Razão Social:</td>
+              <td className="val" colSpan={3}>{form.getValues("representativeName") || ""}</td>
+            </tr>
+
+            <tr className="row">
+              <td className="lbl">RG</td>
+              <td className="half">
+                {String(form.getValues("representativeDocumentType") || "").toUpperCase() === "RG"
+                  ? (form.getValues("representativeDocumentNumber") || "")
+                  : ""}
+              </td>
+              <td className="lbl">CPF</td>
+              <td className="half">
+                {String(form.getValues("representativeDocumentType") || "").toUpperCase() === "CPF"
+                  ? (form.getValues("representativeDocumentNumber") || "")
+                  : ""}
+              </td>
+            </tr>
+
+            <tr className="row">
+              <td className="lbl">Endereço</td>
+              <td className="val" colSpan={3}></td>
+            </tr>
+            <tr className="row">
+              <td className="lbl">Município</td>
+              <td className="half"></td>
+              <td className="lbl">UF</td>
+              <td className="half"></td>
+            </tr>
+          </tbody>
+        </table>
+
         <p className="para">
           O COMPRADOR autoriza seu REPRESENTANTE, acima identificado, a retirar os produtos listados no Pedido, cujas informações estão
           detalhadas no quadro abaixo, na loja física escolhida pelo COMPRADOR no momento da realização de sua compra no site.
@@ -411,32 +416,36 @@ export function AuthorizationPdfTemplate({
           O horário de funcionamento da loja física escolhida para retirada do pedido, deverá ser respeitado.
         </p>
 
-        {/* Quadro do pedido (equivalente ao oficial) */}
         <table>
-          <thead>
+          <thead className="order-head">
             <tr>
-              <th className="lbl">Data da Compra</th>
-              <th className="lbl">Valor da Compra</th>
-              <th className="lbl">Nº do Pedido</th>
-              <th className="lbl">Loja para Retirada</th>
+              <th>Data da Compra</th>
+              <th>Valor da Compra</th>
+              <th>Nº do Pedido</th>
+              <th>Loja para Retirada</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td>{purchaseDate}</td>
-              <td>{purchaseValue}</td>
-              <td>{orderNumberFull}</td>
-              <td>{pickupStore}</td>
+          <tbody className="order-body">
+            <tr className="row">
+              <td>
+                {form.getValues("purchaseDate") ? format(form.getValues("purchaseDate")!, "dd/MM/yyyy") : ""}
+              </td>
+              <td>R$ {String(form.getValues("purchaseValue") || "").replace(".", ",")}</td>
+              <td>{getFullOrderNumber()}</td>
+              <td>
+                {PICKUP_ADDRESS}
+              </td>
             </tr>
           </tbody>
         </table>
 
-        {/* Campo data da retirada (digital, sem linhas em branco) */}
-        <div style={{ fontSize: "9.7pt", marginTop: "2mm" }}>
-          Data da retirada: {pickupDate}
+        <div className="pickup-date">
+          Data da retirada:{" "}
+          {form.getValues("pickupDate")
+            ? format(form.getValues("pickupDate")!, "dd/MM/yyyy")
+            : "A definir no ato da retirada"}
         </div>
 
-        {/* Assinatura digital (sem “linha em branco”) */}
         <div className="sign-block">
           <div className="sign-label">Assinatura do comprador:</div>
 
@@ -444,18 +453,15 @@ export function AuthorizationPdfTemplate({
             {signatureDataUrl ? (
               <img src={signatureDataUrl} alt="Assinatura" className="signature-img" crossOrigin="anonymous" />
             ) : (
-              <div style={{ fontSize: "9pt" }}>Assinatura eletrônica confirmada no formulário</div>
+              <div style={{ fontSize: "9pt", lineHeight: 1.2 }}>
+                <strong>Assinatura eletrônica registrada em:</strong>{" "}
+                {generationTimestamp || ""}{" "}
+                {buildSignerIdLine() ? `| ${buildSignerIdLine()}` : ""}
+              </div>
             )}
           </div>
 
           <div className="sign-caption">Assinatura do comprador</div>
-
-          <div className="gen-info">
-            Assinatura eletrônica registrada em: {generationTimestamp || ""}{" "}
-            {buyerType === "individual"
-              ? `| ${buyerDocType ? `${buyerDocType} nº ${buyerDocNumber}` : ""}`
-              : `| CNPJ nº ${buyerCNPJ}`}
-          </div>
         </div>
 
         <div className="small-note">
@@ -482,7 +488,6 @@ export function AuthorizationForm() {
     if (!hasSeenModal) {
       setIsInitialModalOpen(true);
     }
-     setGenerationTimestamp(format(new Date(), "dd/MM/yyyy 'às' HH:mm:ss"));
   }, []);
 
   const handleContinueFromModal = () => {
@@ -568,12 +573,12 @@ export function AuthorizationForm() {
     
     try {
       const canvas = await html2canvas(pdfContentElement, {
-        scale: 2,
+        scale: 1.5,
         useCORS: true,
         backgroundColor: "#fff",
       });
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const imgData = canvas.toDataURL('image/jpeg', 0.9);
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfW = pdf.internal.pageSize.getWidth();
       const pdfH = pdf.internal.pageSize.getHeight();
@@ -615,6 +620,8 @@ export function AuthorizationForm() {
   const handleGeneratePdf = async () => {
     setIsSubmitting(true);
     setShowGlobalError(false);
+
+    setGenerationTimestamp(format(new Date(), "dd/MM/yyyy 'às' HH:mm:ss"));
 
     const isValid = await form.trigger();
     if (!isValid) {
@@ -1157,6 +1164,8 @@ const Separator = () => <div className="border-t border-border/60 my-6" />;
 
 export default AuthorizationForm;
     
+    
+
     
 
     
