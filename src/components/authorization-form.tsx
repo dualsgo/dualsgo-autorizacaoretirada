@@ -118,6 +118,356 @@ const InitialModal = ({ open, onOpenChange, onContinue }: { open: boolean, onOpe
   )
 }
 
+type PdfTemplateProps = {
+  pdfTemplateRef: React.RefObject<HTMLDivElement>;
+  generationTimestamp: string | null;
+  getFullOrderNumber: () => string;
+  form: any; // useForm<AuthorizationFormData>
+  signatureDataUrl?: string | null; // ex: "data:image/png;base64,...."
+};
+
+export function AuthorizationPdfTemplate({
+  pdfTemplateRef,
+  generationTimestamp,
+  getFullOrderNumber,
+  form,
+  signatureDataUrl = null,
+}: PdfTemplateProps) {
+  const buyerType = form.getValues("buyerType");
+
+  const purchaseDate = form.getValues("purchaseDate")
+    ? format(form.getValues("purchaseDate")!, "dd/MM/yyyy")
+    : "";
+
+  const pickupDate = form.getValues("pickupDate")
+    ? format(form.getValues("pickupDate")!, "dd/MM/yyyy")
+    : "A definir no ato da retirada";
+
+  const purchaseValue = form.getValues("purchaseValue")
+    ? `R$ ${String(form.getValues("purchaseValue")).replace(".", ",")}`
+    : "";
+
+  const pickupStore = form.getValues("pickupStore") || "";
+  const orderNumberFull = getFullOrderNumber();
+
+  const buyerName = form.getValues("buyerName") || "";
+  const buyerCPF = form.getValues("buyerCPF") || "";
+  const buyerCNPJ = form.getValues("buyerCNPJ") || "";
+  const buyerDocType = form.getValues("buyerDocumentType") || "";
+  const buyerDocNumber = form.getValues("buyerDocumentNumber") || "";
+
+  const repName = form.getValues("representativeName") || "";
+  const repDocType = form.getValues("representativeDocumentType") || "";
+  const repDocNumber = form.getValues("representativeDocumentNumber") || "";
+
+  // Preenche RG/CPF no padrão do termo oficial (se houver RG ou CPF informados)
+  const buyerRGCell =
+    buyerType === "individual" && String(buyerDocType).toUpperCase() === "RG" ? buyerDocNumber : "";
+  const buyerCPFCell = buyerType === "individual" ? buyerCPF : "";
+
+  const repRGCell = String(repDocType).toUpperCase() === "RG" ? repDocNumber : "";
+  const repCPFCell = String(repDocType).toUpperCase() === "CPF" ? repDocNumber : "";
+
+  return (
+    <div
+      ref={pdfTemplateRef}
+      className="hidden"
+      style={{
+        position: "fixed",
+        left: "-400mm",
+        top: 0,
+        width: "210mm",
+        height: "297mm", // FIXO: impede crescer e virar 2 páginas
+        backgroundColor: "#fff",
+        overflow: "hidden",
+      }}
+    >
+      <style>
+        {`
+          /* Página A4 fixa */
+          .a4 {
+            width: 210mm;
+            height: 297mm;
+            padding: 20mm;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #000;
+            font-size: 10.5pt;
+            line-height: 1.15;
+            position: relative;
+          }
+
+          /* Cabeçalho superior (compacto) */
+          .hdr-top {
+            font-size: 9.5pt;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5mm;
+          }
+
+          /* Logo + título */
+          .logo-wrap { text-align: center; margin: 0 0 3mm 0; }
+          .logo { width: 52px; height: auto; display: inline-block; }
+
+          .title {
+            text-align: center;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 12pt;
+            margin: 0 0 5mm 0;
+            letter-spacing: 0.2px;
+          }
+
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-bottom: 5mm;
+          }
+          th, td {
+            border: 1px solid #000;
+            padding: 2.1mm 2.4mm;
+            vertical-align: middle;
+            word-wrap: break-word;
+          }
+          th.section {
+            font-weight: 700;
+            text-align: center;
+            background: #fff;
+          }
+
+          .lbl { width: 26%; font-size: 9.5pt; }
+          .val { width: 74%; }
+          .half { width: 50%; }
+
+          .para {
+            margin: 0 0 3.5mm 0;
+            text-align: justify;
+            font-size: 9.7pt;
+            line-height: 1.2;
+          }
+
+          /* Bloco assinatura fixado no rodapé para não empurrar conteúdo */
+          .sign-block {
+            position: absolute;
+            left: 20mm;
+            right: 20mm;
+            bottom: 26mm;
+          }
+          .sign-label {
+            font-size: 9.7pt;
+            margin-bottom: 1.6mm;
+          }
+          .signature-box {
+            width: 85%;
+            height: 20mm;        /* controla altura (1 página) */
+            border: 1px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #fff;
+          }
+          .signature-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+          }
+          .sign-caption {
+            font-size: 9pt;
+            margin-top: 1.6mm;
+          }
+          .gen-info {
+            font-size: 8.5pt;
+            margin-top: 1.8mm;
+          }
+
+          /* Nota final (*) no rodapé */
+          .small-note {
+            position: absolute;
+            left: 20mm;
+            right: 20mm;
+            bottom: 12mm;
+            font-size: 8.5pt;
+            line-height: 1.15;
+          }
+
+          .nowrap { white-space: nowrap; }
+        `}
+      </style>
+
+      <div className="a4">
+        <div className="hdr-top">
+          <div className="nowrap">{purchaseDate || ""}</div>
+          <div className="nowrap">Retirada – Ri Happy Brinquedos</div>
+        </div>
+
+        <div className="logo-wrap">
+          <img
+            src="https://rihappynovo.vtexassets.com/arquivos/solzinhoFooterNew.png"
+            alt="Logo Ri Happy"
+            className="logo"
+            crossOrigin="anonymous"
+            data-ai-hint="company logo"
+          />
+        </div>
+
+        <div className="title">TERMO DE AUTORIZAÇÃO PARA RETIRADA POR TERCEIRO</div>
+
+        {/* COMPRADOR (tabela equivalente ao oficial) */}
+        <table>
+          <thead>
+            <tr>
+              <th className="section" colSpan={4}>
+                COMPRADOR
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="lbl">Nome/Razão Social:</td>
+              <td className="val" colSpan={3}>
+                {buyerName}
+              </td>
+            </tr>
+
+            {buyerType === "individual" ? (
+              <tr>
+                <td className="lbl">RG</td>
+                <td className="half">{buyerRGCell}</td>
+                <td className="lbl">CPF</td>
+                <td className="half">{buyerCPFCell}</td>
+              </tr>
+            ) : (
+              <tr>
+                <td className="lbl">CNPJ</td>
+                <td className="val" colSpan={3}>
+                  {buyerCNPJ}
+                </td>
+              </tr>
+            )}
+
+            <tr>
+              <td className="lbl">Endereço</td>
+              <td className="val" colSpan={3}>{/* não coletado no seu form */}</td>
+            </tr>
+            <tr>
+              <td className="lbl">Município</td>
+              <td className="half"></td>
+              <td className="lbl">UF</td>
+              <td className="half"></td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* REPRESENTANTE (tabela equivalente ao oficial) */}
+        <table>
+          <thead>
+            <tr>
+              <th className="section" colSpan={4}>
+                REPRESENTANTE
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="lbl">Nome/Razão Social:</td>
+              <td className="val" colSpan={3}>
+                {repName}
+              </td>
+            </tr>
+            <tr>
+              <td className="lbl">RG</td>
+              <td className="half">{repRGCell}</td>
+              <td className="lbl">CPF</td>
+              <td className="half">{repCPFCell}</td>
+            </tr>
+            <tr>
+              <td className="lbl">Endereço</td>
+              <td className="val" colSpan={3}></td>
+            </tr>
+            <tr>
+              <td className="lbl">Município</td>
+              <td className="half"></td>
+              <td className="lbl">UF</td>
+              <td className="half"></td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Texto oficial + adaptações mínimas para digital */}
+        <p className="para">
+          O COMPRADOR autoriza seu REPRESENTANTE, acima identificado, a retirar os produtos listados no Pedido, cujas informações estão
+          detalhadas no quadro abaixo, na loja física escolhida pelo COMPRADOR no momento da realização de sua compra no site.
+        </p>
+        <p className="para">
+          Para retirada dos produtos, o REPRESENTANTE deverá ser maior de 18 anos, estar munido de documento oficial com foto e deste termo
+          devidamente assinado eletronicamente pelo COMPRADOR e uma cópia (foto/imagem) do documento de identidade oficial do COMPRADOR.
+          Sendo o COMPRADOR pessoa jurídica, uma foto ou cópia (imagem legível) do Contrato Social / Estatuto Social da empresa do COMPRADOR
+          deverá ser apresentada. (*)
+        </p>
+        <p className="para">
+          O horário de funcionamento da loja física escolhida para retirada do pedido, deverá ser respeitado.
+        </p>
+
+        {/* Quadro do pedido (equivalente ao oficial) */}
+        <table>
+          <thead>
+            <tr>
+              <th className="lbl">Data da Compra</th>
+              <th className="lbl">Valor da Compra</th>
+              <th className="lbl">Nº do Pedido</th>
+              <th className="lbl">Loja para Retirada</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{purchaseDate}</td>
+              <td>{purchaseValue}</td>
+              <td>{orderNumberFull}</td>
+              <td>{pickupStore}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Campo data da retirada (digital, sem linhas em branco) */}
+        <div style={{ fontSize: "9.7pt", marginTop: "2mm" }}>
+          Data da retirada: {pickupDate}
+        </div>
+
+        {/* Assinatura digital (sem “linha em branco”) */}
+        <div className="sign-block">
+          <div className="sign-label">Assinatura do comprador:</div>
+
+          <div className="signature-box">
+            {signatureDataUrl ? (
+              <img src={signatureDataUrl} alt="Assinatura" className="signature-img" crossOrigin="anonymous" />
+            ) : (
+              <div style={{ fontSize: "9pt" }}>Assinatura eletrônica confirmada no formulário</div>
+            )}
+          </div>
+
+          <div className="sign-caption">Assinatura do comprador</div>
+
+          <div className="gen-info">
+            Assinatura eletrônica registrada em: {generationTimestamp || ""}{" "}
+            {buyerType === "individual"
+              ? `| ${buyerDocType ? `${buyerDocType} nº ${buyerDocNumber}` : ""}`
+              : `| CNPJ nº ${buyerCNPJ}`}
+          </div>
+        </div>
+
+        <div className="small-note">
+          (*) Os documentos mencionados e obrigatórios para entrega do(s) produto(s), não serão retidos em loja, após a conferência, serão
+          devolvidos ao terceiro autorizado.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 export function AuthorizationForm() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -218,31 +568,24 @@ export function AuthorizationForm() {
     
     try {
       const canvas = await html2canvas(pdfContentElement, {
-        scale: 1.5,
+        scale: 2,
         useCORS: true,
-        logging: false,
+        backgroundColor: "#fff",
       });
 
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgProps = pdf.getImageProperties(imgData);
-      const ratio = imgProps.height / imgProps.width;
-      let imgHeight = pdfWidth * ratio;
-      let heightLeft = imgHeight;
-      let position = 0;
+      const pdfW = pdf.internal.pageSize.getWidth();
+      const pdfH = pdf.internal.pageSize.getHeight();
+
+      const props = pdf.getImageProperties(imgData);
+      const ratio = props.height / props.width;
+
+      let w = pdfW;
+      let h = w * ratio;
+      if (h > pdfH) { h = pdfH; w = h / ratio; }
       
-      pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-      heightLeft -= pdfHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pdfHeight;
-      }
-
+      pdf.addImage(imgData, "JPEG", (pdfW - w) / 2, (pdfH - h) / 2, w, h, undefined, "FAST");
       
       const pdfBlob = pdf.output('blob');
       const pdfFile = new File([pdfBlob], getPdfTitle(), { type: 'application/pdf' });
@@ -606,9 +949,9 @@ export function AuthorizationForm() {
                   PDF Gerado! Próximo Passo:
                 </AlertDialogTitle>
                 <div className="text-sm text-foreground/90 pt-2 text-center space-y-3">
-                  <p>O seu PDF foi baixado! Agora você precisa enviá-lo para a loja.</p>
-                  <p>Acesse a área de downloads do seu navegador (geralmente clicando no ícone de <strong>seta para baixo ↓</strong> ou no menu de <strong>3 pontinhos ⋮</strong>) e abra o arquivo.</p>
-                  <p>Dentro do visualizador de PDF, procure pela opção <strong>"Compartilhar"</strong> e envie o arquivo para a loja junto com uma foto do seu documento.</p>
+                   <p>O seu PDF foi baixado! Agora você precisa enviá-lo para a loja.</p>
+                   <p>Acesse a área de downloads do seu navegador (geralmente clicando no ícone de <strong>seta para baixo ↓</strong> ou no menu de <strong>3 pontinhos ⋮</strong>) e abra o arquivo.</p>
+                   <p>Dentro do visualizador de PDF, procure pela opção <strong>"Compartilhar"</strong> e envie o arquivo para a loja junto com uma foto do seu documento.</p>
                 </div>
               </AlertDialogHeader>
               <AlertDialogFooter className="flex-col sm:flex-col sm:space-x-0 gap-2">
@@ -634,135 +977,14 @@ export function AuthorizationForm() {
         <p>Av. Eng. Luís Carlos Berrini, 105 – São Paulo/SP | <a href="mailto:atendimento@rihappy.com.br" className="hover:underline">atendimento@rihappy.com.br</a></p>
       </footer>
     </Card>
-
-    <div ref={pdfTemplateRef} className="hidden" style={{ position: 'fixed', left: '-300mm', top: '0px', width: '210mm', minHeight: '297mm', backgroundColor: '#FFFFFF', padding: '0', margin: '0', overflow: 'hidden' }}>
-      <style>
-        {`
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-          @page {
-            size: A4;
-            margin: 15mm;
-          }
-          body {
-            -webkit-print-color-adjust: exact;
-          }
-          .pdf-page-container {
-            width: 180mm;
-            height: 267mm;
-            box-sizing: border-box;
-            font-family: 'Inter', Arial, sans-serif;
-            font-size: 11pt;
-            line-height: 1.3;
-            background-color: #FFFFFF;
-            color: #333333;
-            display: flex;
-            flex-direction: column;
-          }
-          .pdf-header { text-align: center; margin-bottom: 5mm; }
-          .pdf-logo { max-width: 40px; height: auto; margin: 0 auto 2mm; }
-          .pdf-main-title { font-size: 13pt; font-weight: 700; color: #000000; margin-bottom: 1mm; }
-          .pdf-sub-title { font-size: 10pt; color: #555555; margin-bottom: 4mm; }
-          .pdf-section { margin-bottom: 4mm; page-break-inside: avoid; }
-          .pdf-section-title { font-size: 12pt; font-weight: 600; color: #111827; padding-bottom: 1.5mm; border-bottom: 1px solid #EAEAEA; margin-bottom: 2mm; }
-          .pdf-declaration-section { margin-bottom: 4mm; text-align: justify; page-break-inside: avoid; }
-          .pdf-declaration-title { font-size: 12pt; font-weight: 600; margin-bottom: 2mm; }
-          .pdf-conditions-list { margin-top: 1mm; padding-left: 5mm; list-style-position: outside; }
-          .pdf-conditions-list li { padding-left: 1mm; margin-bottom: 1.5mm;}
-          .pdf-data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm 5mm; }
-          .pdf-data-item { display: flex; flex-direction: column; page-break-inside: avoid; }
-          .pdf-field-label { font-weight: 500; color: #555555; font-size: 9pt; margin-bottom: 0.5mm; }
-          .pdf-field-value { font-size: 10.5pt; word-break: break-word; }
-          .pdf-data-item.full-width { grid-column: span 2; }
-          .pdf-signature-block { margin-top: 8mm; text-align: center; page-break-inside: avoid; }
-          .pdf-signature-line { width: 70%; border-top: 1px solid #333333; margin: 0 auto; }
-          .pdf-signature-label { font-size: 9pt; margin-top: 1mm; }
-          .pdf-footer { font-size: 8pt; color: #666666; text-align: center; margin-top: auto; padding-top: 3mm; border-top: 1px solid #EAEAEA; }
-        `}
-      </style>
-
-      <div className="pdf-page-container">
-        <div className="pdf-header">
-          <img src="https://rihappynovo.vtexassets.com/arquivos/solzinhoFooterNew.png" alt="Logo Ri Happy" className="pdf-logo" data-ai-hint="company logo" />
-          <div className="pdf-main-title">Termo de Autorização para Retirada por Terceiros</div>
-          <div className="pdf-sub-title">Pedido: {getFullOrderNumber()}</div>
-        </div>
-
-        <div className="pdf-declaration-section">
-          <div className="pdf-declaration-title">Declaração de Autorização</div>
-          <p>
-            Eu, <strong>{form.getValues('buyerName')}</strong>, {form.getValues('buyerType') === 'individual' ? `portador(a) do documento CPF nº ${form.getValues('buyerCPF')}` : `representante legal da empresa portadora do CNPJ nº ${form.getValues('buyerCNPJ')}`}, autorizo o(a) representante <strong>{form.getValues('representativeName')}</strong>, portador(a) do documento {form.getValues('representativeDocumentType')} nº {form.getValues('representativeDocumentNumber')}, a retirar os produtos vinculados ao Pedido nº {getFullOrderNumber()}, conforme informações registradas neste documento, na loja física selecionada no momento da compra realizada no site.
-          </p>
-
-            <div className="pdf-declaration-title" style={{ marginTop: '5mm' }}>Condições para Retirada</div>
-             <p>Declaro estar ciente de que:</p>
-              <ul className="pdf-conditions-list">
-                  <li>O representante deverá ser maior de 18 anos.</li>
-                  <li>Documento oficial com foto do representante deverá ser apresentado no ato da retirada.</li>
-                  <li>Documento oficial com foto do comprador deverá ser enviado previamente ao WhatsApp ou e-mail da loja, juntamente com este termo digital.</li>
-                  <li>Este termo digital deverá ser enviado à loja devidamente preenchido e validado.</li>
-                  <li>Para comprador pessoa jurídica, deverá ser enviada previamente cópia ou imagem do Contrato Social ou Estatuto Social da empresa.</li>
-              </ul>
-              <p style={{marginTop: '2mm'}}>A retirada estará condicionada à conferência documental pela equipe da loja.</p>
-        </div>
-
-        <div className="pdf-section">
-          <div className="pdf-section-title">Dados do Titular da Compra</div>
-          <div className="pdf-data-grid">
-            <div className="pdf-data-item full-width">
-              <span className="pdf-field-label">{form.getValues('buyerType') === 'individual' ? 'Nome Completo' : 'Razão Social'}</span>
-              <div className="pdf-field-value">{form.getValues('buyerName')}</div>
-            </div>
-            {form.getValues('buyerType') === 'individual' ? (
-              <>
-                <div className="pdf-data-item">
-                  <span className="pdf-field-label">CPF</span>
-                  <div className="pdf-field-value">{form.getValues('buyerCPF')}</div>
-                </div>
-                <div className="pdf-data-item">
-                  <span className="pdf-field-label">{form.getValues('buyerDocumentType')}</span>
-                  <div className="pdf-field-value">{form.getValues('buyerDocumentNumber')}</div>
-                </div>
-              </>
-            ) : (
-              <div className="pdf-data-item full-width">
-                <span className="pdf-field-label">CNPJ</span>
-                <div className="pdf-field-value">{form.getValues('buyerCNPJ')}</div>
-              </div>
-            )}
-            <div className="pdf-data-item"><span className="pdf-field-label">E-mail</span><div className="pdf-field-value">{form.getValues('buyerEmail')}</div></div>
-            <div className="pdf-data-item"><span className="pdf-field-label">Telefone</span><div className="pdf-field-value">{form.getValues('buyerPhone')}</div></div>
-          </div>
-        </div>
-        
-        <div className="pdf-section">
-          <div className="pdf-section-title">Dados da Pessoa Autorizada</div>
-          <div className="pdf-data-grid">
-            <div className="pdf-data-item full-width"><span className="pdf-field-label">Nome Completo</span><div className="pdf-field-value">{form.getValues('representativeName')}</div></div>
-            <div className="pdf-data-item full-width"><span className="pdf-field-label">{form.getValues('representativeDocumentType')}</span><div className="pdf-field-value">{form.getValues('representativeDocumentNumber')}</div></div>
-          </div>
-        </div>
-
-        <div className="pdf-section">
-          <div className="pdf-section-title">Dados do Pedido</div>
-          <div className="pdf-data-grid">
-            <div className="pdf-data-item"><span className="pdf-field-label">Data da Compra</span><div className="pdf-field-value">{form.getValues('purchaseDate') ? format(form.getValues('purchaseDate')!, 'dd/MM/yyyy') : ''}</div></div>
-            <div className="pdf-data-item"><span className="pdf-field-label">Data da Retirada</span><div className="pdf-field-value">{form.getValues('pickupDate') ? format(form.getValues('pickupDate')!, 'dd/MM/yyyy') : ''}</div></div>
-            <div className="pdf-data-item"><span className="pdf-field-label">Valor Total</span><div className="pdf-field-value">R$ {form.getValues('purchaseValue').replace('.', ',')}</div></div>
-            <div className="pdf-data-item"><span className="pdf-field-label">Loja de Retirada</span><div className="pdf-field-value">{form.getValues('pickupStore')}</div></div>
-          </div>
-        </div>
-
-        <div className="pdf-signature-block">
-          <div className="pdf-signature-line"></div>
-          <p className="pdf-signature-label">Assinatura do Titular da Compra</p>
-        </div>
-
-        <div className="pdf-footer">
-            Gerado em: {generationTimestamp} <br/>
-            Documento auxiliar sujeito à conferência. A retirada está condicionada à apresentação dos documentos exigidos conforme regulamento oficial da modalidade “Retira em Loja”.
-        </div>
-      </div>
-    </div>
+    
+    <AuthorizationPdfTemplate
+      pdfTemplateRef={pdfTemplateRef}
+      generationTimestamp={generationTimestamp}
+      getFullOrderNumber={getFullOrderNumber}
+      form={form}
+      signatureDataUrl={null}
+    />
     </>
   );
 }
@@ -847,15 +1069,16 @@ const FormSelect: React.FC<FormSelectProps> = ({ control, trigger, setValue, nam
             control={control}
             name={name}
             render={({ field }) => (
-                <Select onValueChange={(value) => {
-                    field.onChange(value);
-                    if (name === 'buyerDocumentType' || name === 'representativeDocumentType') {
-                        const dependentField = (name === 'buyerDocumentType' ? 'buyerDocumentNumber' : 'representativeDocumentNumber') as keyof AuthorizationFormData;
-                        setValue(dependentField, '');
-                        trigger(dependentField);
-                    }
-                }}
-                value={field.value || undefined}
+                <Select
+                    onValueChange={(value) => {
+                        field.onChange(value);
+                        if (name === 'buyerDocumentType' || name === 'representativeDocumentType') {
+                            const dependentField = name === 'buyerDocumentType' ? 'buyerDocumentNumber' : 'representativeDocumentNumber';
+                            setValue(dependentField, '');
+                            trigger(dependentField);
+                        }
+                    }}
+                    value={field.value || undefined}
                 >
                     <SelectTrigger id={name as string} className={error ? 'border-destructive' : ''}>
                         <SelectValue placeholder={placeholder} />
@@ -934,6 +1157,8 @@ const Separator = () => <div className="border-t border-border/60 my-6" />;
 
 export default AuthorizationForm;
     
+    
+
     
 
     
