@@ -148,6 +148,10 @@ export const authorizationSchema = z.object({
   agreedToTerms: z.literal(true, {
     errorMap: () => ({ message: "Você deve concordar com os termos para gerar o PDF." }),
   }),
+  agreedToRequirements: z.literal(true, {
+    errorMap: () => ({ message: "Você deve declarar ciência das exigências para continuar." }),
+  }),
+
 
 }).superRefine((data, ctx) => {
   // Buyer validation

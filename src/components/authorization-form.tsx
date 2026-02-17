@@ -80,6 +80,7 @@ const InitialModal = ({ open, onOpenChange, onContinue }: { open: boolean, onOpe
             <p>As regras oficiais da modalidade “Retira em Loja” permanecem válidas e devem ser observadas conforme o regulamento disponível no site oficial da empresa.</p>
             <p>Caso prefira, você pode utilizar o modelo oficial de autorização disponibilizado pela empresa para impressão manual.</p>
             <p>O uso deste formulário não substitui as exigências previstas no regulamento oficial.</p>
+            <p className="pt-2">Para que a retirada seja autorizada, o representante deverá ser maior de 18 anos e apresentar documento oficial com foto, este termo assinado e cópia do documento do comprador. Para pessoa jurídica, será exigido Contrato Social ou Estatuto.</p>
           </AlertDialogDescription>
         </AlertDialogHeader>
         
@@ -156,12 +157,14 @@ export function AuthorizationForm() {
       orderNumber: '',
       pickupStore: '1187 - CARIOCA SHOPPING',
       agreedToTerms: false,
+      agreedToRequirements: false,
     },
      mode: "onBlur",
   });
 
   const buyerType = form.watch('buyerType');
   const agreedToTerms = form.watch('agreedToTerms');
+  const agreedToRequirements = form.watch('agreedToRequirements');
   const buyerDocType = useWatch({ control: form.control, name: 'buyerDocumentType' });
   const repDocType = useWatch({ control: form.control, name: 'representativeDocumentType' });
 
@@ -225,8 +228,20 @@ export function AuthorizationForm() {
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const imgProps = pdf.getImageProperties(imgData);
       const ratio = imgProps.height / imgProps.width;
-      const imgHeight = pdfWidth * ratio;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
+      let imgHeight = pdfWidth * ratio;
+      let heightLeft = imgHeight;
+      let position = 0;
+      
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+
       
       const pdfBlob = pdf.output('blob');
       const pdfFile = new File([pdfBlob], getPdfTitle(), { type: 'application/pdf' });
@@ -496,6 +511,18 @@ export function AuthorizationForm() {
               <div className="text-left">
                   <h2 className="text-lg font-semibold text-foreground flex items-center gap-2"><FileCheck2 className="h-5 w-5 text-primary"/>Confirmação e Geração do PDF</h2>
               </div>
+              
+              <div className="bg-muted/50 p-4 rounded-md text-sm">
+                  <h3 className="font-semibold text-base mb-2 flex items-center gap-2">Condições obrigatórias para retirada:</h3>
+                  <ul className="list-disc list-inside space-y-1 text-foreground/90">
+                      <li>Representante maior de 18 anos.</li>
+                      <li>Apresentação de documento oficial com foto.</li>
+                      <li>Apresentação deste termo assinado.</li>
+                      <li>Apresentação de cópia do documento do comprador.</li>
+                      <li>Para pessoa jurídica: apresentação de Contrato Social ou Estatuto.</li>
+                  </ul>
+              </div>
+              
               <div className="bg-muted/50 p-4 rounded-md text-sm text-foreground">
                   <p className="font-semibold text-base mb-2 flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-primary" />Tratamento de Dados Pessoais (LGPD)</p>
                   <p>Os dados informados neste formulário serão utilizados exclusivamente para gerar o documento PDF de autorização em seu próprio dispositivo. Nenhuma informação é armazenada em servidores ou compartilhada, em conformidade com a Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018).</p>
@@ -523,8 +550,31 @@ export function AuthorizationForm() {
                   </div>
                   {form.formState.errors.agreedToTerms && <FormErrorMessage message={form.formState.errors.agreedToTerms.message} />}
               </FormFieldItem>
+
+               <FormFieldItem>
+                  <div className="flex items-start space-x-3">
+                      <Controller
+                          name="agreedToRequirements"
+                          control={form.control}
+                          render={({ field }) => (
+                              <Checkbox
+                                  id="agreedToRequirements"
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                  className="mt-0.5"
+                              />
+                          )}
+                      />
+                      <div className="grid gap-1.5 leading-none">
+                          <Label htmlFor="agreedToRequirements" className="cursor-pointer">
+                            Declaro estar ciente das exigências documentais para retirada por terceiros.
+                          </Label>
+                      </div>
+                  </div>
+                  {form.formState.errors.agreedToRequirements && <FormErrorMessage message={form.formState.errors.agreedToRequirements.message} />}
+              </FormFieldItem>
             
-              <Button type="submit" size="lg" className="w-full font-semibold text-base" disabled={isSubmitting || !agreedToTerms}>
+              <Button type="submit" size="lg" className="w-full font-semibold text-base" disabled={isSubmitting || !agreedToTerms || !agreedToRequirements}>
                 {isSubmitting ? (
                   <>
                     <Loader2 className="animate-spin -ml-1 mr-3 h-5 w-5" />
@@ -577,12 +627,13 @@ export function AuthorizationForm() {
       </footer>
     </Card>
 
-    <div ref={pdfTemplateRef} className="hidden" style={{ position: 'fixed', left: '-300mm', top: '0px', width: '210mm', height: 'auto', minHeight: '297mm', backgroundColor: '#FFFFFF', padding: '0', margin: '0', overflow: 'hidden' }}>
+    <div ref={pdfTemplateRef} className="hidden" style={{ position: 'fixed', left: '-300mm', top: '0px', width: '210mm', minHeight: '297mm', backgroundColor: '#FFFFFF', padding: '0', margin: '0', overflow: 'hidden' }}>
       <style>
         {`
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
           .pdf-page-container {
-            width: 100%;
-            height: 100%;
+            width: 210mm;
+            min-height: 297mm;
             padding: 20mm;
             box-sizing: border-box;
             font-family: 'Inter', Arial, sans-serif;
@@ -599,7 +650,9 @@ export function AuthorizationForm() {
           .pdf-sub-title { font-size: 10pt; color: #555555; margin-bottom: 8mm; }
           .pdf-section { margin-bottom: 6mm; }
           .pdf-section-title { font-size: 11pt; font-weight: 600; color: #111827; padding-bottom: 2mm; border-bottom: 1px solid #EAEAEA; margin-bottom: 4mm; }
-          .pdf-declaration { text-align: justify; margin-bottom: 6mm; }
+          .pdf-declaration-section { margin-bottom: 6mm; text-align: justify; }
+          .pdf-declaration-title { font-size: 12pt; font-weight: 600; margin-bottom: 4mm; }
+          .pdf-conditions-list { margin-top: 4mm; padding-left: 5mm; }
           .pdf-data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 6mm; }
           .pdf-data-item { display: flex; flex-direction: column; }
           .pdf-field-label { font-weight: 500; color: #555555; font-size: 8.5pt; margin-bottom: 1mm; }
@@ -619,10 +672,21 @@ export function AuthorizationForm() {
           <div className="pdf-sub-title">Pedido: {getFullOrderNumber()}</div>
         </div>
 
-        <div className="pdf-section">
-          <p className="pdf-declaration">
-            Eu, <strong>{form.getValues('buyerName')}</strong>, titular da compra, portador(a) do documento {form.getValues('buyerType') === 'individual' ? `${form.getValues('buyerDocumentType')} nº ${form.getValues('buyerDocumentNumber')}` : `CNPJ nº ${form.getValues('buyerCNPJ')}`}, autorizo pelo presente termo a pessoa <strong>{form.getValues('representativeName')}</strong>, portador(a) do documento {form.getValues('representativeDocumentType')} nº {form.getValues('representativeDocumentNumber')}, a retirar em meu nome o pedido mencionado acima na loja Ri Happy designada.
+        <div className="pdf-declaration-section">
+          <div className="pdf-declaration-title">Declaração de Autorização</div>
+          <p>
+            Eu, <strong>{form.getValues('buyerName')}</strong>, {form.getValues('buyerType') === 'individual' ? `portador(a) do documento CPF nº ${form.getValues('buyerCPF')}` : `representante legal da empresa portadora do CNPJ nº ${form.getValues('buyerCNPJ')}`}, autorizo o(a) representante <strong>{form.getValues('representativeName')}</strong>, portador(a) do documento {form.getValues('representativeDocumentType')} nº {form.getValues('representativeDocumentNumber')}, a retirar os produtos vinculados ao Pedido nº {getFullOrderNumber()}, conforme informações registradas neste documento, na loja física selecionada no momento da compra realizada no site.
           </p>
+
+          <div className="pdf-declaration-title" style={{ marginTop: '8mm' }}>Condições para Retirada</div>
+           <p>Declaro estar ciente de que:</p>
+            <ul className="pdf-conditions-list">
+                <li>O representante deverá ser maior de 18 anos.</li>
+                <li>O representante deverá apresentar documento oficial com foto.</li>
+                <li>Este termo deverá estar devidamente assinado.</li>
+                <li>Deverá ser apresentada cópia do documento oficial do comprador.</li>
+                <li>Caso o comprador seja pessoa jurídica, deverá ser apresentada cópia ou imagem do Contrato Social ou Estatuto.</li>
+            </ul>
         </div>
 
         <div className="pdf-section">
@@ -679,7 +743,7 @@ export function AuthorizationForm() {
 
         <div className="pdf-footer">
             Gerado em: {generationTimestamp} <br/>
-            Documento auxiliar sujeito à conferência conforme regulamento oficial. A retirada só será autorizada mediante apresentação deste termo junto com a cópia do documento do titular e documento original do autorizado.
+            Documento auxiliar sujeito à conferência. A retirada está condicionada à apresentação dos documentos exigidos conforme regulamento oficial da modalidade “Retira em Loja”.
         </div>
       </div>
     </div>
