@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
@@ -20,7 +19,7 @@ import { CalendarIcon, HelpCircle, Mail, Download, Loader2, Link as LinkIcon, Ex
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
@@ -176,6 +175,8 @@ export function AuthorizationPdfTemplate({
     const cnpj = String(form.getValues("buyerCNPJ") || "");
     return cnpj ? `CNPJ nº ${cnpj}` : "";
   };
+  const LOGO_BASE64 = "data:image/png;base64,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";
+
 
   return (
     <div
@@ -191,147 +192,118 @@ export function AuthorizationPdfTemplate({
         overflow: "hidden",
       }}
     >
-      <style>
-        {`
-      .a4 {
-        width: 210mm;
-        height: 297mm;
-        padding: 20mm;
-        box-sizing: border-box;
-        font-family: Arial, Helvetica, sans-serif;
-        color: #000;
-        font-size: 10.5pt;
-        line-height: 1.15;
-        position: relative;
-      }
-
-      .a4 .logo-wrap { text-align: center; margin: 0 0 3mm 0; }
-      .a4 .logo { width: 52px; height: auto; display: inline-block; }
-
-      .a4 .title {
-        text-align: center;
-        font-weight: 700;
-        text-transform: uppercase;
-        font-size: 12pt;
-        margin: 0 0 5mm 0;
-        letter-spacing: 0.2px;
-      }
-
-      .a4 table {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: fixed;
-        margin-bottom: 5mm;
-      }
-
-      .a4 th, .a4 td {
-        border: 1px solid #000;
-        padding: 2.1mm 2.4mm;
-        vertical-align: middle;
-        word-wrap: break-word;
-      }
-
-      .a4 th.section {
-        font-weight: 700;
-        text-align: center;
-        background: #fff;
-      }
-
-      .a4 td.lbl {
-        width: 26%;
-        font-size: 9.5pt;
-        text-align: left;
-      }
-
-      .a4 td.val {
-        width: 74%;
-        text-align: left;
-      }
-
-      .a4 td.half { width: 50%; }
-
-      .a4 tr.row { height: 10mm; }
-
-      .a4 .para {
-        margin: 0 0 3.5mm 0;
-        text-align: justify;
-        font-size: 9.7pt;
-        line-height: 1.2;
-      }
-
-      .a4 .order-head th{
-        font-size: 9.5pt;
-        text-align: center;
-        vertical-align: middle;
-      }
-      .a4 .order-body td{
-        text-align: center;
-        vertical-align: middle;
-      }
-
-      .a4 .pickup-date {
-        font-size: 9.7pt;
-        margin-top: 2mm;
-      }
-
-      .a4 .sign-block {
-        position: absolute;
-        left: 20mm;
-        right: 20mm;
-        bottom: 26mm;
-      }
-
-      .a4 .sign-label {
-        font-size: 9.7pt;
-        margin-bottom: 1.6mm;
-      }
-
-      .a4 .signature-box {
-        width: 100%;
-        height: 20mm;
-        border: 1px solid #000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        overflow: hidden;
-        background: #fff;
-        padding: 2mm;
-        box-sizing: border-box;
-        text-align: center;
-      }
-
-      .a4 .signature-img {
-        max-width: 100%;
-        max-height: 100%;
-        object-fit: contain;
-      }
-
-      .a4 .sign-caption {
-        font-size: 9pt;
-        margin-top: 1.6mm;
-      }
-
-      .a4 .gen-info {
-        font-size: 8.5pt;
-        margin-top: 1.8mm;
-        text-align: center;
-      }
-
-      .a4 .small-note {
-        position: absolute;
-        left: 20mm;
-        right: 20mm;
-        bottom: 12mm;
-        font-size: 8.5pt;
-        line-height: 1.15;
-      }
-    `}
-      </style>
-
       <div className="a4">
+        <style>{`
+          .a4 {
+            width: 210mm;
+            height: 297mm;
+            padding: 20mm;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+            color: #000;
+            font-size: 10.5pt;
+            line-height: 1.15;
+            position: relative;
+          }
+          .a4 .logo-wrap { text-align: center; margin: 0 0 3mm 0; }
+          .a4 .logo { width: 52px; height: auto; display: inline-block; }
+          .a4 .title {
+            text-align: center;
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 12pt;
+            margin: 0 0 5mm 0;
+            letter-spacing: 0.2px;
+          }
+          .a4 table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-bottom: 5mm;
+          }
+          .a4 th, .a4 td {
+            border: 1px solid #333;
+            padding: 3mm;
+            vertical-align: middle;
+            word-wrap: break-word;
+          }
+          .a4 th.section {
+            font-weight: 700;
+            text-align: center;
+            background: #fff;
+          }
+          .a4 td.lbl {
+            width: 26%;
+            font-size: 9.5pt;
+            text-align: left;
+            font-weight: 600;
+          }
+          .a4 td.val { width: 74%; text-align: left; }
+          .a4 td.half { width: 50%; }
+          .a4 .para {
+            margin: 0 0 3.5mm 0;
+            text-align: left;
+            font-size: 9.5pt;
+            line-height: 1.2;
+          }
+          .a4 .order-head th {
+            font-size: 9.5pt;
+            text-align: center;
+            vertical-align: middle;
+          }
+          .a4 .order-body td {
+            vertical-align: middle;
+            text-align: center;
+          }
+          .a4 .order-body td.store-cell {
+            text-align: left;
+            line-height: 1.15;
+            overflow-wrap: anywhere;
+          }
+          .a4 .pickup-date { font-size: 9.7pt; margin-top: 2mm; }
+          .a4 .sign-block {
+            position: absolute;
+            left: 20mm;
+            right: 20mm;
+            bottom: 26mm;
+          }
+          .a4 .sign-label { font-size: 9.7pt; margin-bottom: 1.6mm; }
+          .a4 .signature-box {
+            width: 100%;
+            height: 20mm;
+            border: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: #fff;
+            padding: 2mm;
+            box-sizing: border-box;
+            text-align: center;
+          }
+          .a4 .signature-img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+          }
+          .a4 .sign-caption { font-size: 9pt; margin-top: 1.6mm; }
+          .a4 .gen-info {
+            font-size: 8.5pt;
+            margin-top: 1.8mm;
+            text-align: center;
+          }
+          .a4 .small-note {
+            position: absolute;
+            left: 20mm;
+            right: 20mm;
+            bottom: 12mm;
+            font-size: 8.5pt;
+            line-height: 1.15;
+          }
+        `}</style>
         <div className="logo-wrap">
           <img
-            src="https://rihappynovo.vtexassets.com/arquivos/solzinhoFooterNew.png"
+            src={LOGO_BASE64}
             alt="Logo Ri Happy"
             className="logo"
             crossOrigin="anonymous"
@@ -347,13 +319,13 @@ export function AuthorizationPdfTemplate({
             </tr>
           </thead>
           <tbody>
-            <tr className="row">
+            <tr>
               <td className="lbl">Nome/Razão Social:</td>
               <td className="val" colSpan={3}>{form.getValues("buyerName") || ""}</td>
             </tr>
 
             {form.getValues("buyerType") === "individual" ? (
-              <tr className="row">
+              <tr>
                 <td className="lbl">RG</td>
                 <td className="half">
                   {String(form.getValues("buyerDocumentType") || "").toUpperCase() === "RG"
@@ -364,19 +336,19 @@ export function AuthorizationPdfTemplate({
                 <td className="half">{form.getValues("buyerCPF") || ""}</td>
               </tr>
             ) : (
-              <tr className="row">
+              <tr>
                 <td className="lbl">CNPJ</td>
                 <td className="val" colSpan={3}>{form.getValues("buyerCNPJ") || ""}</td>
               </tr>
             )}
 
-            <tr className="row">
+            <tr>
               <td className="lbl">Endereço</td>
               <td className="val" colSpan={3}>
                 {`${form.getValues("buyerStreet") || ""}, ${form.getValues("buyerNumber") || ""}${form.getValues("buyerComplement") ? ` - ${form.getValues("buyerComplement")}` : ''}`}
               </td>
             </tr>
-            <tr className="row">
+            <tr>
               <td className="lbl">Município</td>
               <td className="half">{form.getValues("buyerCity") || ""}</td>
               <td className="lbl">UF</td>
@@ -392,12 +364,12 @@ export function AuthorizationPdfTemplate({
             </tr>
           </thead>
           <tbody>
-            <tr className="row">
+            <tr>
               <td className="lbl">Nome/Razão Social:</td>
               <td className="val" colSpan={3}>{form.getValues("representativeName") || ""}</td>
             </tr>
 
-            <tr className="row">
+            <tr>
               <td className="lbl">RG</td>
               <td className="half">
                 {String(form.getValues("representativeDocumentType") || "").toUpperCase() === "RG"
@@ -412,11 +384,11 @@ export function AuthorizationPdfTemplate({
               </td>
             </tr>
 
-            <tr className="row">
+            <tr>
               <td className="lbl">Endereço</td>
               <td className="val" colSpan={3}></td>
             </tr>
-            <tr className="row">
+            <tr>
               <td className="lbl">Município</td>
               <td className="half"></td>
               <td className="lbl">UF</td>
@@ -440,6 +412,12 @@ export function AuthorizationPdfTemplate({
         </p>
 
         <table>
+           <colgroup>
+              <col style={{ width: '20%' }} />
+              <col style={{ width: '20%' }} />
+              <col style={{ width: '20%' }} />
+              <col style={{ width: '40%' }} />
+          </colgroup>
           <thead className="order-head">
             <tr>
               <th>Data da Compra</th>
@@ -449,13 +427,13 @@ export function AuthorizationPdfTemplate({
             </tr>
           </thead>
           <tbody className="order-body">
-            <tr className="row">
+            <tr>
               <td>
                 {form.getValues("purchaseDate") ? format(form.getValues("purchaseDate")!, "dd/MM/yyyy") : ""}
               </td>
               <td>R$ {String(form.getValues("purchaseValue") || "").replace(".", ",")}</td>
               <td>{getFullOrderNumber()}</td>
-              <td>
+              <td className='store-cell'>
                 {PICKUP_ADDRESS}
               </td>
             </tr>
@@ -662,12 +640,12 @@ export function AuthorizationForm() {
     
     try {
       const canvas = await html2canvas(pdfContentElement, {
-        scale: 1.5,
+        scale: 3,
         useCORS: true,
         backgroundColor: "#fff",
       });
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.9);
+      const imgData = canvas.toDataURL('image/png', 1.0);
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfW = pdf.internal.pageSize.getWidth();
       const pdfH = pdf.internal.pageSize.getHeight();
@@ -679,7 +657,7 @@ export function AuthorizationForm() {
       let h = w * ratio;
       if (h > pdfH) { h = pdfH; w = h / ratio; }
       
-      pdf.addImage(imgData, "JPEG", (pdfW - w) / 2, (pdfH - h) / 2, w, h, undefined, "FAST");
+      pdf.addImage(imgData, "PNG", (pdfW - w) / 2, (pdfH - h) / 2, w, h, undefined, "FAST");
       
       const pdfBlob = pdf.output('blob');
       const pdfFile = new File([pdfBlob], getPdfTitle(), { type: 'application/pdf' });
@@ -1067,7 +1045,7 @@ export function AuthorizationForm() {
                   <FileCheck2 className="h-8 w-8 text-primary" />
                   PDF Gerado! Próximo Passo:
                 </AlertDialogTitle>
-                <div className="text-sm text-foreground/90 pt-2 text-center space-y-3">
+                 <div className="text-sm text-foreground/90 pt-2 text-center space-y-3">
                    <p>O seu PDF foi baixado! Agora você precisa enviá-lo para a loja.</p>
                    <p>Acesse a área de downloads do seu navegador (geralmente clicando no ícone de <strong>seta para baixo ↓</strong> ou no menu de <strong>3 pontinhos ⋮</strong>) e abra o arquivo.</p>
                    <p>Dentro do visualizador de PDF, procure pela opção <strong>"Compartilhar"</strong> e envie o arquivo para a loja junto com uma foto do seu documento.</p>
@@ -1281,6 +1259,8 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 
 export default AuthorizationForm;
     
+    
+
     
 
     
