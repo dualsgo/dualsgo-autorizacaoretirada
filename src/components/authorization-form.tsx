@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useForm, Controller, SubmitHandler, useWatch, type Control, type FieldError, type UseFormTrigger, type UseFormSetValue } from 'react-hook-form';
+import { useForm, Controller, SubmitHandler, useWatch, type Control, type FieldError, type UseFormSetValue, type UseFormTrigger } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { authorizationSchema, AuthorizationFormData, storeOptionsList, documentTypeOptionsBuyer, documentTypeOptionsRepresentative } from '@/lib/schemas';
 import { Button } from '@/components/ui/button';
@@ -11,19 +11,20 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CalendarIcon, HelpCircle, Mail, Download, Loader2, Link as LinkIcon, ExternalLink, ShieldAlert, FileText, FileCheck2, UserCheck, ShoppingBag } from 'lucide-react';
+import { CalendarIcon, HelpCircle, Mail, Download, Loader2, Link as LinkIcon, ExternalLink, ShieldAlert, FileText, FileCheck2, UserCheck, ShoppingBag, AlertTriangle, FileQuestion, UserRound, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Tooltip, TooltipTrigger, TooltipProvider, TooltipContent } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
+import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 
 // --- Formatting Utilities ---
 const formatPhone = (value: string) => {
@@ -131,8 +132,7 @@ export function AuthorizationForm() {
     if (!hasSeenModal) {
       setIsInitialModalOpen(true);
     }
-    // Set timestamp only on client-side after mount to prevent hydration mismatch
-    setGenerationTimestamp(format(new Date(), "dd/MM/yyyy 'às' HH:mm:ss"));
+     setGenerationTimestamp(format(new Date(), "dd/MM/yyyy 'às' HH:mm:ss"));
   }, []);
 
   const handleContinueFromModal = () => {
@@ -304,209 +304,212 @@ export function AuthorizationForm() {
     <InitialModal open={isInitialModalOpen} onOpenChange={setIsInitialModalOpen} onContinue={handleContinueFromModal} />
     
     <Card className="w-full shadow-lg p-6 sm:p-8 md:p-10">
-      <CardContent className="p-0">
-          <div className="text-center mb-8">
-            <Image 
-              src="https://rihappynovo.vtexassets.com/arquivos/solzinhoFooterNew.png" 
-              alt="Logo da Empresa" 
-              width={64} 
-              height={64} 
-              className="mx-auto mb-4"
-              data-ai-hint="company logo" />
-            <h1 className="text-2xl font-bold text-foreground">
-              Autorização para Retirada por Terceiros
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Este formulário é um recurso auxiliar para facilitar a autorização.
-            </p>
-          </div>
+      <CardHeader className='p-0 text-center mb-8'>
+        <h1 className="text-2xl font-bold text-foreground">
+          Autorização para Retirada por Terceiros
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          A DIVERSÃO CONTINUA COM VOCÊ! Preencha o Termo de Autorização se outra pessoa for retirar seu pedido.
+        </p>
+      </CardHeader>
+
+      <CardContent className="p-0 space-y-8">
+        <Alert variant="warning" className='bg-yellow-100/60 border-yellow-300'>
+          <AlertTriangle className="h-5 w-5 text-yellow-600" />
+          <AlertTitle className='font-semibold text-yellow-800'>Atenção aos documentos</AlertTitle>
+          <AlertDescription className='text-yellow-700/90'>
+             Não solicitamos anexos de documentos neste formulário. A cópia digital (foto ou PDF) do documento do comprador deverá ser enviada junto com o PDF do termo, para o WhatsApp ou e-mail da loja no momento da retirada. As cópias devem estar legíveis.
+          </AlertDescription>
+        </Alert>
 
           <form 
             onSubmit={form.handleSubmit(onSubmit)}
             className="space-y-10"
             noValidate
           >
-            <div className="space-y-6">
-              <div className="text-left">
-                <h2 className="text-lg font-semibold text-foreground flex items-center gap-2"><FileText className="h-5 w-5 text-primary" />Dados do Titular da Compra</h2>
-                <p className="text-sm text-muted-foreground mt-1">Preencha exatamente como no e-mail de confirmação do pedido.</p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                <FormFieldItem className="md:col-span-2">
-                  <Label>Tipo de Comprador *</Label>
-                  <Controller
-                    control={form.control}
-                    name="buyerType"
-                    render={({ field }) => (
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex space-x-4 pt-2"
-                      >
-                        <FormItemRadio value="individual" label="Pessoa Física" field={field} />
-                        <FormItemRadio value="corporate" label="Pessoa Jurídica" field={field} />
-                      </RadioGroup>
-                    )}
-                  />
-                  {form.formState.errors.buyerType && <FormErrorMessage message={form.formState.errors.buyerType.message} />}
-                </FormFieldItem>
+            <Card className="border-border/60 p-6">
+              <CardHeader className='p-0 mb-4'>
+                <CardTitle className='flex items-center gap-2'><UserRound className="h-5 w-5 text-primary" />1. Dados do Titular da Compra</CardTitle>
+                <CardDescription>Preencha exatamente como no e-mail de confirmação do pedido.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                  <FormFieldItem className="md:col-span-2">
+                    <Label>Tipo de Comprador *</Label>
+                    <Controller
+                      control={form.control}
+                      name="buyerType"
+                      render={({ field }) => (
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex space-x-4 pt-2"
+                        >
+                          <FormItemRadio value="individual" label="Pessoa Física" field={field} />
+                          <FormItemRadio value="corporate" label="Pessoa Jurídica" field={field} />
+                        </RadioGroup>
+                      )}
+                    />
+                    {form.formState.errors.buyerType && <FormErrorMessage message={form.formState.errors.buyerType.message} />}
+                  </FormFieldItem>
 
-                <div className="md:col-span-2">
-                  <FormInput control={form.control} name="buyerName" label="Nome Completo / Razão Social *" placeholder="João Silva / Empresa XYZ LTDA" error={form.formState.errors.buyerName} />
+                  <div className="md:col-span-2">
+                    <FormInput control={form.control} name="buyerName" label="Nome Completo / Razão Social *" placeholder="João Silva / Empresa XYZ LTDA" error={form.formState.errors.buyerName} />
+                  </div>
+
+                  {buyerType === 'individual' && (
+                    <>
+                      <FormInput control={form.control} name="buyerCPF" label="CPF do Comprador *" placeholder="000.000.000-00" error={form.formState.errors.buyerCPF} inputMode="numeric" maxLength={14} formatter={formatCPF} tooltip="Digite apenas os números."/>
+                      <FormSelect
+                          control={form.control}
+                          trigger={form.trigger}
+                          setValue={form.setValue}
+                          name="buyerDocumentType"
+                          label="Tipo de Documento com Foto *"
+                          placeholder="Selecione RG ou CNH"
+                          options={documentTypeOptionsBuyer}
+                          error={form.formState.errors.buyerDocumentType}
+                      />
+                      <FormInput
+                          control={form.control}
+                          name="buyerDocumentNumber"
+                          label={`Número do ${buyerDocType || 'Documento'} *`}
+                          placeholder={!buyerDocType ? "Selecione o tipo" : (buyerDocType === 'CNH' ? '00000000000' : '00.000.000-0')}
+                          error={form.formState.errors.buyerDocumentNumber}
+                          inputMode={buyerDocType === 'CNH' ? 'numeric' : 'text'}
+                          maxLength={buyerDocType === 'CNH' ? 11 : 12}
+                          disabled={!buyerDocType}
+                          formatter={buyerDocType === 'RG' ? formatRG : undefined}
+                      />
+                    </>
+                  )}
+                  {buyerType === 'corporate' && (
+                    <>
+                      <FormInput control={form.control} name="buyerCNPJ" label="CNPJ *" placeholder="00.000.000/0000-00" error={form.formState.errors.buyerCNPJ} inputMode="numeric" className="md:col-span-2" maxLength={18} formatter={formatCNPJ} tooltip="Digite apenas os números." />
+                    </>
+                  )}
+                  <FormInput control={form.control} name="buyerEmail" label="E-mail do Comprador *" placeholder="comprador@exemplo.com" type="email" error={form.formState.errors.buyerEmail} />
+                  <FormInput control={form.control} name="buyerPhone" label="Telefone do Comprador *" placeholder="(XX) XXXXX-XXXX" type="tel" error={form.formState.errors.buyerPhone} inputMode="tel" maxLength={15} formatter={formatPhone} tooltip="Com DDD." />
                 </div>
-
-                {buyerType === 'individual' && (
-                  <>
-                    <FormInput control={form.control} name="buyerCPF" label="CPF do Comprador *" placeholder="000.000.000-00" error={form.formState.errors.buyerCPF} inputMode="numeric" maxLength={14} formatter={formatCPF} tooltip="Digite apenas os números."/>
-                    <FormSelect
-                        control={form.control}
-                        trigger={form.trigger}
-                        setValue={form.setValue}
-                        name="buyerDocumentType"
-                        label="Tipo de Documento com Foto *"
-                        placeholder="Selecione RG ou CNH"
-                        options={documentTypeOptionsBuyer}
-                        error={form.formState.errors.buyerDocumentType}
-                    />
-                    <FormInput
-                        control={form.control}
-                        name="buyerDocumentNumber"
-                        label={`Número do ${buyerDocType || 'Documento'} *`}
-                        placeholder={!buyerDocType ? "Selecione o tipo" : (buyerDocType === 'CNH' ? '00000000000' : '00.000.000-0')}
-                        error={form.formState.errors.buyerDocumentNumber}
-                        inputMode={buyerDocType === 'CNH' ? 'numeric' : 'text'}
-                        maxLength={buyerDocType === 'CNH' ? 11 : 12}
-                        disabled={!buyerDocType}
-                        formatter={buyerDocType === 'RG' ? formatRG : undefined}
-                    />
-                  </>
-                )}
-                {buyerType === 'corporate' && (
-                  <>
-                    <FormInput control={form.control} name="buyerCNPJ" label="CNPJ *" placeholder="00.000.000/0000-00" error={form.formState.errors.buyerCNPJ} inputMode="numeric" className="md:col-span-2" maxLength={18} formatter={formatCNPJ} tooltip="Digite apenas os números." />
-                  </>
-                )}
-                 <FormInput control={form.control} name="buyerEmail" label="E-mail do Comprador *" placeholder="comprador@exemplo.com" type="email" error={form.formState.errors.buyerEmail} />
-                 <FormInput control={form.control} name="buyerPhone" label="Telefone do Comprador *" placeholder="(XX) XXXXX-XXXX" type="tel" error={form.formState.errors.buyerPhone} inputMode="tel" maxLength={15} formatter={formatPhone} tooltip="Com DDD." />
-              </div>
-            </div>
-
-            <Separator/>
+              </CardContent>
+            </Card>
             
-            <div className="space-y-6">
-              <div className="text-left">
-                <h2 className="text-lg font-semibold text-foreground flex items-center gap-2"><UserCheck className="h-5 w-5 text-primary" />Dados da Pessoa Autorizada a Retirar</h2>
-                 <p className="text-sm text-muted-foreground mt-1">Essa pessoa precisa ser maior de idade e apresentar um documento original com foto na loja.</p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                <div className="md:col-span-2">
-                 <FormInput control={form.control} name="representativeName" label="Nome Completo da Pessoa Autorizada *" placeholder="Maria Oliveira" error={form.formState.errors.representativeName} />
+            <Card className="border-border/60 p-6">
+              <CardHeader className='p-0 mb-4'>
+                <CardTitle className='flex items-center gap-2'><UserCheck className="h-5 w-5 text-primary" />2. Dados da Pessoa Autorizada a Retirar</CardTitle>
+                <CardDescription>Essa pessoa precisa ser maior de idade e apresentar um documento original com foto na loja.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                  <div className="md:col-span-2">
+                  <FormInput control={form.control} name="representativeName" label="Nome Completo da Pessoa Autorizada *" placeholder="Maria Oliveira" error={form.formState.errors.representativeName} />
+                  </div>
+                  <FormSelect
+                      control={form.control}
+                      trigger={form.trigger}
+                      setValue={form.setValue}
+                      name="representativeDocumentType"
+                      label="Tipo de Documento da Pessoa Autorizada *"
+                      placeholder="Selecione RG, CNH ou CPF"
+                      options={documentTypeOptionsRepresentative}
+                      error={form.formState.errors.representativeDocumentType}
+                  />
+                  <FormInput
+                      control={form.control}
+                      name="representativeDocumentNumber"
+                      label={`Número do ${repDocType || 'Documento'} *`}
+                      placeholder={!repDocType ? 'Selecione o tipo' : 'Digite o número'}
+                      error={form.formState.errors.representativeDocumentNumber}
+                      inputMode={repDocType === 'CPF' || repDocType === 'CNH' ? 'numeric' : 'text'}
+                      maxLength={
+                          repDocType === 'RG' ? 12 :
+                          repDocType === 'CNH' ? 11 :
+                          repDocType === 'CPF' ? 14 : 20
+                      }
+                      disabled={!repDocType}
+                      formatter={
+                          repDocType === 'CPF' ? formatCPF :
+                          repDocType === 'RG' ? formatRG :
+                          undefined
+                      }
+                  />
                 </div>
-                <FormSelect
-                    control={form.control}
-                    trigger={form.trigger}
-                    setValue={form.setValue}
-                    name="representativeDocumentType"
-                    label="Tipo de Documento da Pessoa Autorizada *"
-                    placeholder="Selecione RG, CNH ou CPF"
-                    options={documentTypeOptionsRepresentative}
-                    error={form.formState.errors.representativeDocumentType}
-                />
-                <FormInput
-                    control={form.control}
-                    name="representativeDocumentNumber"
-                    label={`Número do ${repDocType || 'Documento'} *`}
-                    placeholder={!repDocType ? 'Selecione o tipo' : 'Digite o número'}
-                    error={form.formState.errors.representativeDocumentNumber}
-                    inputMode={repDocType === 'CPF' || repDocType === 'CNH' ? 'numeric' : 'text'}
-                    maxLength={
-                        repDocType === 'RG' ? 12 :
-                        repDocType === 'CNH' ? 11 :
-                        repDocType === 'CPF' ? 14 : 20
-                    }
-                    disabled={!repDocType}
-                    formatter={
-                        repDocType === 'CPF' ? formatCPF :
-                        repDocType === 'RG' ? formatRG :
-                        undefined
-                    }
-                />
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
-            <Separator/>
+            <Card className="border-border/60 p-6">
+              <CardHeader className='p-0 mb-4'>
+                <CardTitle className='flex items-center gap-2'><ShoppingBag className="h-5 w-5 text-primary" />3. Detalhes do Pedido e Retirada</CardTitle>
+                <CardDescription>Informe os dados referentes à compra que será retirada.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                  <FormDatePicker control={form.control} name="purchaseDate" label="Data da Compra *" error={form.formState.errors.purchaseDate} />
+                  <FormDatePicker control={form.control} name="pickupDate" label="Data Prevista da Retirada *" error={form.formState.errors.pickupDate} />
 
-            <div className="space-y-6">
-              <div className="text-left">
-                <h2 className="text-lg font-semibold text-foreground flex items-center gap-2"><ShoppingBag className="h-5 w-5 text-primary" />Detalhes do Pedido e Retirada</h2>
-                <p className="text-sm text-muted-foreground mt-1">Informe os dados referentes à compra que será retirada.</p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                <FormDatePicker control={form.control} name="purchaseDate" label="Data da Compra *" error={form.formState.errors.purchaseDate} />
-                <FormDatePicker control={form.control} name="pickupDate" label="Data Prevista da Retirada *" error={form.formState.errors.pickupDate} />
+                  <FormInput control={form.control} name="purchaseValue" label="Valor da Compra (R$) *" placeholder="Ex: 199,90" type="text" inputMode='decimal' error={form.formState.errors.purchaseValue} formatter={formatCurrency}/>
+                  
+                  <FormFieldItem>
+                    <Label htmlFor="orderNumber">Número do Pedido *</Label>
+                    <div className="flex items-center w-full">
+                        <span className="inline-flex items-center px-3 h-11 text-sm text-foreground bg-muted border border-r-0 border-input rounded-l-md">
+                            V
+                        </span>
+                        <Controller
+                            control={form.control}
+                            name="orderNumber"
+                            render={({ field }) => (
+                                <Input
+                                    {...field}
+                                    id="orderNumber"
+                                    type="text"
+                                    inputMode="numeric"
+                                    placeholder="12345678"
+                                    maxLength={8}
+                                    className={cn(
+                                        "rounded-none w-full min-w-0 flex-1 focus:z-10",
+                                        form.formState.errors.orderNumber ? 'border-destructive' : ''
+                                    )}
+                                    onChange={(e) => {
+                                        const { value } = e.target;
+                                        if (/^\d*$/.test(value)) {
+                                            field.onChange(value);
+                                        }
+                                    }}
+                                />
+                            )}
+                        />
+                        <span className="inline-flex items-center px-3 h-11 text-sm text-foreground bg-muted border border-l-0 border-input rounded-r-md whitespace-nowrap">
+                            RIHP-01
+                        </span>
+                    </div>
+                    {form.formState.errors.orderNumber && <FormErrorMessage message={form.formState.errors.orderNumber.message} />}
+                  </FormFieldItem>
 
-                <FormInput control={form.control} name="purchaseValue" label="Valor da Compra (R$) *" placeholder="Ex: 199,90" type="text" inputMode='decimal' error={form.formState.errors.purchaseValue} formatter={formatCurrency}/>
-                
-                <FormFieldItem>
-                  <Label htmlFor="orderNumber">Número do Pedido *</Label>
-                   <div className="flex items-center w-full">
-                      <span className="inline-flex items-center px-3 h-11 text-sm text-foreground bg-muted border border-r-0 border-input rounded-l-md">
-                          V
-                      </span>
+
+                  <FormFieldItem className="md:col-span-2">
+                      <Label htmlFor="pickupStore">Loja para Retirada *</Label>
                       <Controller
                           control={form.control}
-                          name="orderNumber"
+                          name="pickupStore"
                           render={({ field }) => (
-                              <Input
-                                  {...field}
-                                  id="orderNumber"
-                                  type="text"
-                                  inputMode="numeric"
-                                  placeholder="12345678"
-                                  maxLength={8}
-                                  className={cn(
-                                      "rounded-none w-full min-w-0 flex-1 focus:z-10",
-                                      form.formState.errors.orderNumber ? 'border-destructive' : ''
-                                  )}
-                                  onChange={(e) => {
-                                      const { value } = e.target;
-                                      if (/^\d*$/.test(value)) {
-                                          field.onChange(value);
-                                      }
-                                  }}
-                              />
+                          <Select onValueChange={field.onChange} value={field.value || undefined} disabled>
+                              <SelectTrigger id="pickupStore" className={form.formState.errors.pickupStore ? 'border-destructive' : ''}>
+                                  <SelectValue placeholder="Selecione uma loja" />
+                              </SelectTrigger>
+                              <SelectContent>
+                              {storeOptionsList.map(option => (
+                                  <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                              ))}
+                              </SelectContent>
+                          </Select>
                           )}
                       />
-                      <span className="inline-flex items-center px-3 h-11 text-sm text-foreground bg-muted border border-l-0 border-input rounded-r-md whitespace-nowrap">
-                          RIHP-01
-                      </span>
-                   </div>
-                  {form.formState.errors.orderNumber && <FormErrorMessage message={form.formState.errors.orderNumber.message} />}
-                </FormFieldItem>
-
-
-                <FormFieldItem className="md:col-span-2">
-                    <Label htmlFor="pickupStore">Loja para Retirada *</Label>
-                    <Controller
-                        control={form.control}
-                        name="pickupStore"
-                        render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value || undefined} disabled>
-                            <SelectTrigger id="pickupStore" className={form.formState.errors.pickupStore ? 'border-destructive' : ''}>
-                                <SelectValue placeholder="Selecione uma loja" />
-                            </SelectTrigger>
-                            <SelectContent>
-                            {storeOptionsList.map(option => (
-                                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        )}
-                    />
-                    {form.formState.errors.pickupStore && <FormErrorMessage message={form.formState.errors.pickupStore.message} />}
-                </FormFieldItem>
-              </div>
-            </div>
+                      {form.formState.errors.pickupStore && <FormErrorMessage message={form.formState.errors.pickupStore.message} />}
+                  </FormFieldItem>
+                </div>
+              </CardContent>
+            </Card>
 
             <Separator/>
             
@@ -527,10 +530,11 @@ export function AuthorizationForm() {
                     <p className="mt-2 text-foreground/90">A retirada estará condicionada à conferência documental pela equipe da loja.</p>
                 </div>
               
-              <div className="bg-muted/50 p-4 rounded-md text-sm text-foreground">
-                  <p className="font-semibold text-base mb-2 flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-primary" />Tratamento de Dados Pessoais (LGPD)</p>
-                  <p>Os dados informados neste formulário serão utilizados exclusivamente para gerar o documento PDF de autorização em seu próprio dispositivo. Nenhuma informação é armazenada em servidores ou compartilhada, em conformidade com a Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018).</p>
-              </div>
+              <Alert>
+                  <ShieldAlert className="h-5 w-5 text-primary" />
+                  <AlertTitle className="font-semibold">Tratamento de Dados Pessoais (LGPD)</AlertTitle>
+                  <AlertDescription>Os dados informados neste formulário serão utilizados exclusivamente para gerar o documento PDF de autorização em seu próprio dispositivo. Nenhuma informação é armazenada em servidores ou compartilhada, em conformidade com a Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018).</AlertDescription>
+              </Alert>
 
               <FormFieldItem>
                   <div className="flex items-start space-x-3">
@@ -548,7 +552,7 @@ export function AuthorizationForm() {
                       />
                       <div className="grid gap-1.5 leading-none">
                           <Label htmlFor="agreedToTerms" className="cursor-pointer">
-                            Declaro que li as informações e concordo com o tratamento dos dados para a finalidade descrita.
+                            Li e concordo com o tratamento dos meus dados pessoais conforme descrito acima.
                           </Label>
                       </div>
                   </div>
@@ -601,11 +605,11 @@ export function AuthorizationForm() {
                   <FileCheck2 className="h-8 w-8 text-primary" />
                   PDF Gerado! Próximo Passo:
                 </AlertDialogTitle>
-                <AlertDialogDescription className="text-foreground/90 pt-2 text-center space-y-3">
+                <div className="text-sm text-foreground/90 pt-2 text-center space-y-3">
                   <p>O seu PDF foi baixado! Agora você precisa enviá-lo para a loja.</p>
                   <p>Acesse a área de downloads do seu navegador (geralmente clicando no ícone de <strong>seta para baixo ↓</strong> ou no menu de <strong>3 pontinhos ⋮</strong>) e abra o arquivo.</p>
                   <p>Dentro do visualizador de PDF, procure pela opção <strong>"Compartilhar"</strong> e envie o arquivo para a loja junto com uma foto do seu documento.</p>
-                </AlertDialogDescription>
+                </div>
               </AlertDialogHeader>
               <AlertDialogFooter className="flex-col sm:flex-col sm:space-x-0 gap-2">
                 <Button asChild className="w-full bg-green-600 hover:bg-green-700 text-white">
@@ -637,12 +641,14 @@ export function AuthorizationForm() {
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
           @page {
             size: A4;
-            margin: 0;
+            margin: 15mm;
+          }
+          body {
+            -webkit-print-color-adjust: exact;
           }
           .pdf-page-container {
-            width: 210mm;
-            height: 297mm;
-            padding: 15mm;
+            width: 180mm;
+            height: 267mm;
             box-sizing: border-box;
             font-family: 'Inter', Arial, sans-serif;
             font-size: 11pt;
@@ -652,25 +658,25 @@ export function AuthorizationForm() {
             display: flex;
             flex-direction: column;
           }
-          .pdf-header { text-align: center; margin-bottom: 6mm; }
+          .pdf-header { text-align: center; margin-bottom: 5mm; }
           .pdf-logo { max-width: 40px; height: auto; margin: 0 auto 2mm; }
           .pdf-main-title { font-size: 13pt; font-weight: 700; color: #000000; margin-bottom: 1mm; }
-          .pdf-sub-title { font-size: 11pt; color: #555555; margin-bottom: 6mm; }
-          .pdf-section { margin-bottom: 5mm; page-break-inside: avoid; }
-          .pdf-section-title { font-size: 12pt; font-weight: 600; color: #111827; padding-bottom: 1.5mm; border-bottom: 1px solid #EAEAEA; margin-bottom: 3mm; }
-          .pdf-declaration-section { margin-bottom: 5mm; text-align: justify; page-break-inside: avoid; }
-          .pdf-declaration-title { font-size: 12pt; font-weight: 600; margin-bottom: 3mm; }
-          .pdf-conditions-list { margin-top: 2mm; padding-left: 5mm; list-style-position: outside; }
-          .pdf-conditions-list li { padding-left: 1mm; margin-bottom: 1mm;}
+          .pdf-sub-title { font-size: 10pt; color: #555555; margin-bottom: 4mm; }
+          .pdf-section { margin-bottom: 4mm; page-break-inside: avoid; }
+          .pdf-section-title { font-size: 12pt; font-weight: 600; color: #111827; padding-bottom: 1.5mm; border-bottom: 1px solid #EAEAEA; margin-bottom: 2mm; }
+          .pdf-declaration-section { margin-bottom: 4mm; text-align: justify; page-break-inside: avoid; }
+          .pdf-declaration-title { font-size: 12pt; font-weight: 600; margin-bottom: 2mm; }
+          .pdf-conditions-list { margin-top: 1mm; padding-left: 5mm; list-style-position: outside; }
+          .pdf-conditions-list li { padding-left: 1mm; margin-bottom: 1.5mm;}
           .pdf-data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm 5mm; }
           .pdf-data-item { display: flex; flex-direction: column; page-break-inside: avoid; }
           .pdf-field-label { font-weight: 500; color: #555555; font-size: 9pt; margin-bottom: 0.5mm; }
-          .pdf-field-value { font-size: 11pt; word-break: break-word; }
+          .pdf-field-value { font-size: 10.5pt; word-break: break-word; }
           .pdf-data-item.full-width { grid-column: span 2; }
-          .pdf-signature-block { margin-top: 10mm; text-align: center; page-break-inside: avoid; }
+          .pdf-signature-block { margin-top: 8mm; text-align: center; page-break-inside: avoid; }
           .pdf-signature-line { width: 70%; border-top: 1px solid #333333; margin: 0 auto; }
-          .pdf-signature-label { font-size: 9pt; margin-top: 1.5mm; }
-          .pdf-footer { font-size: 9pt; color: #666666; text-align: center; margin-top: auto; padding-top: 4mm; border-top: 1px solid #EAEAEA; }
+          .pdf-signature-label { font-size: 9pt; margin-top: 1mm; }
+          .pdf-footer { font-size: 8pt; color: #666666; text-align: center; margin-top: auto; padding-top: 3mm; border-top: 1px solid #EAEAEA; }
         `}
       </style>
 
@@ -687,7 +693,7 @@ export function AuthorizationForm() {
             Eu, <strong>{form.getValues('buyerName')}</strong>, {form.getValues('buyerType') === 'individual' ? `portador(a) do documento CPF nº ${form.getValues('buyerCPF')}` : `representante legal da empresa portadora do CNPJ nº ${form.getValues('buyerCNPJ')}`}, autorizo o(a) representante <strong>{form.getValues('representativeName')}</strong>, portador(a) do documento {form.getValues('representativeDocumentType')} nº {form.getValues('representativeDocumentNumber')}, a retirar os produtos vinculados ao Pedido nº {getFullOrderNumber()}, conforme informações registradas neste documento, na loja física selecionada no momento da compra realizada no site.
           </p>
 
-            <div className="pdf-declaration-title" style={{ marginTop: '6mm' }}>Condições para Retirada</div>
+            <div className="pdf-declaration-title" style={{ marginTop: '5mm' }}>Condições para Retirada</div>
              <p>Declaro estar ciente de que:</p>
               <ul className="pdf-conditions-list">
                   <li>O representante deverá ser maior de 18 anos.</li>
@@ -927,6 +933,5 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 const Separator = () => <div className="border-t border-border/60 my-6" />;
 
 export default AuthorizationForm;
-
     
     
