@@ -122,12 +122,15 @@ export function AuthorizationForm() {
   const [showPostPdfModal, setShowPostPdfModal] = useState(false);
   const pdfTemplateRef = useRef<HTMLDivElement>(null);
   const [isInitialModalOpen, setIsInitialModalOpen] = useState(false);
+  const [generationTimestamp, setGenerationTimestamp] = useState<string | null>(null);
 
   useEffect(() => {
     const hasSeenModal = sessionStorage.getItem('hasSeenAuthFormModalV1');
     if (!hasSeenModal) {
       setIsInitialModalOpen(true);
     }
+    // Set timestamp only on client-side after mount to prevent hydration mismatch
+    setGenerationTimestamp(format(new Date(), "dd/MM/yyyy 'às' HH:mm:ss"));
   }, []);
 
   const handleContinueFromModal = () => {
@@ -675,7 +678,7 @@ export function AuthorizationForm() {
         </div>
 
         <div className="pdf-footer">
-            Gerado em: {format(new Date(), "dd/MM/yyyy 'às' HH:mm:ss")} <br/>
+            Gerado em: {generationTimestamp} <br/>
             Documento auxiliar sujeito à conferência conforme regulamento oficial. A retirada só será autorizada mediante apresentação deste termo junto com a cópia do documento do titular e documento original do autorizado.
         </div>
       </div>
