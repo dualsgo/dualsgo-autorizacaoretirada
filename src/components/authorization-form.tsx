@@ -24,7 +24,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
-import { Alert, AlertTitle } from './ui/alert';
+import { Alert, AlertTitle, AlertDescription } from './ui/alert';
+import { Separator } from './ui/separator';
 
 const PICKUP_ADDRESS = "Avenida Vicente de Carvalho, 909 - Vicente de Carvalho - Rio de Janeiro - RJ - 21211-007 - pickup";
 
@@ -69,6 +70,11 @@ const formatRG = (value: string) => {
     if (!value) return "";
     return value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
 }
+
+const formatCEP = (value: string) => {
+  if (!value) return "";
+  return value.replace(/\D/g, '').replace(/^(\d{5})(\d)/, '$1-$2').slice(0, 9);
+};
 
 
 const InitialModal = ({ open, onOpenChange, onContinue }: { open: boolean, onOpenChange: (open: boolean) => void, onContinue: () => void }) => {
@@ -141,6 +147,14 @@ const DateWarningModal = ({ open, onOpenChange }: { open: boolean, onOpenChange:
   </AlertDialog>
 );
 
+
+type PdfTemplateProps = {
+  pdfTemplateRef: React.RefObject<HTMLDivElement>;
+  generationTimestamp: string | null;
+  getFullOrderNumber: () => string;
+  form: any; // useForm<AuthorizationFormData>
+  signatureDataUrl?: string | null; // ex: "data:image/png;base64,...."
+};
 
 export function AuthorizationPdfTemplate({
   pdfTemplateRef,
@@ -358,13 +372,15 @@ export function AuthorizationPdfTemplate({
 
             <tr className="row">
               <td className="lbl">Endereço</td>
-              <td className="val" colSpan={3}></td>
+              <td className="val" colSpan={3}>
+                {`${form.getValues("buyerStreet") || ""}, ${form.getValues("buyerNumber") || ""}${form.getValues("buyerComplement") ? ` - ${form.getValues("buyerComplement")}` : ''}`}
+              </td>
             </tr>
             <tr className="row">
               <td className="lbl">Município</td>
-              <td className="half"></td>
+              <td className="half">{form.getValues("buyerCity") || ""}</td>
               <td className="lbl">UF</td>
-              <td className="half"></td>
+              <td className="half">{form.getValues("buyerState") || ""}</td>
             </tr>
           </tbody>
         </table>
@@ -480,13 +496,6 @@ export function AuthorizationPdfTemplate({
   );
 }
 
-type PdfTemplateProps = {
-  pdfTemplateRef: React.RefObject<HTMLDivElement>;
-  generationTimestamp: string | null;
-  getFullOrderNumber: () => string;
-  form: any; // useForm<AuthorizationFormData>
-  signatureDataUrl?: string | null; // ex: "data:image/png;base64,...."
-};
 
 export function AuthorizationForm() {
   const { toast } = useToast();
@@ -497,17 +506,19 @@ export function AuthorizationForm() {
   const [isInitialModalOpen, setIsInitialModalOpen] = useState(false);
   const [generationTimestamp, setGenerationTimestamp] = useState<string | null>(null);
   const [showDateWarningModal, setShowDateWarningModal] = useState(false);
+  const [isCepLoading, setIsCepLoading] = useState(false);
+
 
   useEffect(() => {
-    const hasSeenModal = sessionStorage.getItem('hasSeenAuthFormModalV1');
-    if (!hasSeenModal) {
-      setIsInitialModalOpen(true);
+    // Only show the modal once per session
+    if (!sessionStorage.getItem('hasSeenAuthFormModalV2')) {
+        setIsInitialModalOpen(true);
     }
   }, []);
 
   const handleContinueFromModal = () => {
-    sessionStorage.setItem('hasSeenAuthFormModalV1', 'true');
-    setIsInitialModalOpen(false);
+      sessionStorage.setItem('hasSeenAuthFormModalV2', 'true');
+      setIsInitialModalOpen(false);
   };
 
 
@@ -521,6 +532,14 @@ export function AuthorizationForm() {
       buyerCPF: '',
       buyerDocumentType: undefined,
       buyerDocumentNumber: '',
+      buyerCNPJ: '',
+      buyerCEP: '',
+      buyerStreet: '',
+      buyerNumber: '',
+      buyerComplement: '',
+      buyerDistrict: '',
+      buyerCity: '',
+      buyerState: '',
       representativeName: '',
       representativeDocumentType: undefined,
       representativeDocumentNumber: '',
@@ -557,6 +576,7 @@ export function AuthorizationForm() {
         setShowDateWarningModal(true);
       }
     }
+    form.trigger("pickupDate");
   };
 
   const getFullOrderNumber = () => {
@@ -586,6 +606,50 @@ export function AuthorizationForm() {
     return encodeURIComponent(`Envio do Termo de Autorização de Retirada - Pedido ${orderId}`);
   };
 
+  const handleCepBlur = async (e: React.FocusEvent<HTMLInputElement>) => {
+    const cep = e.target.value.replace(/\D/g, '');
+    form.trigger('buyerCEP'); // Trigger validation on blur
+    if (cep.length !== 8) {
+      return;
+    }
+
+    setIsCepLoading(true);
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      if (!response.ok) throw new Error('Falha na busca do CEP');
+      const data = await response.json();
+
+      if (data.erro) {
+        toast({
+          variant: "destructive",
+          title: "CEP não encontrado",
+          description: "Por favor, verifique o CEP e tente novamente. Você pode preencher o endereço manualmente.",
+        });
+        form.setValue('buyerStreet', '');
+        form.setValue('buyerDistrict', '');
+        form.setValue('buyerCity', '');
+        form.setValue('buyerState', '');
+      } else {
+        form.setValue('buyerStreet', data.logradouro, { shouldValidate: true });
+        form.setValue('buyerDistrict', data.bairro, { shouldValidate: true });
+        form.setValue('buyerCity', data.localidade, { shouldValidate: true });
+        form.setValue('buyerState', data.uf, { shouldValidate: true });
+        toast({
+          title: "Endereço preenchido",
+          description: "Os campos de endereço foram preenchidos automaticamente.",
+        });
+        form.setFocus('buyerNumber');
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao buscar CEP",
+        description: "Não foi possível conectar ao serviço de CEP. Preencha o endereço manualmente.",
+      });
+    } finally {
+      setIsCepLoading(false);
+    }
+  };
 
   const generatePdf = async () => {
     const pdfContentElement = pdfTemplateRef.current;
@@ -764,6 +828,28 @@ export function AuthorizationForm() {
                       <FormInput control={form.control} name="buyerCNPJ" label="CNPJ *" placeholder="00.000.000/0000-00" error={form.formState.errors.buyerCNPJ} inputMode="numeric" className="md:col-span-2" maxLength={18} formatter={formatCNPJ} tooltip="Digite apenas os números." />
                     </>
                   )}
+                  <div className="md:col-span-2"><Separator /></div>
+
+                  <FormFieldItem className='relative'>
+                    <FormInput control={form.control} name="buyerCEP" label="CEP *" placeholder="00000-000" error={form.formState.errors.buyerCEP} inputMode="numeric" maxLength={9} formatter={formatCEP} onBlur={handleCepBlur} />
+                    {isCepLoading && <Loader2 className="absolute right-3 top-9 h-5 w-5 animate-spin text-muted-foreground" />}
+                  </FormFieldItem>
+
+                  <FormInput control={form.control} name="buyerStreet" label="Endereço *" placeholder="Av. Brasil" error={form.formState.errors.buyerStreet} disabled={isCepLoading} />
+                  
+                  <FormInput control={form.control} name="buyerNumber" label="Número *" placeholder="123" error={form.formState.errors.buyerNumber} disabled={isCepLoading} />
+                  
+                  <FormInput control={form.control} name="buyerComplement" label="Complemento" placeholder="Apto 101" error={form.formState.errors.buyerComplement} disabled={isCepLoading} />
+
+                  <FormInput control={form.control} name="buyerDistrict" label="Bairro *" placeholder="Centro" error={form.formState.errors.buyerDistrict} disabled={isCepLoading} />
+
+                  <FormInput control={form.control} name="buyerCity" label="Cidade *" placeholder="Rio de Janeiro" error={form.formState.errors.buyerCity} disabled={isCepLoading} />
+
+                  <FormInput control={form.control} name="buyerState" label="UF *" placeholder="RJ" error={form.formState.errors.buyerState} maxLength={2} disabled={isCepLoading} />
+
+                  <div className="md:col-span-2"><Separator /></div>
+
+
                   <FormInput control={form.control} name="buyerEmail" label="E-mail do Comprador *" placeholder="comprador@exemplo.com" type="email" error={form.formState.errors.buyerEmail} />
                   <FormInput control={form.control} name="buyerPhone" label="Telefone do Comprador *" placeholder="(XX) XXXXX-XXXX" type="tel" error={form.formState.errors.buyerPhone} inputMode="tel" maxLength={15} formatter={formatPhone} tooltip="Com DDD." />
                 </div>
@@ -909,7 +995,7 @@ export function AuthorizationForm() {
               <Alert>
                   <ShieldAlert className="h-5 w-5 text-primary" />
                   <AlertTitle className="font-semibold">Tratamento de Dados Pessoais (LGPD)</AlertTitle>
-                  <div className="text-sm text-muted-foreground">Os dados informados neste formulário serão utilizados exclusivamente para gerar o documento PDF de autorização em seu próprio dispositivo. Nenhuma informação é armazenada em servidores ou compartilhada, em conformidade com a Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018).</div>
+                  <AlertDescription>Os dados informados neste formulário serão utilizados exclusivamente para gerar o documento PDF de autorização em seu próprio dispositivo. Nenhuma informação é armazenada em servidores ou compartilhada, em conformidade com a Lei Geral de Proteção de Dados (LGPD – Lei nº 13.709/2018).</AlertDescription>
               </Alert>
 
               <FormFieldItem>
@@ -1028,7 +1114,7 @@ const FormFieldItem: React.FC<{ children: React.ReactNode; className?: string }>
   <div className={cn("space-y-1.5", className)}>{children}</div>
 );
 
-interface FormInputProps {
+interface FormInputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   control: Control<AuthorizationFormData>;
   name: keyof AuthorizationFormData;
   label: string;
@@ -1043,7 +1129,7 @@ interface FormInputProps {
   formatter?: (value: string) => string;
 }
 
-const FormInput: React.FC<FormInputProps> = ({ control, name, label, placeholder, type = "text", inputMode, error, className, maxLength, disabled, tooltip, formatter }) => (
+const FormInput: React.FC<FormInputProps> = ({ control, name, label, placeholder, type = "text", inputMode, error, className, maxLength, disabled, tooltip, formatter, ...props }) => (
   <FormFieldItem className={className}>
       <div className="flex items-center gap-1.5">
         <Label htmlFor={name as string}>{label}</Label>
@@ -1069,6 +1155,7 @@ const FormInput: React.FC<FormInputProps> = ({ control, name, label, placeholder
         inputMode={inputMode} 
         placeholder={placeholder} 
         {...field} 
+        {...props}
         onChange={(e) => {
             const value = e.target.value;
             field.onChange(formatter ? formatter(value) : value);
@@ -1095,38 +1182,40 @@ interface FormSelectProps {
     className?: string;
 }
 
-const FormSelect: React.FC<FormSelectProps> = ({ control, trigger, setValue, name, label, placeholder, options, error, className }) => (
-    <FormFieldItem className={className}>
-        <Label htmlFor={name as string}>{label}</Label>
-        <Controller
-            control={control}
-            name={name}
-            render={({ field }) => (
-                <Select
-                    onValueChange={(value) => {
-                        field.onChange(value);
-                        if (name === 'buyerDocumentType' || name === 'representativeDocumentType') {
-                            const dependentField = name === 'buyerDocumentType' ? 'buyerDocumentNumber' : 'representativeDocumentNumber';
-                            setValue(dependentField, '');
-                            trigger(dependentField);
-                        }
-                    }}
-                    value={field.value || undefined}
-                >
-                    <SelectTrigger id={name as string} className={error ? 'border-destructive' : ''}>
-                        <SelectValue placeholder={placeholder} />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {options.map(option => (
-                            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            )}
-        />
-        {error && <FormErrorMessage message={error.message} />}
-    </FormFieldItem>
-);
+const FormSelect: React.FC<FormSelectProps> = ({ control, trigger, setValue, name, label, placeholder, options, error, className }) => {
+    return (
+        <FormFieldItem className={className}>
+            <Label htmlFor={name as string}>{label}</Label>
+            <Controller
+                control={control}
+                name={name}
+                render={({ field }) => (
+                    <Select
+                        onValueChange={(value) => {
+                            field.onChange(value);
+                            if (name === 'buyerDocumentType' || name === 'representativeDocumentType') {
+                                const dependentField = name === 'buyerDocumentType' ? 'buyerDocumentNumber' : 'representativeDocumentNumber';
+                                setValue(dependentField, '');
+                                trigger(dependentField);
+                            }
+                        }}
+                        value={field.value || undefined}
+                    >
+                        <SelectTrigger id={name as string} className={error ? 'border-destructive' : ''}>
+                            <SelectValue placeholder={placeholder} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {options.map(option => (
+                                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                )}
+            />
+            {error && <FormErrorMessage message={error.message} />}
+        </FormFieldItem>
+    );
+};
 
 
 interface FormDatePickerProps {
@@ -1189,8 +1278,6 @@ const FormItemRadio: React.FC<{ value: string; label: string; field: any }> = ({
 const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
   message ? <p className="text-sm text-destructive">{message}</p> : null
 );
-
-const Separator = () => <div className="border-t border-border/60 my-6" />;
 
 export default AuthorizationForm;
     

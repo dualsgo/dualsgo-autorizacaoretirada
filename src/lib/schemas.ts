@@ -102,6 +102,14 @@ export const authorizationSchema = z.object({
     .transform(val => val.replace(/\D/g, ''))
     .refine(val => val.length === 10 || val.length === 11, "Telefone inválido. Use DDD + 8 ou 9 dígitos.")
     .transform(val => formatPhoneNumber(val)),
+  
+  buyerCEP: z.string().trim().min(1, "CEP é obrigatório.").refine(val => val.replace(/\D/g, '').length === 8, "CEP deve ter 8 dígitos."),
+  buyerStreet: z.string().trim().min(1, "Endereço é obrigatório."),
+  buyerNumber: z.string().trim().min(1, "Número é obrigatório."),
+  buyerComplement: z.string().trim().optional(),
+  buyerDistrict: z.string().trim().min(1, "Bairro é obrigatório."),
+  buyerCity: z.string().trim().min(1, "Cidade é obrigatória."),
+  buyerState: z.string().trim().min(2, "UF é obrigatório.").max(2, "UF deve ter 2 letras."),
 
   representativeName: z.string()
     .trim()
