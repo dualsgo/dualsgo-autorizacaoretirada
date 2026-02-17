@@ -1,7 +1,8 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useForm, Controller, SubmitHandler, useWatch, type Control, type FieldError, type UseFormTrigger } from 'react-hook-form';
+import { useForm, Controller, SubmitHandler, useWatch, type Control, type FieldError, type UseFormTrigger, type UseFormSetValue } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { authorizationSchema, AuthorizationFormData, storeOptionsList, documentTypeOptionsBuyer, documentTypeOptionsRepresentative } from '@/lib/schemas';
 import { Button } from '@/components/ui/button';
@@ -360,6 +361,7 @@ export function AuthorizationForm() {
                     <FormSelect
                         control={form.control}
                         trigger={form.trigger}
+                        setValue={form.setValue}
                         name="buyerDocumentType"
                         label="Tipo de Documento com Foto *"
                         placeholder="Selecione RG ou CNH"
@@ -403,6 +405,7 @@ export function AuthorizationForm() {
                 <FormSelect
                     control={form.control}
                     trigger={form.trigger}
+                    setValue={form.setValue}
                     name="representativeDocumentType"
                     label="Tipo de Documento da Pessoa Autorizada *"
                     placeholder="Selecione RG, CNH ou CPF"
@@ -815,6 +818,7 @@ const FormInput: React.FC<FormInputProps> = ({ control, name, label, placeholder
 interface FormSelectProps {
     control: Control<AuthorizationFormData>;
     trigger: UseFormTrigger<AuthorizationFormData>;
+    setValue: UseFormSetValue<AuthorizationFormData>;
     name: keyof AuthorizationFormData;
     label: string;
     placeholder: string;
@@ -823,7 +827,7 @@ interface FormSelectProps {
     className?: string;
 }
 
-const FormSelect: React.FC<FormSelectProps> = ({ control, trigger, name, label, placeholder, options, error, className }) => (
+const FormSelect: React.FC<FormSelectProps> = ({ control, trigger, setValue, name, label, placeholder, options, error, className }) => (
     <FormFieldItem className={className}>
         <Label htmlFor={name as string}>{label}</Label>
         <Controller
@@ -834,7 +838,7 @@ const FormSelect: React.FC<FormSelectProps> = ({ control, trigger, name, label, 
                     field.onChange(value);
                     if (name === 'buyerDocumentType' || name === 'representativeDocumentType') {
                         const dependentField = (name === 'buyerDocumentType' ? 'buyerDocumentNumber' : 'representativeDocumentNumber') as keyof AuthorizationFormData;
-                        form.setValue(dependentField, '');
+                        setValue(dependentField, '');
                         trigger(dependentField);
                     }
                 }}
@@ -916,3 +920,5 @@ const FormErrorMessage: React.FC<{ message?: string }> = ({ message }) => (
 const Separator = () => <div className="border-t border-border/60 my-6" />;
 
 export default AuthorizationForm;
+
+    
