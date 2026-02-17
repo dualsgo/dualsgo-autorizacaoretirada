@@ -515,16 +515,17 @@ export function AuthorizationForm() {
                   <h2 className="text-lg font-semibold text-foreground flex items-center gap-2"><FileCheck2 className="h-5 w-5 text-primary"/>Confirmação e Geração do PDF</h2>
               </div>
               
-              <div className="bg-muted/50 p-4 rounded-md text-sm">
-                  <h3 className="font-semibold text-base mb-2 flex items-center gap-2">Condições obrigatórias para retirada:</h3>
-                  <ul className="list-disc list-inside space-y-1 text-foreground/90">
-                      <li>Representante maior de 18 anos.</li>
-                      <li>Apresentação de documento oficial com foto.</li>
-                      <li>Apresentação deste termo assinado.</li>
-                      <li>Apresentação de cópia do documento do comprador.</li>
-                      <li>Para pessoa jurídica: apresentação de Contrato Social ou Estatuto.</li>
-                  </ul>
-              </div>
+                <div className="bg-muted/50 p-4 rounded-md text-sm">
+                    <h3 className="font-semibold text-base mb-2 flex items-center gap-2">Condições obrigatórias para retirada:</h3>
+                    <ul className="list-disc list-inside space-y-1 text-foreground/90">
+                        <li>O representante deverá ser maior de 18 anos.</li>
+                        <li>Documento oficial com foto do representante deverá ser apresentado no ato da retirada.</li>
+                        <li>Documento oficial com foto do comprador deverá ser enviado previamente ao WhatsApp ou e-mail da loja, juntamente com este termo digital.</li>
+                        <li>Este termo digital deverá ser enviado à loja devidamente preenchido e validado.</li>
+                        <li>Para comprador pessoa jurídica, deverá ser enviada previamente cópia ou imagem do Contrato Social ou Estatuto Social da empresa.</li>
+                    </ul>
+                    <p className="mt-2 text-foreground/90">A retirada estará condicionada à conferência documental pela equipe da loja.</p>
+                </div>
               
               <div className="bg-muted/50 p-4 rounded-md text-sm text-foreground">
                   <p className="font-semibold text-base mb-2 flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-primary" />Tratamento de Dados Pessoais (LGPD)</p>
@@ -634,37 +635,42 @@ export function AuthorizationForm() {
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+          @page {
+            size: A4;
+            margin: 0;
+          }
           .pdf-page-container {
             width: 210mm;
-            min-height: 297mm;
-            padding: 20mm;
+            height: 297mm;
+            padding: 15mm;
             box-sizing: border-box;
             font-family: 'Inter', Arial, sans-serif;
-            font-size: 10pt;
-            line-height: 1.5;
+            font-size: 11pt;
+            line-height: 1.3;
             background-color: #FFFFFF;
             color: #333333;
             display: flex;
             flex-direction: column;
           }
-          .pdf-header { text-align: center; margin-bottom: 8mm; }
-          .pdf-logo { max-width: 50px; height: auto; margin: 0 auto 3mm; }
-          .pdf-main-title { font-size: 16pt; font-weight: 600; color: #000000; margin-bottom: 2mm; }
-          .pdf-sub-title { font-size: 10pt; color: #555555; margin-bottom: 8mm; }
-          .pdf-section { margin-bottom: 6mm; }
-          .pdf-section-title { font-size: 11pt; font-weight: 600; color: #111827; padding-bottom: 2mm; border-bottom: 1px solid #EAEAEA; margin-bottom: 4mm; }
-          .pdf-declaration-section { margin-bottom: 6mm; text-align: justify; }
-          .pdf-declaration-title { font-size: 12pt; font-weight: 600; margin-bottom: 4mm; }
-          .pdf-conditions-list { margin-top: 4mm; padding-left: 5mm; }
-          .pdf-data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3mm 6mm; }
-          .pdf-data-item { display: flex; flex-direction: column; }
-          .pdf-field-label { font-weight: 500; color: #555555; font-size: 8.5pt; margin-bottom: 1mm; }
-          .pdf-field-value { font-size: 10pt; word-break: break-word; }
+          .pdf-header { text-align: center; margin-bottom: 6mm; }
+          .pdf-logo { max-width: 40px; height: auto; margin: 0 auto 2mm; }
+          .pdf-main-title { font-size: 13pt; font-weight: 700; color: #000000; margin-bottom: 1mm; }
+          .pdf-sub-title { font-size: 11pt; color: #555555; margin-bottom: 6mm; }
+          .pdf-section { margin-bottom: 5mm; page-break-inside: avoid; }
+          .pdf-section-title { font-size: 12pt; font-weight: 600; color: #111827; padding-bottom: 1.5mm; border-bottom: 1px solid #EAEAEA; margin-bottom: 3mm; }
+          .pdf-declaration-section { margin-bottom: 5mm; text-align: justify; page-break-inside: avoid; }
+          .pdf-declaration-title { font-size: 12pt; font-weight: 600; margin-bottom: 3mm; }
+          .pdf-conditions-list { margin-top: 2mm; padding-left: 5mm; list-style-position: outside; }
+          .pdf-conditions-list li { padding-left: 1mm; margin-bottom: 1mm;}
+          .pdf-data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2mm 5mm; }
+          .pdf-data-item { display: flex; flex-direction: column; page-break-inside: avoid; }
+          .pdf-field-label { font-weight: 500; color: #555555; font-size: 9pt; margin-bottom: 0.5mm; }
+          .pdf-field-value { font-size: 11pt; word-break: break-word; }
           .pdf-data-item.full-width { grid-column: span 2; }
-          .pdf-signature-block { margin-top: 15mm; text-align: center; }
-          .pdf-signature-line { width: 80%; border-top: 1px solid #333333; margin: 0 auto; }
-          .pdf-signature-label { font-size: 9pt; margin-top: 2mm; }
-          .pdf-footer { font-size: 8pt; color: #777777; text-align: center; margin-top: auto; padding-top: 5mm; border-top: 1px solid #EAEAEA; }
+          .pdf-signature-block { margin-top: 10mm; text-align: center; page-break-inside: avoid; }
+          .pdf-signature-line { width: 70%; border-top: 1px solid #333333; margin: 0 auto; }
+          .pdf-signature-label { font-size: 9pt; margin-top: 1.5mm; }
+          .pdf-footer { font-size: 9pt; color: #666666; text-align: center; margin-top: auto; padding-top: 4mm; border-top: 1px solid #EAEAEA; }
         `}
       </style>
 
@@ -681,15 +687,16 @@ export function AuthorizationForm() {
             Eu, <strong>{form.getValues('buyerName')}</strong>, {form.getValues('buyerType') === 'individual' ? `portador(a) do documento CPF nº ${form.getValues('buyerCPF')}` : `representante legal da empresa portadora do CNPJ nº ${form.getValues('buyerCNPJ')}`}, autorizo o(a) representante <strong>{form.getValues('representativeName')}</strong>, portador(a) do documento {form.getValues('representativeDocumentType')} nº {form.getValues('representativeDocumentNumber')}, a retirar os produtos vinculados ao Pedido nº {getFullOrderNumber()}, conforme informações registradas neste documento, na loja física selecionada no momento da compra realizada no site.
           </p>
 
-          <div className="pdf-declaration-title" style={{ marginTop: '8mm' }}>Condições para Retirada</div>
-           <p>Declaro estar ciente de que:</p>
-            <ul className="pdf-conditions-list">
-                <li>O representante deverá ser maior de 18 anos.</li>
-                <li>O representante deverá apresentar documento oficial com foto.</li>
-                <li>Este termo deverá estar devidamente assinado.</li>
-                <li>Deverá ser apresentada cópia do documento oficial do comprador.</li>
-                <li>Caso o comprador seja pessoa jurídica, deverá ser apresentada cópia ou imagem do Contrato Social ou Estatuto.</li>
-            </ul>
+            <div className="pdf-declaration-title" style={{ marginTop: '6mm' }}>Condições para Retirada</div>
+             <p>Declaro estar ciente de que:</p>
+              <ul className="pdf-conditions-list">
+                  <li>O representante deverá ser maior de 18 anos.</li>
+                  <li>Documento oficial com foto do representante deverá ser apresentado no ato da retirada.</li>
+                  <li>Documento oficial com foto do comprador deverá ser enviado previamente ao WhatsApp ou e-mail da loja, juntamente com este termo digital.</li>
+                  <li>Este termo digital deverá ser enviado à loja devidamente preenchido e validado.</li>
+                  <li>Para comprador pessoa jurídica, deverá ser enviada previamente cópia ou imagem do Contrato Social ou Estatuto Social da empresa.</li>
+              </ul>
+              <p style={{marginTop: '2mm'}}>A retirada estará condicionada à conferência documental pela equipe da loja.</p>
         </div>
 
         <div className="pdf-section">
@@ -921,4 +928,5 @@ const Separator = () => <div className="border-t border-border/60 my-6" />;
 
 export default AuthorizationForm;
 
+    
     
