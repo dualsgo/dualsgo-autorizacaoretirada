@@ -21,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Checkbox } from '@/components/ui/checkbox';
 import Image from 'next/image';
 import { Alert, AlertTitle } from './ui/alert';
@@ -191,10 +191,10 @@ export function AuthorizationPdfTemplate({
         position: relative;
       }
 
-      .logo-wrap { text-align: center; margin: 0 0 3mm 0; }
-      .logo { width: 52px; height: auto; display: inline-block; }
+      .a4 .logo-wrap { text-align: center; margin: 0 0 3mm 0; }
+      .a4 .logo { width: 52px; height: auto; display: inline-block; }
 
-      .title {
+      .a4 .title {
         text-align: center;
         font-weight: 700;
         text-transform: uppercase;
@@ -203,88 +203,82 @@ export function AuthorizationPdfTemplate({
         letter-spacing: 0.2px;
       }
 
-      table {
+      .a4 table {
         width: 100%;
         border-collapse: collapse;
         table-layout: fixed;
         margin-bottom: 5mm;
       }
 
-      th, td {
+      .a4 th, .a4 td {
         border: 1px solid #000;
         padding: 2.1mm 2.4mm;
-        vertical-align: middle;          /* ALINHAMENTO VERTICAL */
+        vertical-align: middle;
         word-wrap: break-word;
       }
 
-      /* Cabeçalhos das seções (COMPRADOR/REPRESENTANTE) */
-      th.section {
+      .a4 th.section {
         font-weight: 700;
         text-align: center;
         background: #fff;
       }
 
-      /* Células de rótulo e de valor */
-      td.lbl {
+      .a4 td.lbl {
         width: 26%;
         font-size: 9.5pt;
         text-align: left;
       }
 
-      td.val {
+      .a4 td.val {
         width: 74%;
         text-align: left;
       }
 
-      td.half { width: 50%; }
+      .a4 td.half { width: 50%; }
 
-      /* Padroniza altura mínima para “parecer quadro” e alinhar tudo */
-      tr.row { height: 10mm; }          /* ajuste fino (8–11mm conforme necessidade) */
+      .a4 tr.row { height: 10mm; }
 
-      .para {
+      .a4 .para {
         margin: 0 0 3.5mm 0;
         text-align: justify;
         font-size: 9.7pt;
         line-height: 1.2;
       }
 
-      /* Quadro do pedido */
-      .order-head th{
+      .a4 .order-head th{
         font-size: 9.5pt;
-        text-align: center;             /* ALINHAMENTO HORIZONTAL */
+        text-align: center;
         vertical-align: middle;
       }
-      .order-body td{
-        text-align: center;             /* ALINHAMENTO HORIZONTAL */
+      .a4 .order-body td{
+        text-align: center;
         vertical-align: middle;
       }
 
-      /* Data da retirada (sem linha manual) */
-      .pickup-date {
+      .a4 .pickup-date {
         font-size: 9.7pt;
         margin-top: 2mm;
       }
 
-      /* Assinatura fixada no rodapé para nunca empurrar conteúdo */
-      .sign-block {
+      .a4 .sign-block {
         position: absolute;
         left: 20mm;
         right: 20mm;
         bottom: 26mm;
       }
 
-      .sign-label {
+      .a4 .sign-label {
         font-size: 9.7pt;
         margin-bottom: 1.6mm;
       }
 
-      .signature-box {
+      .a4 .signature-box {
         width: 100%;
         height: 20mm;
         border: 1px solid #000;
         display: flex;
-        align-items: center;            /* VERTICAL CENTRO */
-        justify-content: center;        /* HORIZONTAL CENTRO */
+        align-items: center;
+        justify-content: center;
         overflow: hidden;
         background: #fff;
         padding: 2mm;
@@ -292,25 +286,24 @@ export function AuthorizationPdfTemplate({
         text-align: center;
       }
 
-      .signature-img {
+      .a4 .signature-img {
         max-width: 100%;
         max-height: 100%;
         object-fit: contain;
       }
 
-      .sign-caption {
+      .a4 .sign-caption {
         font-size: 9pt;
         margin-top: 1.6mm;
       }
 
-      .gen-info {
+      .a4 .gen-info {
         font-size: 8.5pt;
         margin-top: 1.8mm;
         text-align: center;
       }
 
-      /* Nota final (*) no rodapé */
-      .small-note {
+      .a4 .small-note {
         position: absolute;
         left: 20mm;
         right: 20mm;
@@ -633,7 +626,7 @@ export function AuthorizationForm() {
           title: `Autorização Pedido ${getFullOrderNumber()}`,
           text: `Segue o termo de autorização para o pedido ${getFullOrderNumber()}.`,
         });
-        toast({ variant: "success", title: "Pronto para Enviar!", description: "Selecione o WhatsApp ou E-mail para compartilhar o PDF." });
+        toast({ variant: "default", title: "Pronto para Enviar!", description: "Selecione o WhatsApp ou E-mail para compartilhar o PDF." });
       } else {
         pdf.save(getPdfTitle());
         setShowPostPdfModal(true);
@@ -652,7 +645,7 @@ export function AuthorizationForm() {
   const handleGeneratePdf = async () => {
     setIsSubmitting(true);
     setShowGlobalError(false);
-
+    
     setGenerationTimestamp(format(new Date(), "dd/MM/yyyy 'às' HH:mm:ss"));
 
     const isValid = await form.trigger();
